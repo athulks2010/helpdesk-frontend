@@ -136,7 +136,7 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
       plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help quickbars emoticons',
       menubar: 'file edit view insert format tools table help',
       toolbar_mode: 'wrap',
-      toolbar: 'undo redo bold italic underline strikethrough fontfamily fontsize blocks alignleft aligncenter alignright alignjustify | outdent indent numlist bullist | forecolor backcolor removeformat pagebreak | charmap emoticons fullscreen preview | anchor codesample ltr rtl | code | image media link',
+      toolbar: 'undo redo bold italic underline strikethrough fontfamily fontsize blocks alignleft aligncenter alignright alignjustify | outdent indent numlist bullist | forecolor backcolor removeformat pagebreak | charmap emoticons table fullscreen preview | anchor codesample ltr rtl | code | image media link',
       height: 420,
       setup: (editor: any) => {
         this.editorInstance = editor;

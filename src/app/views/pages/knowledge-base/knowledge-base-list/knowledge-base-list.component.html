@@ -1,6 +1,5 @@
 <div class="space-y-6">
   <div class="flex items-center justify-end gap-2">
-      <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
       <button type="button" class="hd-btn-primary" (click)="createNew()">
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
@@ -9,19 +8,38 @@
       </button>
   </div>
 
-  <div class="hd-card p-4">
+  <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
       <div class="relative flex-1">
-        <input type="search" class="hd-input pl-10" placeholder="Search knowledge base..." [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()" />
-        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor"
-          viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none"
+          stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
+        <input type="search"
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-slate-300"
+          placeholder="Search knowledge base..." [(ngModel)]="search" (ngModelChange)="onSearchChange()" />
       </div>
-      <div class="text-sm text-slate-500 whitespace-nowrap">
-        Total: {{ rows.length }} · Showing: {{ filtered.length }}
+
+      <div class="relative sm:w-40" (click)="$event.stopPropagation()">
+        <button type="button" (click)="toggleTypeMenu()"
+          class="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border-2 border-blue-500 rounded-md text-sm text-slate-800 dark:text-slate-100 text-left">
+          {{ selectedTypeLabel }}
+        </button>
+        <ul *ngIf="typeMenuOpen" class="kb-type-menu">
+          <li>
+            <button type="button" class="kb-type-option" [class.active]="typeFilter === ''" (click)="selectType('')">
+              All Types
+            </button>
+          </li>
+          <li *ngFor="let t of types">
+            <button type="button" class="kb-type-option"
+              [class.active]="isTypeSelected(t)"
+              (click)="selectType(t.id || t._id)">
+              {{ t.name }}
+            </button>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
