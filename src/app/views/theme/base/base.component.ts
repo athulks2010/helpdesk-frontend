@@ -48,6 +48,7 @@ export class BaseComponent implements OnInit, OnDestroy {
   private authSub?: Subscription;
   private routerSub?: Subscription;
   private settingsSub?: Subscription;
+  logoFailed = false;
 
   currentUrl = '';
   currentTitle = 'Dashboard';
@@ -86,7 +87,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private router: Router,
     private notificationService: NotificationService,
-    private settingService: SettingService
+    public settingService: SettingService
   ) {}
 
   ngOnInit(): void {
@@ -99,8 +100,11 @@ export class BaseComponent implements OnInit, OnDestroy {
       this.auth.me().subscribe();
     }
 
+    this.settingService.loadBrandSettings();
     this.settingService.getAll({}).subscribe({ error: () => {} });
-    this.settingsSub = this.settingService.settings$.subscribe();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
 
     this.loadNotifications();
 
@@ -131,6 +135,12 @@ export class BaseComponent implements OnInit, OnDestroy {
     this.authSub?.unsubscribe();
     this.routerSub?.unsubscribe();
     this.settingsSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
   }
 
   @HostListener('document:click', ['$event'])
@@ -398,7 +408,7 @@ export class BaseComponent implements OnInit, OnDestroy {
         languages: 'Languages',
         menus: 'Navigation Menus',
         'email-templates': 'Email Templates',
-        'ticket-fields': 'Custom Ticket Fields',
+        'ticket-fields': 'Ticket Form Builder',
         license: 'License',
       };
 

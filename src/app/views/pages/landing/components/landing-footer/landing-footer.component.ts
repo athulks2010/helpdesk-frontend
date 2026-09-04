@@ -1,17 +1,42 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { LandingService } from '../../../../../core/landing/_services/landing.service';
+import { SettingService } from '../../../../../core/setting/_services/setting.service';
 
 @Component({
   selector: 'app-landing-footer',
   templateUrl: './landing-footer.component.html',
   styleUrls: ['./landing-footer.component.scss'],
 })
-export class LandingFooterComponent {
+export class LandingFooterComponent implements OnInit, OnDestroy {
   email = '';
   isSubmitting = false;
   subscribeSuccess = false;
+  logoFailed = false;
+  currentYear = new Date().getFullYear();
+  private settingsSub?: Subscription;
 
-  constructor(private landingService: LandingService) {}
+  constructor(
+    private landingService: LandingService,
+    public settingService: SettingService
+  ) {}
+
+  ngOnInit(): void {
+    this.settingService.loadBrandSettings();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
+  }
 
   onSubscribe(): void {
     if (!this.email || !this.email.includes('@')) {

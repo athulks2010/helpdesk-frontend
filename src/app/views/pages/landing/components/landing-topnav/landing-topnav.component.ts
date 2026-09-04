@@ -1,6 +1,6 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../../../core/auth/_services/auth.service';
 import { SettingService } from '../../../../../core/setting/_services/setting.service';
@@ -18,12 +18,15 @@ interface NavItem {
   templateUrl: './landing-topnav.component.html',
   styleUrls: ['./landing-topnav.component.scss'],
 })
-export class LandingTopNavComponent implements OnInit {
+export class LandingTopNavComponent implements OnInit, OnDestroy {
   isScrolled = false;
   mobileMenuOpen = false;
   userDropdownOpen = false;
   langDropdownOpen = false;
   selectedLanguage = { code: 'en', name: 'English' };
+  logoFailed = false;
+  private settingsSub?: Subscription;
+  private routerSub?: Subscription;
 
   languages = [
     { code: 'en', name: 'English' },
@@ -40,21 +43,36 @@ export class LandingTopNavComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private settingService: SettingService
+    public settingService: SettingService
   ) {
     this.currentUser$ = this.authService.currentUser$;
     this.isLoggedIn$ = this.authService.isLoggedIn$;
   }
 
   ngOnInit(): void {
+    this.settingService.loadBrandSettings();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
     this.loadNavMenus();
-    this.router.events
+    this.routerSub = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
         this.mobileMenuOpen = false;
         this.userDropdownOpen = false;
         this.langDropdownOpen = false;
       });
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+    this.routerSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
   }
 
   private loadNavMenus(): void {

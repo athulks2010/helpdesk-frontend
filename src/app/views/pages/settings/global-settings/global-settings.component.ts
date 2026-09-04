@@ -1,6 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { environment } from '../../../../../environments/environment';
+import { FileUploadService } from '../../../../core/shared/file-upload.service';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { UserService } from '../../../../core/user/_services/user.service';
+
+type SettingsTab =
+  | 'general'
+  | 'branding'
+  | 'features'
+  | 'email_notification'
+  | 'customization'
+  | 'ticket-fields';
 
 @Component({
   selector: 'app-global-settings',
@@ -11,19 +23,32 @@ export class GlobalSettingsComponent implements OnInit {
   form!: FormGroup;
   loading = true;
   saving = false;
+  uploading: Record<string, boolean> = {};
   error = '';
   success = '';
-  activeTab = 'general';
+  activeTab: SettingsTab = 'general';
   languages: any[] = [];
+  recipients: any[] = [];
+  queueCron = '';
+  sharedCron = '';
 
-  readonly tabs = [
-    { id: 'general', name: 'General' },
-    { id: 'branding', name: 'Branding' },
-    { id: 'features', name: 'Features' },
-    { id: 'email_notification', name: 'Email Notifications' },
-    { id: 'customization', name: 'Customization' },
-    { id: 'ticket-fields', name: 'Ticket Fields' },
+  readonly tabs: Array<{ id: SettingsTab; name: string; icon: string }> = [
+    { id: 'general', name: 'General', icon: 'globe' },
+    { id: 'branding', name: 'Branding', icon: 'palette' },
+    { id: 'features', name: 'Features', icon: 'eye' },
+    { id: 'email_notification', name: 'Email Notifications', icon: 'bell' },
+    { id: 'customization', name: 'Customization', icon: 'monitor' },
+    { id: 'ticket-fields', name: 'Ticket Fields', icon: 'doc' },
   ];
+
+  readonly sectionSlugs: Record<SettingsTab, string[]> = {
+    general: ['app_name', 'site_key', 'default_language'],
+    branding: ['main_logo', 'main_logo_white', 'main_favicon', 'footer_text'],
+    features: ['enable_options'],
+    email_notification: ['email_notifications', 'default_recipient'],
+    customization: ['custom_css'],
+    'ticket-fields': ['hide_ticket_fields', 'required_ticket_fields'],
+  };
 
   readonly ticketFieldOptions = [
     'department',
@@ -32,6 +57,52 @@ export class GlobalSettingsComponent implements OnInit {
     'ticket_type',
     'assigned_to',
   ];
+
+  readonly brandingAssets: Array<{
+    key: 'main_logo' | 'main_logo_white' | 'main_favicon';
+    label: string;
+    tip: string;
+    dark: boolean;
+  }> = [
+    {
+      key: 'main_logo',
+      label: 'Main Logo',
+      tip: 'Recommended: 200-300px width, 60-100px height (2:1 to 3:1 ratio)',
+      dark: false,
+    },
+    {
+      key: 'main_logo_white',
+      label: 'White Logo',
+      tip: 'Recommended: 200-300px width, 60-100px height (2:1 to 3:1 ratio)',
+      dark: true,
+    },
+    {
+      key: 'main_favicon',
+      label: 'Favicon',
+      tip: 'Recommended: 32x32px or 16x16px (square format)',
+      dark: false,
+    },
+  ];
+
+  readonly featureDescriptions: Record<string, string> = {
+    chat: 'Enable real-time chat functionality for customer support.',
+    faq: 'Show FAQ section on the public site.',
+    kb: 'Enable knowledge base articles for self-service.',
+    blog: 'Publish blog posts on the front page.',
+    contact: 'Enable contacts module in admin.',
+    organization: 'Enable organizations module in admin.',
+    note: 'Enable notes module in admin.',
+    show_login: 'Show login link on the front page.',
+    enable_piping: 'Create tickets automatically from incoming email.',
+    service: 'Show services page on the front site.',
+    color_picker: 'Allow color picker in ticket/forms UI.',
+    require_login_submit_ticket: 'Require login before submitting a ticket.',
+    contact_page: 'Show contact page on the front site.',
+    terms_of_services: 'Show Terms of Services page.',
+    privacy_policy: 'Show Privacy Policy page.',
+    newsletter: 'Enable newsletter signup.',
+    enable_registration: 'Allow new users to register.',
+  };
 
   readonly defaultEnableOptions = [
     { name: 'Chat', slug: 'chat', value: false },
@@ -62,9 +133,19 @@ export class GlobalSettingsComponent implements OnInit {
     { name: 'Create a new user', slug: 'user_created', value: false },
   ];
 
-  constructor(private fb: FormBuilder, private settingService: SettingService) {}
+  constructor(
+    private fb: FormBuilder,
+    private settingService: SettingService,
+    private fileUpload: FileUploadService,
+    private userService: UserService,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
+    const base = (environment.apiUrl || '').replace(/\/$/, '') || 'https://yourdomain.com';
+    this.queueCron = `*/2 * * * * /usr/bin/php artisan queue:work --queue=high,default --stop-when-empty`;
+    this.sharedCron = `*/2 * * * * wget -q -O - ${base}/cron/queue_work >/dev/null 2>&1`;
+
     this.form = this.fb.group({
       app_name: [''],
       site_key: [''],
@@ -84,6 +165,7 @@ export class GlobalSettingsComponent implements OnInit {
     this.setToggleArray('enable_options', this.defaultEnableOptions);
     this.setToggleArray('email_notifications', this.defaultEmailNotifications);
     this.load();
+    this.loadRecipients();
   }
 
   get enableOptions(): FormArray {
@@ -94,8 +176,58 @@ export class GlobalSettingsComponent implements OnInit {
     return this.form.get('email_notifications') as FormArray;
   }
 
-  setTab(id: string): void {
+  get cssPreviewStyle(): SafeHtml {
+    const css = this.form?.get('custom_css')?.value || '';
+    return this.sanitizer.bypassSecurityTrustHtml(`<style>.css-preview-box{${css}}</style>`);
+  }
+
+  setTab(id: SettingsTab): void {
     this.activeTab = id;
+    this.error = '';
+    this.success = '';
+  }
+
+  featureDescription(slug: string): string {
+    return this.featureDescriptions[slug] || 'Configure this system feature.';
+  }
+
+  assetUrl(control: string): string {
+    return this.fileUpload.resolveUrl(this.form.get(control)?.value);
+  }
+
+  onFileSelected(control: 'main_logo' | 'main_logo_white' | 'main_favicon', event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploading[control] = true;
+    this.fileUpload.upload(file, 'branding').subscribe({
+      next: (path) => {
+        if (path) this.form.patchValue({ [control]: path });
+        this.uploading[control] = false;
+        input.value = '';
+      },
+      error: () => {
+        this.uploading[control] = false;
+        this.error = 'Failed to upload file';
+        input.value = '';
+      },
+    });
+  }
+
+  loadRecipients(): void {
+    this.userService.getAll({}).subscribe({
+      next: (data) => {
+        this.recipients = Array.isArray(data) ? data : data?.items || data?.list || data?.data || [];
+      },
+      error: () => {
+        this.recipients = [];
+      },
+    });
+  }
+
+  recipientLabel(user: any): string {
+    const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+    return name || user.name || user.email || String(user.id || user._id);
   }
 
   load(): void {
@@ -107,7 +239,7 @@ export class GlobalSettingsComponent implements OnInit {
         this.form.patchValue({
           app_name: this.settingValue(settings, 'app_name', 'Help Desk'),
           site_key: this.settingValue(settings, 'site_key', ''),
-          default_recipient: this.settingValue(settings, 'default_recipient', '1'),
+          default_recipient: String(this.settingValue(settings, 'default_recipient', '1')),
           default_language: this.settingValue(settings, 'default_language', 'en'),
           main_logo: this.settingValue(settings, 'main_logo', '/images/logo.png'),
           main_logo_white: this.settingValue(settings, 'main_logo_white', '/images/logo_white.png'),
@@ -118,16 +250,14 @@ export class GlobalSettingsComponent implements OnInit {
           required_ticket_fields: this.asStringArray(this.settingValue(settings, 'required_ticket_fields', [])),
         });
 
-        const enable = this.asToggleList(
-          this.settingValue(settings, 'enable_options', null),
-          this.defaultEnableOptions
+        this.setToggleArray(
+          'enable_options',
+          this.asToggleList(this.settingValue(settings, 'enable_options', null), this.defaultEnableOptions)
         );
-        const emails = this.asToggleList(
-          this.settingValue(settings, 'email_notifications', null),
-          this.defaultEmailNotifications
+        this.setToggleArray(
+          'email_notifications',
+          this.asToggleList(this.settingValue(settings, 'email_notifications', null), this.defaultEmailNotifications)
         );
-        this.setToggleArray('enable_options', enable);
-        this.setToggleArray('email_notifications', emails);
         this.loading = false;
       },
       error: () => {
@@ -146,12 +276,33 @@ export class GlobalSettingsComponent implements OnInit {
     });
   }
 
+  private sectionUpdates(tab: SettingsTab): Array<{ slug: string; value: any }> {
+    const raw = this.form.getRawValue();
+    return (this.sectionSlugs[tab] || []).map((slug) => ({
+      slug,
+      value: raw[slug],
+    }));
+  }
+
+  /** Bulk body as key-value object, e.g. { app_name: "Help Desk", default_language: "en" } */
+  private sectionKeyValueBody(tab: SettingsTab): Record<string, any> {
+    const body: Record<string, any> = {};
+    this.sectionUpdates(tab).forEach((row) => {
+      body[row.slug] = row.value;
+    });
+    return body;
+  }
+
   save(): void {
+    const body = this.sectionKeyValueBody(this.activeTab);
+    if (!Object.keys(body).length) return;
+
     this.saving = true;
     this.error = '';
     this.success = '';
-    const value = this.form.getRawValue();
-    this.settingService.updateGlobal(value).subscribe({
+
+    // POST /setting/update — one bulk call for the active section only
+    this.settingService.updateSetting(body).subscribe({
       next: () => {
         this.saving = false;
         this.success = 'Settings saved successfully';
@@ -164,18 +315,13 @@ export class GlobalSettingsComponent implements OnInit {
   }
 
   isChecked(controlName: 'hide_ticket_fields' | 'required_ticket_fields', field: string): boolean {
-    const list = this.asStringArray(this.form.get(controlName)?.value);
-    return list.includes(field);
+    return this.asStringArray(this.form.get(controlName)?.value).includes(field);
   }
 
   toggleField(controlName: 'hide_ticket_fields' | 'required_ticket_fields', field: string, checked: boolean): void {
     let list = this.asStringArray(this.form.get(controlName)?.value);
-    if (checked && !list.includes(field)) {
-      list = [...list, field];
-    }
-    if (!checked) {
-      list = list.filter((f) => f !== field);
-    }
+    if (checked && !list.includes(field)) list = [...list, field];
+    if (!checked) list = list.filter((f) => f !== field);
 
     if (controlName === 'required_ticket_fields') {
       if (checked && (field === 'category' || field === 'sub_category')) {

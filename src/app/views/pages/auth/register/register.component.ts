@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { catchError, of } from 'rxjs';
+import { Subscription, catchError, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
+import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { environment } from '../../../../../environments/environment';
 import { apiUrl } from '../../../../core/_config/api.config';
 
@@ -18,12 +19,14 @@ export interface RoleOption {
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
 })
-export class RegisterComponent implements OnInit {
+export class RegisterComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   loading = false;
   loadingRoles = false;
   error = '';
   success = '';
+  logoFailed = false;
+  private settingsSub?: Subscription;
 
   // Password visibility toggles
   showPassword = false;
@@ -43,7 +46,8 @@ export class RegisterComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    public settingService: SettingService
   ) {}
 
   ngOnInit(): void {
@@ -59,7 +63,21 @@ export class RegisterComponent implements OnInit {
       { validators: this.passwordMatchValidator }
     );
 
+    this.settingService.loadBrandSettings();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
     this.loadRoles();
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
   }
 
   loadRoles(): void {

@@ -12,6 +12,7 @@ export class PusherSettingsComponent implements OnInit {
   loading = true;
   saving = false;
   testing = false;
+  showSecret = false;
   error = '';
   success = '';
   testResult: { success: boolean; message: string } | null = null;
@@ -33,12 +34,12 @@ export class PusherSettingsComponent implements OnInit {
     this.error = '';
     this.settingService.getPusher().subscribe({
       next: (raw) => {
-        const data = raw?.data ?? raw ?? {};
+        const item = raw?.item ?? raw?.data?.item ?? raw?.data ?? raw ?? {};
         this.form.patchValue({
-          app_id: data.app_id ?? data.PUSHER_APP_ID ?? '',
-          key: data.key ?? data.PUSHER_APP_KEY ?? '',
-          secret: data.secret ?? data.PUSHER_APP_SECRET ?? '',
-          cluster: data.cluster ?? data.PUSHER_APP_CLUSTER ?? 'mt1',
+          app_id: item.pusher_app_id ?? item.app_id ?? item.PUSHER_APP_ID ?? '',
+          key: item.pusher_app_key ?? item.key ?? item.PUSHER_APP_KEY ?? '',
+          secret: item.pusher_app_secret ?? item.secret ?? item.PUSHER_APP_SECRET ?? '',
+          cluster: item.pusher_app_cluster ?? item.cluster ?? item.PUSHER_APP_CLUSTER ?? 'mt1',
         });
         this.loading = false;
       },
@@ -49,6 +50,15 @@ export class PusherSettingsComponent implements OnInit {
     });
   }
 
+  private toApiBody(value: any): Record<string, any> {
+    return {
+      pusher_app_id: value.app_id,
+      pusher_app_key: value.key,
+      pusher_app_secret: value.secret,
+      pusher_app_cluster: value.cluster,
+    };
+  }
+
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -57,7 +67,7 @@ export class PusherSettingsComponent implements OnInit {
     this.saving = true;
     this.error = '';
     this.success = '';
-    this.settingService.updatePusher(this.form.getRawValue()).subscribe({
+    this.settingService.updatePusher(this.toApiBody(this.form.getRawValue())).subscribe({
       next: () => {
         this.saving = false;
         this.success = 'Pusher settings saved';
@@ -72,12 +82,12 @@ export class PusherSettingsComponent implements OnInit {
   test(): void {
     this.testing = true;
     this.testResult = null;
-    this.settingService.testPusher(this.form.getRawValue()).subscribe({
+    this.settingService.testPusher(this.toApiBody(this.form.getRawValue())).subscribe({
       next: (res) => {
         this.testing = false;
         this.testResult = {
-          success: res?.success !== false,
-          message: res?.message || 'Connection successful',
+          success: res?.success !== false && res?.response?.status !== 'ERROR',
+          message: res?.message || res?.response?.message || 'Connection successful',
         };
       },
       error: (err) => {
