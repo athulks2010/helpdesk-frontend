@@ -7,6 +7,7 @@ import { SmtpSettingsComponent } from './smtp-settings/smtp-settings.component';
 import { PusherSettingsComponent } from './pusher-settings/pusher-settings.component';
 import { PipingSettingsComponent } from './piping-settings/piping-settings.component';
 import { LanguagesListComponent } from './languages-list/languages-list.component';
+import { LanguagesFormComponent } from './languages-form/languages-form.component';
 import { MenusListComponent } from './menus-list/menus-list.component';
 import { EmailTemplatesListComponent } from './email-templates-list/email-templates-list.component';
 import { EmailTemplateEditComponent } from './email-template-edit/email-template-edit.component';
@@ -20,6 +21,7 @@ import { LicenseComponent } from './license/license.component';
     PusherSettingsComponent,
     PipingSettingsComponent,
     LanguagesListComponent,
+    LanguagesFormComponent,
     MenusListComponent,
     EmailTemplatesListComponent,
     EmailTemplateEditComponent,

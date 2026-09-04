@@ -398,6 +398,24 @@ export class BaseComponent implements OnInit, OnDestroy {
         return;
       }
 
+      if (parts[1] === 'languages' && parts[2] === 'create') {
+        this.setPage('Create a new language', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Languages', path: '/settings/languages' },
+          { label: 'Create a new language' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'languages' && parts[3] === 'edit') {
+        this.setPage('Edit language', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Languages', path: '/settings/languages' },
+          { label: 'Edit language' },
+        ]);
+        return;
+      }
+
       const nestedTitle = settingsPages[parts[1]] || 'Settings';
       this.setPage(nestedTitle, [
         { label: 'Settings', path: '/settings' },

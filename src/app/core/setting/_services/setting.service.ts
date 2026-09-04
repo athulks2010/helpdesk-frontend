@@ -80,7 +80,11 @@ export class SettingService extends ApiBaseService {
   }
 
   getLanguages(params?: Record<string, any>): Observable<any> {
-    return this.getCollection(apiUrl.languagesAll, params);
+    return this.getCollection(apiUrl.languagesAll, {
+      pageNumber: 1,
+      pageSize: 10000000,
+      ...(params || {}),
+    });
   }
 
   createLanguage(body: any): Observable<any> {
