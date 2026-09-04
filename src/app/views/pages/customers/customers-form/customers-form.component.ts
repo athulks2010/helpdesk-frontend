@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../../../core/user/_services/user.service';
+import { FileUploadService } from '../../../../core/shared/file-upload.service';
 
 
 @Component({
@@ -16,13 +17,15 @@ export class CustomersFormComponent implements OnInit {
   error = '';
   isEditMode = false;
   entityId: string | null = null;
+  showPassword = false;
 
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: UserService
+    private service: UserService,
+    private fileUpload: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -37,7 +40,9 @@ export class CustomersFormComponent implements OnInit {
       phone: [''],
       city: [''],
       address: [''],
+      country: [''],
       password: [''],
+      photo_path: [''],
     });
 
     // Customers are users with customer role (Laravel parity)
@@ -58,7 +63,9 @@ export class CustomersFormComponent implements OnInit {
           phone: item.phone ?? null,
           city: item.city ?? null,
           address: item.address ?? null,
+          country: item.country ?? null,
           password: item.password ?? null,
+          photo_path: item.photo_path ?? item.photo ?? null,
           });
           // Password not required when editing
           this.form.get('password')?.clearValidators();
@@ -81,6 +88,30 @@ export class CustomersFormComponent implements OnInit {
     // no extras
   }
 
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (!file) return;
+    this.fileUpload.upload(file, 'customers').subscribe({
+      next: (path: string) => {
+        if (path) {
+          this.form.patchValue({ photo_path: path });
+        }
+      },
+      error: (err: any) => {
+        console.error('File upload failed', err);
+        this.error = 'Failed to upload photo';
+      },
+    });
+  }
+
+  getPhotoUrl(): string {
+    return this.fileUpload.resolveUrl(this.form.get('photo_path')?.value);
+  }
+
+  getFileName(): string {
+    return this.fileUpload.getFileName(this.form.get('photo_path')?.value);
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -89,7 +120,12 @@ export class CustomersFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
-    raw.role = 'customer';
+    // Pass role_id for customer role (role_id = 2)
+    if (!this.isEditMode) {
+      raw.role_id = 2;
+      raw.is_active = true;
+    }
+    delete raw.role;
 
     if (!raw.password) {
       delete raw.password;
@@ -106,7 +142,13 @@ export class CustomersFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        const msg =
+          err?.error?.message ||
+          err?.error?.error ||
+          (Array.isArray(err?.error?.errors) ? err.error.errors[0] : null) ||
+          err?.statusText ||
+          'Save failed';
+        this.error = msg;
       },
     });
   }
