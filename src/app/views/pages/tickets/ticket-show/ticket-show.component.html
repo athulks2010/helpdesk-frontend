@@ -208,7 +208,7 @@
                 Description
               </h3>
               <div *ngIf="showDescription" class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                {{ ticket.details || ticket.body || ticket.description || 'No description provided.' }}
+                {{ ticketBody() || 'No description provided.' }}
               </div>
               <div *ngIf="!showDescription" class="text-xs italic text-slate-400 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
                 Description hidden
@@ -243,13 +243,13 @@
                   <span class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white dark:ring-slate-800"></span>
                   <div class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
                     <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                      {{ (displayName(ticket.user).charAt(0) || 'U').toUpperCase() }}
+                      {{ (displayName(customer()).charAt(0) || 'U').toUpperCase() }}
                     </div>
                     <span>Ticket {{ ticketKey() }} was created</span>
                     <span class="px-2 py-0.5 rounded text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">System Event</span>
                   </div>
                   <div class="text-xs text-slate-400">
-                    by {{ displayName(ticket.user) }} {{ formatDateTime(ticket.created_at) }}
+                    by {{ displayName(customer()) }} {{ formatDateTime(ticket.created_at) }}
                   </div>
                 </div>
 
@@ -349,40 +349,77 @@
             </div>
             <div class="p-6 space-y-4 text-sm">
 
+              <!-- UID -->
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Ticket ID</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ ticketKey() }}</span>
+              </div>
+
               <!-- Customer -->
-              <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Customer</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200">{{ displayName(ticket.user) }}</span>
+              <div class="flex items-start justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Customer</span>
+                <div class="text-right">
+                  <div class="font-bold text-slate-800 dark:text-slate-200">{{ displayName(customer()) }}</div>
+                  <div *ngIf="displayEmail(customer())" class="text-xs text-slate-400 mt-0.5">{{ displayEmail(customer()) }}</div>
+                </div>
+              </div>
+
+              <!-- Contact -->
+              <div class="flex items-start justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Contact</span>
+                <div class="text-right">
+                  <div class="font-bold text-slate-800 dark:text-slate-200">{{ displayName(contactPerson()) }}</div>
+                  <div *ngIf="displayEmail(contactPerson())" class="text-xs text-slate-400 mt-0.5">{{ displayEmail(contactPerson()) }}</div>
+                </div>
               </div>
 
               <!-- Assigned to -->
-              <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Assigned to</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200">{{ displayName(ticket.assignee || ticket.assignedTo) }}</span>
+              <div class="flex items-start justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Assigned to</span>
+                <div class="text-right">
+                  <div class="font-bold text-slate-800 dark:text-slate-200">{{ displayName(assignee()) }}</div>
+                  <div *ngIf="displayEmail(assignee())" class="text-xs text-slate-400 mt-0.5">{{ displayEmail(assignee()) }}</div>
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Status</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold" [ngClass]="getStatusClass(ticket.status)">
+                  {{ ticket.status?.name || '—' }}
+                </span>
+              </div>
+
+              <!-- Priority -->
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Priority</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold" [ngClass]="getPriorityClass(ticket.priority)">
+                  {{ ticket.priority?.name || '—' }}
+                </span>
               </div>
 
               <!-- Department -->
-              <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Department</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200">{{ ticket.department?.name || ticket.department || '—' }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Department</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ ticket.department?.name || '—' }}</span>
               </div>
 
               <!-- Category -->
-              <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Category</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200">{{ ticket.category?.name || ticket.category || '—' }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Category</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ ticket.category?.name || (ticket.category_id ? ('#' + ticket.category_id) : '—') }}</span>
               </div>
 
               <!-- Type -->
-              <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Type</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200">{{ ticket.type?.name || ticket.type || '—' }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Type</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ ticket.type?.name || '—' }}</span>
               </div>
 
-              <!-- Source -->
-              <div class="flex items-center justify-between">
-                <span class="text-slate-500 dark:text-slate-400">Source</span>
-                <span class="font-bold text-slate-800 dark:text-slate-200 capitalize">{{ ticket.source || 'Web' }}</span>
+              <!-- Due -->
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-slate-500 dark:text-slate-400 shrink-0">Due</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ ticket.due ? formatDateTime(ticket.due) : '—' }}</span>
               </div>
 
             </div>
@@ -406,6 +443,20 @@
                 <div>
                   <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Updated</p>
                   <p class="text-xs text-slate-400 mt-0.5">{{ formatDateTime(ticket.updated_at) }}</p>
+                </div>
+              </div>
+              <div *ngIf="ticket.close" class="flex items-start gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></span>
+                <div>
+                  <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Closed</p>
+                  <p class="text-xs text-slate-400 mt-0.5">{{ formatDateTime(ticket.close) }}</p>
+                </div>
+              </div>
+              <div *ngIf="ticket.due" class="flex items-start gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1.5 shrink-0"></span>
+                <div>
+                  <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Due</p>
+                  <p class="text-xs text-slate-400 mt-0.5">{{ formatDateTime(ticket.due) }}</p>
                 </div>
               </div>
             </div>

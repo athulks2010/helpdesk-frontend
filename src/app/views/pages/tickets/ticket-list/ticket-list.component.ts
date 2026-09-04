@@ -39,8 +39,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
   searchText = '';
   pageSize = 10;
   currentPage = 1;
-  sortField = 'created_at';
-  sortOrder: 'asc' | 'desc' = 'desc';
+  sortField = '';
+  sortOrder = '';
 
   filters = {
     clientSearch: '',
@@ -95,7 +95,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = '';
     this.ticketService
-      .getAll({ pageNumber: 1, pageSize: 1000, sortField: 'created_at', sortOrder: 'desc' })
+      .getAll({ pageNumber: this.currentPage, pageSize: this.pageSize, sortField: this.sortField, sortOrder: this.sortOrder })
       .subscribe({
         next: (data: any) => {
           const list = Array.isArray(data) ? data : data?.items || data?.list || data?.tickets || [];
@@ -295,7 +295,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
   }
 
   open(row: any): void {
-    this.router.navigate(['/tickets', row.id]);
+    const id = row?.id ?? row?._id;
+    if (!id) return;
+    this.router.navigate(['/tickets', id]);
   }
 
   edit(row: any, e: Event): void {

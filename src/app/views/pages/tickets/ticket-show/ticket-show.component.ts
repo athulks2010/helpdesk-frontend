@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
 import { ConversationService } from '../../../../core/conversation/_services/conversation.service';
 
@@ -9,28 +10,27 @@ import { ConversationService } from '../../../../core/conversation/_services/con
   templateUrl: './ticket-show.component.html',
   styleUrls: ['./ticket-show.component.scss'],
 })
-export class TicketShowComponent implements OnInit {
+export class TicketShowComponent implements OnInit, OnDestroy {
   id!: string;
   ticket: any = null;
   loading = true;
   error = '';
 
-  // UI States
   showDescription = true;
   isFavorited = false;
   favoriteLoading = false;
   copiedId = false;
 
-  // Comments / Activity Log
   comments: any[] = [];
   commentForm!: FormGroup;
   commenting = false;
 
-  // Conversations
   conversations: any[] = [];
   loadingConversations = false;
   showNewConversationModal = false;
   conversationSubject = '';
+
+  private routeSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -41,40 +41,69 @@ export class TicketShowComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.id = this.route.snapshot.paramMap.get('id') || '';
     this.commentForm = this.fb.group({
       body: ['', Validators.required],
     });
-    this.loadTicketData();
+
+    // React to /tickets/:id — always load via GET /ticket/single?id=...
+    this.routeSub = this.route.paramMap.subscribe((params) => {
+      this.id = params.get('id') || '';
+      if (this.id) {
+        this.loadTicketData();
+      } else {
+        this.error = 'Invalid ticket id';
+        this.loading = false;
+      }
+    });
   }
 
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  /** Loads ticket detail from GET /ticket/single?id={id} */
   loadTicketData(): void {
     this.loading = true;
     this.error = '';
+    this.ticket = null;
+
     this.ticketService.getById(this.id).subscribe({
-      next: (data) => {
-        const t = data?.ticket || data;
-        this.ticket = t;
-        this.isFavorited = !!(t?.is_favorite || t?.favorited);
+      next: (ticket) => {
+        if (!ticket || ticket.id == null) {
+          this.error = 'Ticket not found';
+          this.loading = false;
+          return;
+        }
+        this.ticket = ticket;
+        this.id = String(ticket.id);
+        this.isFavorited = !!(ticket.is_favorite || ticket.favorited);
         this.loading = false;
         this.loadComments();
         this.loadConversations();
       },
-      error: () => {
-        this.error = 'Failed to load ticket details';
+      error: (err) => {
+        this.error =
+          err?.error?.message ||
+          err?.error?.response?.message ||
+          'Failed to load ticket details';
         this.loading = false;
       },
     });
   }
 
   loadComments(): void {
-    this.ticketService.getComments(this.id).subscribe({
+    const ticketId = this.ticket?.id || this.id;
+    this.ticketService.getComments(ticketId).subscribe({
       next: (data) => {
+        if (Array.isArray(this.ticket?.comments) && this.ticket.comments.length) {
+          this.comments = this.ticket.comments;
+          return;
+        }
         const list = Array.isArray(data) ? data : data?.items || data?.list || data?.comments || [];
         this.comments = list;
       },
       error: () => {
-        this.comments = [];
+        this.comments = Array.isArray(this.ticket?.comments) ? this.ticket.comments : [];
       },
     });
   }
@@ -107,7 +136,6 @@ export class TicketShowComponent implements OnInit {
         },
         error: () => {
           this.commenting = false;
-          // Optimistic append fallback if API returns void/204
           this.comments.push({
             body,
             created_at: new Date().toISOString(),
@@ -120,6 +148,11 @@ export class TicketShowComponent implements OnInit {
 
   loadConversations(): void {
     this.loadingConversations = true;
+    if (Array.isArray(this.ticket?.conversations)) {
+      this.conversations = this.ticket.conversations;
+      this.loadingConversations = false;
+      return;
+    }
     this.conversationService.getAll({ ticket_id: this.ticket?.id || this.id }).subscribe({
       next: (data) => {
         this.conversations = Array.isArray(data) ? data : (data?.items || data?.list || []);
@@ -154,9 +187,44 @@ export class TicketShowComponent implements OnInit {
   }
 
   copyDescription(): void {
-    const desc = this.ticket?.details || this.ticket?.body || this.ticket?.description || '';
-    navigator.clipboard.writeText(desc);
+    navigator.clipboard.writeText(this.ticketBody());
     alert('Description copied to clipboard');
+  }
+
+  /** Ticket body text from /ticket/single (body | details | description) */
+  ticketBody(): string {
+    return this.ticket?.body || this.ticket?.details || this.ticket?.description || '';
+  }
+
+  /** Assignee from API: assignedTo (nested) */
+  assignee(): any {
+    return this.ticket?.assignedTo || this.ticket?.assignee || this.ticket?.assigned_user || null;
+  }
+
+  /** Customer from API: user */
+  customer(): any {
+    return this.ticket?.user || null;
+  }
+
+  contactPerson(): any {
+    return this.ticket?.contact || null;
+  }
+
+  ticketKey(): string {
+    const key = this.ticket?.uid || this.ticket?.uuid || this.ticket?.key;
+    if (key) return `#${key}`;
+    return `#${this.ticket?.id || this.id}`;
+  }
+
+  displayName(user: any): string {
+    if (!user) return '—';
+    if (typeof user === 'string') return user;
+    const name = [user.first_name, user.last_name].filter(Boolean).join(' ');
+    return name || user.name || user.email || '—';
+  }
+
+  displayEmail(user: any): string {
+    return user?.email || '';
   }
 
   toggleDescription(): void {
@@ -209,18 +277,7 @@ export class TicketShowComponent implements OnInit {
   }
 
   editTicket(): void {
-    this.router.navigate(['/tickets', this.id, 'edit']);
-  }
-
-  ticketKey(): string {
-    return this.ticket?.key || this.ticket?.uid || `#${this.ticket?.id || this.id}`;
-  }
-
-  displayName(user: any): string {
-    if (!user) return 'System / Guest';
-    if (typeof user === 'string') return user;
-    const name = [user.first_name, user.last_name].filter(Boolean).join(' ');
-    return name || user.name || user.email || 'System';
+    this.router.navigate(['/tickets', this.ticket?.id || this.id, 'edit']);
   }
 
   getStatusClass(status: any): string {

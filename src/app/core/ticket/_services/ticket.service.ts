@@ -27,16 +27,73 @@ export class TicketService extends ApiBaseService {
     return this.getCollection(apiUrl.ticketsAll, params);
   }
 
+  /**
+   * GET /ticket/single?id={id}
+   * Response shape:
+   * { response: {...}, data: { item: { id, subject, status, priority, ... } } }
+   */
   getById(id: string | number): Observable<any> {
-    return this.getSingle(apiUrl.ticketSingle, { id, _id: id });
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketSingle}`, {
+        params: this.toParams({ id }),
+      })
+      .pipe(
+        map((res: any) => {
+          if (!res) return null;
+          // Primary shape from API
+          if (res.data?.item) return res.data.item;
+          if (res.item) return res.item;
+          if (res.ticket) return res.ticket;
+          if (res.data?.ticket) return res.data.ticket;
+          if (res.data && typeof res.data === 'object' && !Array.isArray(res.data) && res.data.id) {
+            return res.data;
+          }
+          if (res.id) return res;
+          return null;
+        })
+      );
   }
 
   createTicket(body: any): Observable<any> {
-    return this.post(apiUrl.ticketCreate, body);
+    return this.post(apiUrl.ticketCreate, this.toCreatePayload(body));
   }
 
   updateTicket(body: any): Observable<any> {
-    return this.put(apiUrl.ticketUpdate, body);
+    return this.put(apiUrl.ticketUpdate, this.toUpdatePayload(body));
+  }
+
+  /** Maps UI form values → POST /ticket/create body */
+  toCreatePayload(raw: Record<string, any>): Record<string, any> {
+    return {
+      subject: String(raw['subject'] ?? '').trim(),
+      body: String(raw['body'] ?? raw['details'] ?? '').trim(),
+      user_id: this.toId(raw['user_id']),
+      contact_id: this.toId(raw['contact_id']),
+      status_id: this.toId(raw['status_id']),
+      priority_id: this.toId(raw['priority_id']),
+      department_id: this.toId(raw['department_id']),
+      type_id: this.toId(raw['type_id']),
+      category_id: this.toId(raw['category_id']),
+      assigned_to: this.toId(raw['assigned_to']),
+    };
+  }
+
+  /** Maps UI form values → PUT /ticket/update body */
+  toUpdatePayload(raw: Record<string, any>): Record<string, any> {
+    return {
+      id: this.toId(raw['id']),
+      subject: String(raw['subject'] ?? '').trim(),
+      body: String(raw['body'] ?? raw['details'] ?? '').trim(),
+      status_id: this.toId(raw['status_id']),
+      priority_id: this.toId(raw['priority_id']),
+      assigned_to: this.toId(raw['assigned_to']),
+    };
+  }
+
+  private toId(value: any): number {
+    if (value === null || value === undefined || value === '') return 0;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
   }
 
   deleteTicket(id: string | number): Observable<any> {
@@ -78,8 +135,10 @@ export class TicketService extends ApiBaseService {
     statuses: any[];
     types: any[];
     departments: any[];
+    categories: any[];
     customers: any[];
     assignees: any[];
+    contacts: any[];
   }> {
     const safe = (obs: Observable<any>) =>
       obs.pipe(
@@ -92,8 +151,10 @@ export class TicketService extends ApiBaseService {
       statuses:   safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.statusesAll}`)),
       types:      safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.typesAll}`)),
       departments:safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.departmentsAll}`)),
+      categories: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.categoriesAll}`)),
       customers:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2`)),
       assignees:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=6`)),
+      contacts:   safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.contactsAll}`)),
     });
   }
 
