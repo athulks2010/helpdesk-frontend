@@ -1,0 +1,172 @@
+<div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Global Settings</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Configure your helpdesk system settings</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="space-y-6">
+    <nav class="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+      <button
+        *ngFor="let tab of tabs"
+        type="button"
+        class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+        [class.bg-blue-600]="activeTab === tab.id"
+        [class.text-white]="activeTab === tab.id"
+        [class.text-slate-600]="activeTab !== tab.id"
+        [class.hover:bg-slate-100]="activeTab !== tab.id"
+        (click)="setTab(tab.id)"
+      >
+        {{ tab.name }}
+      </button>
+    </nav>
+
+    <!-- General -->
+    <div *ngIf="activeTab === 'general'" class="hd-card">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">General Settings</h3>
+        <p class="text-sm text-slate-500">Basic application configuration</p>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">App Name</label>
+          <input type="text" class="hd-input" formControlName="app_name" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Google ReCaptcha Site Key</label>
+          <input type="text" class="hd-input" formControlName="site_key" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Default Language</label>
+          <select class="hd-input" formControlName="default_language">
+            <option value="en">English</option>
+            <option *ngFor="let lang of languages" [value]="lang.code || lang.slug">{{ lang.name }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Branding -->
+    <div *ngIf="activeTab === 'branding'" class="hd-card">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Branding & Assets</h3>
+        <p class="text-sm text-slate-500">Logo and favicon paths (URL or relative path)</p>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Main Logo</label>
+          <input type="text" class="hd-input" formControlName="main_logo" placeholder="/images/logo.png" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">White Logo</label>
+          <input type="text" class="hd-input" formControlName="main_logo_white" placeholder="/images/logo_white.png" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Favicon</label>
+          <input type="text" class="hd-input" formControlName="main_favicon" placeholder="/favicon.png" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Footer Text</label>
+          <input type="text" class="hd-input" formControlName="footer_text" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div *ngIf="activeTab === 'features'" class="hd-card">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Feature Settings</h3>
+        <p class="text-sm text-slate-500">Enable or disable system features</p>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" formArrayName="enable_options">
+        <label
+          *ngFor="let opt of enableOptions.controls; let i = index"
+          [formGroupName]="i"
+          class="flex items-center justify-between gap-3 p-4 border border-slate-200 dark:border-slate-600 rounded-xl cursor-pointer hover:border-blue-300"
+        >
+          <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ opt.get('name')?.value }}</span>
+          <input type="checkbox" class="w-4 h-4" formControlName="value" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Email Notifications -->
+    <div *ngIf="activeTab === 'email_notification'" class="hd-card">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Email Notifications</h3>
+        <p class="text-sm text-slate-500">Configure email notification for different actions</p>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" formArrayName="email_notifications">
+        <label
+          *ngFor="let opt of emailNotifications.controls; let i = index"
+          [formGroupName]="i"
+          class="flex items-center justify-between gap-3 p-4 border border-slate-200 dark:border-slate-600 rounded-xl cursor-pointer hover:border-blue-300"
+        >
+          <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ opt.get('name')?.value }}</span>
+          <input type="checkbox" class="w-4 h-4" formControlName="value" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Customization -->
+    <div *ngIf="activeTab === 'customization'" class="hd-card">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Custom CSS</h3>
+        <p class="text-sm text-slate-500">Add custom styles to your helpdesk</p>
+      </div>
+      <div class="p-6">
+        <textarea class="hd-input min-h-[240px] font-mono text-sm" formControlName="custom_css" rows="12" placeholder="Enter your custom CSS here..."></textarea>
+      </div>
+    </div>
+
+    <!-- Ticket Fields -->
+    <div *ngIf="activeTab === 'ticket-fields'" class="hd-card">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Ticket Field Configuration</h3>
+        <p class="text-sm text-slate-500">Configure which fields to show and require</p>
+      </div>
+      <div class="p-6 space-y-6">
+        <div>
+          <h4 class="text-md font-medium text-slate-900 dark:text-white mb-3">Hide ticket fields</h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <label *ngFor="let field of ticketFieldOptions" class="flex items-center gap-2 p-3 border border-slate-200 rounded-lg cursor-pointer">
+              <input
+                type="checkbox"
+                class="w-4 h-4"
+                [checked]="isChecked('hide_ticket_fields', field)"
+                (change)="toggleField('hide_ticket_fields', field, $any($event.target).checked)"
+              />
+              <span class="text-sm capitalize">{{ labelize(field) }}</span>
+            </label>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-md font-medium text-slate-900 dark:text-white mb-3">Required fields to submit ticket</h4>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <label *ngFor="let field of ticketFieldOptions" class="flex items-center gap-2 p-3 border border-slate-200 rounded-lg cursor-pointer">
+              <input
+                type="checkbox"
+                class="w-4 h-4"
+                [checked]="isChecked('required_ticket_fields', field)"
+                (change)="toggleField('required_ticket_fields', field, $any($event.target).checked)"
+              />
+              <span class="text-sm capitalize">{{ labelize(field) }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+    <div *ngIf="success" class="text-sm text-green-600">{{ success }}</div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="hd-btn-primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save Settings' }}
+      </button>
+    </div>
+  </form>
+</div>

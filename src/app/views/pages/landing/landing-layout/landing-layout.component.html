@@ -1,0 +1,25 @@
+<div class="min-h-screen flex flex-col layout_landing bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white">
+  <!-- Top Navigation Bar -->
+  <app-landing-topnav></app-landing-topnav>
+
+  <!-- Page Content -->
+  <main class="flex-1">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <app-landing-footer></app-landing-footer>
+
+  <!-- Back to Top Button -->
+  <button
+    type="button"
+    *ngIf="showBackToTop"
+    (click)="scrollToTop()"
+    class="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-xl bg-primary text-white shadow-xl shadow-primary/30 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-primary-600 focus:outline-none"
+    aria-label="Back to top"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+    </svg>
+  </button>
+</div>

@@ -1,0 +1,33 @@
+<div class="space-y-6 max-w-3xl">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">License</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Informational view of your HelpDesk license status</p>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+
+  <form *ngIf="!loading" class="hd-card" [formGroup]="form">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">License Key</label>
+        <input type="text" class="hd-input" formControlName="license_key" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+        <input type="text" class="hd-input" formControlName="license_status" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Expires</label>
+        <input type="text" class="hd-input" formControlName="expires_at" />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Licensed To</label>
+        <input type="text" class="hd-input" formControlName="licensed_to" />
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500">
+      This is a read-only placeholder. License activation is managed by your installation.
+    </div>
+  </form>
+</div>

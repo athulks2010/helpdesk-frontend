@@ -1,0 +1,71 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Custom Ticket Fields</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Create and manage custom ticket form fields</p>
+  </div>
+
+  <form class="hd-card" [formGroup]="form" (ngSubmit)="save()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
+        <select class="hd-input" formControlName="type">
+          <option *ngFor="let t of fieldTypes" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Label</label>
+        <input type="text" class="hd-input" formControlName="label" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+        <input type="text" class="hd-input" formControlName="name" placeholder="custom_field_1" />
+      </div>
+      <div class="flex items-center gap-2 pt-6">
+        <input id="tf-required" type="checkbox" class="w-4 h-4" formControlName="required" />
+        <label for="tf-required" class="text-sm text-slate-700 dark:text-slate-300">Required</label>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Options (comma-separated)</label>
+        <input type="text" class="hd-input" formControlName="options" placeholder="Option A, Option B" />
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="hd-btn-primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Create Field' }}
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading…</div>
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading" class="hd-table-wrap">
+    <table class="hd-table">
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Options</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let row of rows">
+          <td>{{ row.label || '—' }}</td>
+          <td>{{ row.name || '—' }}</td>
+          <td>{{ row.type || '—' }}</td>
+          <td>{{ row.required ? 'Yes' : 'No' }}</td>
+          <td>{{ optionsLabel(row) }}</td>
+          <td class="text-right">
+            <button type="button" class="hd-btn-secondary" (click)="remove(row)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="!rows.length">
+          <td colspan="6" class="px-4 py-8 text-center text-slate-500">No custom fields found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

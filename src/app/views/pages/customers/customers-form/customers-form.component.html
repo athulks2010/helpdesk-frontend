@@ -1,0 +1,68 @@
+<div class="space-y-6 max-w-3xl">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        {{ isEditMode ? 'Edit Customer' : 'Create Customer' }}
+      </h1>
+      <p class="text-sm text-slate-500 mt-0.5">{{ isEditMode ? 'Update existing record' : 'Add a new customer' }}</p>
+    </div>
+    <button type="button" class="hd-btn-secondary" (click)="cancel()">Back</button>
+  </div>
+
+  <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+
+  <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">First Name</label>
+        <input type="text" class="hd-input" formControlName="first_name" />
+        <p *ngIf="hasError('first_name')" class="mt-1 text-xs text-red-600">{{ 'First Name' }} is required</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Last Name</label>
+        <input type="text" class="hd-input" formControlName="last_name" />
+        <p *ngIf="hasError('last_name')" class="mt-1 text-xs text-red-600">{{ 'Last Name' }} is required</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+        <input type="email" class="hd-input" formControlName="email" />
+        <p *ngIf="hasError('email')" class="mt-1 text-xs text-red-600">{{ 'Email' }} is required</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+        <input type="text" class="hd-input" formControlName="phone" />
+
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</label>
+        <input type="text" class="hd-input" formControlName="city" />
+
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+        <input type="text" class="hd-input" formControlName="address" />
+
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password <span class="text-slate-400 font-normal">(required on create)</span></label>
+        <input type="password" class="hd-input" formControlName="password" />
+        <p *ngIf="hasError('password')" class="mt-1 text-xs text-red-600">{{ 'Password' }} is required</p>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+
+    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+      <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
+      <button type="submit" class="hd-btn-primary" [disabled]="loading">
+        {{ loading ? 'Saving…' : (isEditMode ? 'Update Customer' : 'Create Customer') }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,416 @@
+<div class="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+  <div class="flex h-screen overflow-hidden">
+    <!-- Mobile Menu Overlay -->
+    <div
+      *ngIf="mobileMenuOpen"
+      class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden transition-opacity"
+      (click)="mobileMenuOpen = false"
+    ></div>
+
+    <!-- Sidebar (Desktop & Mobile Drawer) -->
+    <aside
+      class="fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 shrink-0"
+      [class.-translate-x-full]="!mobileMenuOpen"
+      [class.translate-x-0]="mobileMenuOpen"
+    >
+      <!-- Sidebar Header / Logo -->
+      <div class="relative h-16 px-5 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+        <a routerLink="/dashboard" class="flex items-center gap-2 group">
+          <img
+            src="/images/logo.png"
+            alt="Logo"
+            class="h-8 w-auto max-w-[170px] object-contain transition-transform duration-300 group-hover:scale-105"
+            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+          />
+          <!-- Fallback Brand Logo if image fails -->
+          <div class="hidden items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary-500 to-primary-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary-500/30">
+              H
+            </div>
+            <span class="font-bold text-lg text-slate-800 dark:text-white tracking-tight">HelpDesk</span>
+          </div>
+        </a>
+
+        <!-- Mobile Close Button -->
+        <button
+          type="button"
+          (click)="mobileMenuOpen = false"
+          class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          aria-label="Close sidebar"
+        >
+          <hd-icon name="x" class="w-5 h-5"></hd-icon>
+        </button>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+        <!-- Menu Groups -->
+        <div *ngFor="let group of menuGroups" class="mb-5 last:mb-0">
+          <!-- Group Header (matches Laravel screenshot) -->
+          <div class="px-3 mb-2.5 flex items-center gap-2">
+            <span class="w-0.5 h-3.5 bg-blue-500 dark:bg-blue-400 rounded-full opacity-90"></span>
+            <h3 class="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+              {{ group.title }}
+            </h3>
+          </div>
+
+          <!-- Group Items -->
+          <div class="space-y-1">
+            <div *ngFor="let item of group.items" class="relative">
+              <!-- Regular Menu Item (No Submenu) -->
+              <a
+                *ngIf="!item.submenu"
+                [routerLink]="item.path"
+                [class]="
+                  isItemActive(item)
+                    ? 'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 text-white shadow-lg shadow-primary-500/25 dark:shadow-primary-500/15'
+                    : 'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 relative overflow-hidden text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white group'
+                "
+                (click)="mobileMenuOpen = false"
+              >
+                <!-- Active Background Glow -->
+                <div
+                  *ngIf="isItemActive(item)"
+                  class="absolute inset-0 bg-gradient-to-r from-primary-400 to-primary-500 dark:from-primary-500/30 dark:to-primary-600/30 opacity-20 animate-pulse pointer-events-none"
+                ></div>
+
+                <!-- Icon Container -->
+                <div
+                  class="relative flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200"
+                  [class]="
+                    isItemActive(item)
+                      ? 'bg-white/20 dark:bg-white/15 backdrop-blur-sm text-white'
+                      : 'bg-slate-100 dark:bg-slate-700/80 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                  "
+                >
+                  <hd-icon [name]="item.icon" class="w-4 h-4"></hd-icon>
+                </div>
+
+                <!-- Label -->
+                <span class="flex-1 relative z-10 truncate font-medium">{{ item.name }}</span>
+
+                <!-- Active Dot Indicator -->
+                <div
+                  *ngIf="isItemActive(item)"
+                  class="relative z-10 flex-shrink-0 w-2 h-2 bg-white rounded-full shadow-sm"
+                ></div>
+
+                <!-- Hover Glow for inactive items -->
+                <div
+                  *ngIf="!isItemActive(item)"
+                  class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                ></div>
+              </a>
+
+              <!-- Expandable Menu Item (With Submenu) -->
+              <div *ngIf="item.submenu">
+                <button
+                  type="button"
+                  (click)="toggleSubmenu(item.name)"
+                  class="flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative overflow-hidden focus:outline-none"
+                  [class]="
+                    isParentActive(item) && !isSubmenuExpanded(item.name)
+                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+                  "
+                >
+                  <div class="flex items-center gap-3 relative z-10 min-w-0">
+                    <!-- Icon Container -->
+                    <div
+                      class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200"
+                      [class]="
+                        isParentActive(item)
+                          ? 'bg-primary-100 dark:bg-primary-800/60 text-primary-600 dark:text-primary-300'
+                          : 'bg-slate-100 dark:bg-slate-700/80 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                      "
+                    >
+                      <hd-icon [name]="item.icon" class="w-4 h-4"></hd-icon>
+                    </div>
+
+                    <!-- Label -->
+                    <span class="flex-1 text-left truncate font-medium">{{ item.name }}</span>
+                  </div>
+
+                  <!-- Chevron Down -->
+                  <hd-icon
+                    name="chevron-down"
+                    class="w-4 h-4 flex-shrink-0 transition-transform duration-200 relative z-10 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                    [class.rotate-180]="isSubmenuExpanded(item.name)"
+                  ></hd-icon>
+                </button>
+
+                <!-- Submenu Container -->
+                <div
+                  *ngIf="isSubmenuExpanded(item.name)"
+                  class="mt-1 ml-4 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3 animate-slide-up"
+                >
+                  <a
+                    *ngFor="let sub of item.submenu"
+                    [routerLink]="sub.path"
+                    class="flex items-center gap-2.5 px-2.5 py-2 text-sm rounded-lg transition-all duration-200 group relative overflow-hidden"
+                    [class]="
+                      isSubItemActive(sub)
+                        ? 'bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold border border-primary-200/80 dark:border-primary-700/60 shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/60'
+                    "
+                    (click)="mobileMenuOpen = false"
+                  >
+                    <!-- Submenu Icon -->
+                    <div
+                      class="relative flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-200"
+                      [class]="
+                        isSubItemActive(sub)
+                          ? 'bg-primary-200/80 dark:bg-primary-700/80 text-primary-700 dark:text-primary-300'
+                          : 'bg-slate-100 dark:bg-slate-700/80 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 text-slate-500 dark:text-slate-400'
+                      "
+                    >
+                      <hd-icon [name]="sub.icon || 'dash'" class="w-3.5 h-3.5"></hd-icon>
+                    </div>
+
+                    <!-- Submenu Label -->
+                    <span class="flex-1 relative z-10 truncate">{{ sub.name }}</span>
+
+                    <!-- Submenu Active Dot -->
+                    <div
+                      *ngIf="isSubItemActive(sub)"
+                      class="relative z-10 flex-shrink-0 w-1.5 h-1.5 bg-primary-600 dark:bg-primary-400 rounded-full"
+                    ></div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Top Bar matching Laravel Layout.vue -->
+      <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm sticky top-0 z-30 transition-colors duration-200">
+        <div class="flex items-center justify-between h-16 px-4 lg:px-6">
+          <!-- Left Section: Mobile Toggle & Page Title / Breadcrumbs -->
+          <div class="flex items-center gap-4">
+            <!-- Mobile Menu Toggle -->
+            <button
+              type="button"
+              (click)="mobileMenuOpen = true"
+              class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+              aria-label="Open menu"
+            >
+              <hd-icon name="menu" class="w-5 h-5"></hd-icon>
+            </button>
+
+            <!-- Page Title & Breadcrumb -->
+            <div>
+              <h1 class="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white capitalize leading-tight">
+                {{ currentTitle }}
+              </h1>
+              <nav class="flex items-center space-x-2 text-xs lg:text-sm mt-0.5 text-slate-500 dark:text-slate-400">
+                <a routerLink="/dashboard" class="hover:text-primary transition-colors flex items-center">
+                  <hd-icon name="home" class="w-3.5 h-3.5"></hd-icon>
+                </a>
+                <hd-icon name="chevron-right" class="w-3 h-3 text-slate-400 dark:text-slate-500"></hd-icon>
+                <span class="text-slate-900 dark:text-white font-medium capitalize">{{ currentTitle }}</span>
+              </nav>
+            </div>
+          </div>
+
+          <!-- Right Section: Actions -->
+          <div class="flex items-center gap-1">
+
+            <!-- Notifications Bell -->
+            <div class="relative notification-dropdown-container">
+              <button
+                type="button"
+                (click)="notificationDropdownOpen = !notificationDropdownOpen"
+                class="relative flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                aria-label="View notifications"
+              >
+                <hd-icon name="bell" class="w-5 h-5"></hd-icon>
+                <span
+                  *ngIf="unreadNotificationCount > 0"
+                  class="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold"
+                >
+                  {{ unreadNotificationCount }}
+                </span>
+              </button>
+
+              <!-- Notifications Dropdown -->
+              <div
+                *ngIf="notificationDropdownOpen"
+                class="absolute right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 overflow-hidden text-sm animate-slide-up"
+              >
+                <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-slate-700">
+                  <span class="font-bold text-slate-900 dark:text-white">Notifications</span>
+                  <button
+                    type="button"
+                    (click)="markAllNotificationsAsRead()"
+                    class="text-xs text-primary hover:underline font-medium"
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                <div class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/60">
+                  <div
+                    *ngFor="let notif of notifications"
+                    class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                    [ngClass]="{ 'bg-slate-50 dark:bg-slate-700/40': !notif.read_at }"
+                  >
+                    <div class="text-sm font-medium text-slate-800 dark:text-slate-200">{{ notif.message }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
+                      <span>{{ notif.ticket_subject }}</span>
+                      <span class="text-[11px] text-slate-400">{{ notif.time }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-2 border-t border-slate-100 dark:border-slate-700 text-center">
+                  <a
+                    routerLink="/notifications"
+                    (click)="notificationDropdownOpen = false"
+                    class="text-xs font-semibold text-primary hover:underline block py-1"
+                  >
+                    View all notifications
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Language Selector — Flag + Name + Chevron -->
+            <div class="relative lang-dropdown-container">
+              <button
+                type="button"
+                (click)="langDropdownOpen = !langDropdownOpen"
+                class="flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                <!-- Flag emoji keyed by language code -->
+                <span class="text-base leading-none" aria-hidden="true">{{ langFlag(selectedLanguage.code) }}</span>
+                <span class="text-sm font-medium hidden sm:inline">{{ selectedLanguage.name }}</span>
+                <hd-icon name="chevron-down" class="w-3.5 h-3.5 text-slate-400"></hd-icon>
+              </button>
+
+              <!-- Language Menu -->
+              <div
+                *ngIf="langDropdownOpen"
+                class="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 overflow-hidden text-sm animate-slide-up"
+              >
+                <button
+                  *ngFor="let lang of languages"
+                  type="button"
+                  (click)="selectLanguage(lang)"
+                  class="w-full text-left px-3.5 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2.5"
+                >
+                  <span class="text-base leading-none">{{ langFlag(lang.code) }}</span>
+                  <span class="flex-1 text-sm font-medium">{{ lang.name }}</span>
+                  <span *ngIf="selectedLanguage.code === lang.code" class="text-primary font-bold text-xs">✓</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Theme Toggle (Sun/Moon) -->
+            <button
+              type="button"
+              (click)="switchMode()"
+              class="flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              [title]="'Switch to ' + (currentMode === 'light' ? 'dark' : 'light') + ' mode'"
+              [attr.aria-label]="'Switch to ' + (currentMode === 'light' ? 'dark' : 'light') + ' mode'"
+            >
+              <hd-icon *ngIf="currentMode === 'light'" name="sun" class="w-5 h-5"></hd-icon>
+              <hd-icon *ngIf="currentMode === 'dark'" name="moon" class="w-5 h-5"></hd-icon>
+            </button>
+
+            <!-- Thin divider -->
+            <div class="w-px h-7 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+            <!-- User Menu Dropdown -->
+            <div class="relative user-dropdown-container">
+              <button
+                type="button"
+                (click)="userDropdownOpen = !userDropdownOpen"
+                class="flex items-center gap-2.5 h-9 pl-1 pr-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                <!-- Avatar with Online indicator -->
+                <div class="relative flex-shrink-0">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    {{ (displayName(currentUser).charAt(0) || 'A').toUpperCase() }}
+                  </div>
+                  <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800 block"></span>
+                </div>
+
+                <!-- Name stacked above email -->
+                <div class="hidden sm:block text-left">
+                  <p class="text-sm font-semibold text-slate-800 dark:text-white leading-tight truncate max-w-[130px]">
+                    {{ displayName(currentUser) }}
+                  </p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight truncate max-w-[130px]">
+                    {{ currentUser?.email || currentUser?.title || (isAdmin ? 'Administrator' : 'User') }}
+                  </p>
+                </div>
+
+                <hd-icon name="chevron-down" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 hidden sm:block flex-shrink-0"></hd-icon>
+              </button>
+
+              <!-- User Dropdown Menu -->
+              <div
+                *ngIf="userDropdownOpen"
+                class="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50 text-sm overflow-hidden animate-slide-up"
+              >
+                <!-- User Profile Header -->
+                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+                  <div class="font-bold text-slate-900 dark:text-white truncate">
+                    {{ displayName(currentUser) }}
+                  </div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    {{ currentUser?.email }}
+                  </div>
+                  <div *ngIf="currentUser?.role" class="mt-1">
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 uppercase tracking-wide">
+                      {{ currentUser?.role?.name || currentUser?.role?.slug || 'Admin' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Menu Items -->
+                <div class="py-1">
+                  <a
+                    routerLink="/users"
+                    (click)="userDropdownOpen = false"
+                    class="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <hd-icon name="user" class="w-4 h-4 text-slate-400"></hd-icon>
+                    <span>Edit Profile</span>
+                  </a>
+                  <a
+                    routerLink="/settings"
+                    (click)="userDropdownOpen = false"
+                    class="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <hd-icon name="settings" class="w-4 h-4 text-slate-400"></hd-icon>
+                    <span>Settings</span>
+                  </a>
+                </div>
+
+                <!-- Divider & Logout -->
+                <div class="border-t border-slate-100 dark:border-slate-700 py-1">
+                  <button
+                    type="button"
+                    (click)="logout()"
+                    class="w-full text-left flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                  >
+                    <hd-icon name="logout" class="w-4 h-4"></hd-icon>
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Router Outlet Page View -->
+      <main class="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 transition-colors duration-200">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+</div>

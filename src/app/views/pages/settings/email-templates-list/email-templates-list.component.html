@@ -1,0 +1,38 @@
+<div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Email Templates</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Manage notification email templates</p>
+    </div>
+    <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading…</div>
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="hd-table-wrap">
+    <table class="hd-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Details</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let row of rows">
+          <td>{{ row.name || '—' }}</td>
+          <td>{{ row.slug || '—' }}</td>
+          <td class="max-w-xs truncate">{{ row.details || row.subject || '—' }}</td>
+          <td class="text-right">
+            <button type="button" class="hd-btn-secondary" (click)="edit(row)">Edit</button>
+          </td>
+        </tr>
+        <tr *ngIf="!rows.length">
+          <td colspan="4" class="px-4 py-8 text-center text-slate-500">No templates found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        {{ isEditMode ? 'Edit Role' : 'Create Role' }}
+      </h1>
+      <p class="text-sm text-slate-500 mt-0.5">
+        {{ isEditMode ? 'Update role name, slug, and access permissions' : 'Define a new role and its access matrix' }}
+      </p>
+    </div>
+    <button type="button" class="hd-btn-secondary" (click)="cancel()">Back</button>
+  </div>
+
+  <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+
+  <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+        <input type="text" class="hd-input" formControlName="name" />
+        <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Slug</label>
+        <input type="text" class="hd-input" formControlName="slug" />
+        <p *ngIf="hasError('slug')" class="mt-1 text-xs text-red-600">Slug is required</p>
+      </div>
+    </div>
+
+    <div class="px-6 pb-2" formGroupName="access">
+      <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Access permissions</h2>
+      <div class="hd-table-wrap border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="hd-table">
+            <thead>
+              <tr>
+                <th>Functions</th>
+                <th>Read</th>
+                <th>Create</th>
+                <th>Update</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+              <ng-container *ngFor="let mod of accessModules" [formGroupName]="mod">
+                <tr>
+                  <td class="capitalize font-medium text-slate-800 dark:text-slate-200">{{ moduleLabel(mod) }}</td>
+                  <td>
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" formControlName="read" />
+                    </label>
+                  </td>
+                  <td>
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" formControlName="create" />
+                    </label>
+                  </td>
+                  <td>
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" formControlName="update" />
+                    </label>
+                  </td>
+                  <td>
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" formControlName="delete" />
+                    </label>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+
+    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+      <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
+      <button type="submit" class="hd-btn-primary" [disabled]="loading">
+        {{ loading ? 'Saving…' : (isEditMode ? 'Update Role' : 'Create Role') }}
+      </button>
+    </div>
+  </form>
+</div>

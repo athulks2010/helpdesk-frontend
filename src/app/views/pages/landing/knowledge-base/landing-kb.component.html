@@ -1,0 +1,181 @@
+<div class="overflow-hidden">
+  <!-- ====== Hero Section Start ====== -->
+  <section class="relative flex items-center overflow-hidden bg-slate-950 pt-32 pb-24 lg:pt-36 lg:pb-28">
+    <div class="absolute inset-0 pointer-events-none">
+      <div
+        class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.32),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(14,165,233,0.16),transparent_38%)]"
+      ></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/30 to-slate-950"></div>
+      <div class="absolute inset-0 opacity-20">
+        <div class="absolute inset-0 bg-repeat bg-center" style="background-image: url('/images/patterns/grid.svg'); mask-image: radial-gradient(ellipse at center, white, transparent 70%);"></div>
+      </div>
+      <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-primary-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    </div>
+
+    <div class="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium text-white bg-white/10 rounded-full border border-white/20 shadow-lg backdrop-blur-md">
+        <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <span>Help Center</span>
+      </div>
+
+      <!-- Main Heading -->
+      <h1 class="mb-6 text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
+        Support Knowledge Base
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="mb-10 text-lg sm:text-xl text-white/80 leading-relaxed max-w-3xl mx-auto">
+        Search practical guides, troubleshooting playbooks, and setup documentation to resolve issues faster.
+      </p>
+
+      <!-- Search Section -->
+      <div class="max-w-2xl mx-auto mb-10">
+        <div class="relative group">
+          <svg class="w-6 h-6 absolute left-5 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="search"
+            [(ngModel)]="searchQuery"
+            (input)="onSearchChange()"
+            placeholder="Search by issue, workflow, or keyword..."
+            class="w-full pl-14 pr-6 py-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-md text-base"
+          />
+        </div>
+      </div>
+
+      <!-- Trust Indicators -->
+      <div class="flex flex-wrap items-center justify-center gap-8 text-white/70 text-sm font-medium">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Agent-tested guides</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Step-by-step fixes</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Instant answers</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ====== Hero Section End ====== -->
+
+  <!-- ====== Articles Listing Start ====== -->
+  <section class="py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Category Tabs -->
+      <div class="flex flex-wrap items-center justify-center gap-2 mb-12">
+        <button
+          *ngFor="let cat of categories"
+          type="button"
+          (click)="onSelectCategory(cat)"
+          class="px-5 py-2 rounded-xl text-sm font-semibold transition-all"
+          [ngClass]="selectedCategory === cat
+            ? 'bg-primary text-white shadow-md shadow-primary/25'
+            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'"
+        >
+          {{ cat }}
+        </button>
+      </div>
+
+      <!-- Articles Grid -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div
+          *ngFor="let art of filteredArticles"
+          class="p-7 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer group"
+          (click)="viewArticle(art)"
+        >
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                {{ art.category }}
+              </span>
+              <span class="text-xs text-slate-400">{{ art.updated_at }}</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3 group-hover:text-primary transition-colors">
+              {{ art.title }}
+            </h3>
+
+            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6 line-clamp-3">
+              {{ art.details }}
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500">
+            <span class="flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {{ art.views }} views
+            </span>
+            <span class="text-emerald-600 font-semibold">{{ art.helpful }}% helpful</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!filteredArticles.length" class="text-center py-16 text-slate-500">
+        No documentation matching your search criteria. Try a different query.
+      </div>
+    </div>
+  </section>
+  <!-- ====== Articles Listing End ====== -->
+
+  <!-- Article Detail Modal -->
+  <div
+    *ngIf="selectedArticle"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
+  >
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-700 relative max-h-[90vh] overflow-y-auto">
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="absolute top-6 right-6 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary mb-3">
+        {{ selectedArticle.category }}
+      </span>
+
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+        {{ selectedArticle.title }}
+      </h2>
+
+      <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed space-y-4">
+        <p>{{ selectedArticle.details }}</p>
+        <p>
+          For additional questions or specific escalation requirements relating to this playbook, our support specialists are available 24/7. You can also open a support ticket directly from the portal for dedicated investigation.
+        </p>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <span class="text-xs text-slate-400">Updated: {{ selectedArticle.updated_at }}</span>
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-600"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

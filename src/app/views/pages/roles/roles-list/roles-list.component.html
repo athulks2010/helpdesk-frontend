@@ -1,0 +1,84 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Roles</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage user roles and permissions</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
+      <button type="button" class="hd-btn-primary" (click)="createNew()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        Create Role
+      </button>
+    </div>
+  </div>
+
+  <div class="hd-card p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div class="relative flex-1">
+        <input
+          type="search"
+          class="hd-input pl-10"
+          placeholder="Search roles..."
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+      <div class="text-sm text-slate-500 whitespace-nowrap">
+        Total: {{ rows.length }} · Showing: {{ filtered.length }}
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">
+    <div class="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+    <p>Loading roles…</p>
+  </div>
+
+  <div *ngIf="!loading && error" class="hd-card p-8 text-center text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="hd-table-wrap">
+    <div class="overflow-x-auto">
+      <table class="hd-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Created</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+          <tr *ngFor="let row of filtered">
+            <td class="font-medium text-slate-900 dark:text-white">{{ row.name || '—' }}</td>
+            <td>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
+                {{ row.slug || '—' }}
+              </span>
+            </td>
+            <td>{{ formatDate(row.created_at) }}</td>
+            <td class="text-right whitespace-nowrap">
+              <button type="button" class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3" (click)="edit(row)">Edit</button>
+              <button
+                type="button"
+                class="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                [disabled]="deletingId === (row.id || row._id)"
+                (click)="remove(row)"
+              >Delete</button>
+            </td>
+          </tr>
+          <tr *ngIf="!filtered.length">
+            <td colspan="4" class="px-4 py-10 text-center text-slate-500">
+              No roles found. Create one to get started.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

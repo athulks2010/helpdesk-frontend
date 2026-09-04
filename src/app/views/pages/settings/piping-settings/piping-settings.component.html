@@ -1,0 +1,56 @@
+<div class="space-y-6 max-w-4xl">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Email Piping Settings</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Create tickets automatically from incoming email</p>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+
+  <form *ngIf="!loading" class="hd-card" [formGroup]="form" (ngSubmit)="save()">
+    <div class="p-6 space-y-6">
+      <label class="flex items-center justify-between gap-4 p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 cursor-pointer">
+        <div>
+          <div class="font-medium text-blue-900 dark:text-blue-100">Enable Email Piping</div>
+          <div class="text-sm text-blue-700 dark:text-blue-200">Automatically create tickets from incoming emails</div>
+        </div>
+        <input type="checkbox" class="w-4 h-4" formControlName="enabled" />
+      </label>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5" *ngIf="form.get('enabled')?.value">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Host</label>
+          <input type="text" class="hd-input" formControlName="host" placeholder="imap.gmail.com" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Port</label>
+          <input type="number" class="hd-input" formControlName="port" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
+          <input type="text" class="hd-input" formControlName="username" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+          <input type="password" class="hd-input" formControlName="password" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Encryption</label>
+          <select class="hd-input" formControlName="encryption">
+            <option value="">None</option>
+            <option value="ssl">SSL</option>
+            <option value="tls">TLS</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+    <div *ngIf="success" class="px-6 pb-2 text-sm text-green-600">{{ success }}</div>
+
+    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+      <button type="submit" class="hd-btn-primary" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save Settings' }}
+      </button>
+    </div>
+  </form>
+</div>

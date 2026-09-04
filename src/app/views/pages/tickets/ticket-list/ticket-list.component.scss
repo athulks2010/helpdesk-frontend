@@ -1,0 +1,41 @@
+/* ─── Quick Filter Buttons ─── */
+.quick-filter-btn {
+  @apply flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all;
+}
+.quick-filter-active {
+  @apply bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300;
+}
+.badge-count {
+  @apply inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold px-1;
+}
+
+/* ─── Filter inputs ─── */
+.filter-label {
+  @apply block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wider;
+}
+.filter-input {
+  @apply w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+}
+.filter-select {
+  @apply w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none cursor-pointer;
+}
+
+/* ─── Table ─── */
+.th-sortable {
+  @apply px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-800 dark:hover:text-white select-none whitespace-nowrap transition-colors;
+}
+
+/* ─── Ticket Badges ─── */
+.ticket-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold;
+}
+.badge-red    { @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300; }
+.badge-yellow { @apply bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300; }
+.badge-green  { @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300; }
+.badge-blue   { @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300; }
+.badge-gray   { @apply bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300; }
+
+/* ─── Pagination ─── */
+.pagination-btn {
+  @apply flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:cursor-not-allowed;
+}

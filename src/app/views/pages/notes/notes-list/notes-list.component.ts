@@ -1,0 +1,166 @@
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NoteService } from '../../../../core/note/_services/note.service';
+
+@Component({
+  selector: 'app-notes-list',
+  templateUrl: './notes-list.component.html',
+  styleUrls: ['./notes-list.component.scss'],
+})
+export class NotesListComponent implements OnInit {
+  rows: any[] = [];
+  filtered: any[] = [];
+  loading = true;
+  saving = false;
+  error = '';
+  search = '';
+  deletingId: string | number | null = null;
+
+  panelOpen = false;
+  form!: FormGroup;
+  editingId: string | number | null = null;
+
+  constructor(
+    private service: NoteService,
+    private fb: FormBuilder
+  ) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      id: [null],
+      name: ['', Validators.required],
+      details: ['', Validators.required],
+    });
+    this.load();
+  }
+
+  load(): void {
+    this.loading = true;
+    this.error = '';
+    this.service.getAll({}).subscribe({
+      next: (data: any) => {
+        this.rows = Array.isArray(data) ? data : (data?.items || data?.list || data?.data || []);
+        this.applyFilter();
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Failed to load notes';
+        this.loading = false;
+      },
+    });
+  }
+
+  applyFilter(): void {
+    const q = (this.search || '').toLowerCase().trim();
+    if (!q) {
+      this.filtered = [...this.rows];
+      return;
+    }
+    this.filtered = this.rows.filter((row) =>
+      JSON.stringify(row).toLowerCase().includes(q)
+    );
+  }
+
+  onSearchChange(): void {
+    this.applyFilter();
+  }
+
+  openCreate(): void {
+    this.editingId = null;
+    this.form.reset({ id: null, name: '', details: '' });
+    this.panelOpen = true;
+  }
+
+  openEdit(row: any): void {
+    const id = row.id || row._id;
+    this.editingId = id;
+    this.form.patchValue({
+      id,
+      name: row.name ?? '',
+      details: row.details ?? '',
+    });
+    this.panelOpen = true;
+  }
+
+  closePanel(): void {
+    this.panelOpen = false;
+    this.editingId = null;
+    this.form.reset({ id: null, name: '', details: '' });
+  }
+
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.saving = true;
+    this.error = '';
+    const raw = { ...this.form.getRawValue() };
+    const req$ = this.editingId
+      ? this.service.update(raw)
+      : this.service.create(raw);
+
+    req$.subscribe({
+      next: () => {
+        this.saving = false;
+        this.closePanel();
+        this.load();
+      },
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.message || err?.message || 'Save failed';
+      },
+    });
+  }
+
+  remove(row: any, event?: Event): void {
+    event?.stopPropagation();
+    const id = row?.id || row?._id || this.editingId;
+    if (!id) return;
+    if (!confirm('Delete this note? This action cannot be undone.')) {
+      return;
+    }
+    this.deletingId = id;
+    this.service.deleteById(id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        if (this.editingId === id) {
+          this.closePanel();
+        }
+        this.load();
+      },
+      error: () => {
+        this.deletingId = null;
+        this.error = 'Failed to delete note';
+      },
+    });
+  }
+
+  preview(text: string | null | undefined, max = 180): string {
+    const t = (text || '').trim();
+    if (!t) return '—';
+    return t.length > max ? t.slice(0, max) + '…' : t;
+  }
+
+  formatDate(value: any): string {
+    if (!value) return '—';
+    try {
+      return new Date(value).toLocaleDateString(undefined, {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      });
+    } catch {
+      return String(value);
+    }
+  }
+
+  hasError(control: string): boolean {
+    const c = this.form.get(control);
+    return !!(c && c.invalid && (c.dirty || c.touched));
+  }
+
+  rowId(row: any): string | number | null {
+    return row?.id || row?._id || null;
+  }
+}

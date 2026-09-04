@@ -1,0 +1,56 @@
+<div class="overflow-hidden">
+  <!-- Start Hero -->
+  <section class="relative z-10 overflow-hidden bg-primary pt-[120px] pb-[100px] md:pt-[130px] lg:pt-[160px]">
+    <div class="container mx-auto px-4">
+      <div class="-mx-4 flex flex-wrap items-center">
+        <div class="w-full px-4">
+          <div class="text-center">
+            <h1 class="text-4xl font-semibold text-white">{{ privacyData?.title || 'Privacy Policy' }}</h1>
+            <p class="mt-2 text-base leading-7 text-white">Last updated on {{ privacyData?.updated_at || 'March 1, 2026' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <span class="absolute top-0 left-0 z-[-1]">
+        <img src="/landing/images/header/shape-1.svg" alt="" />
+      </span>
+      <span class="absolute top-0 right-0 z-[-1]">
+        <img src="/landing/images/header/shape-2.svg" alt="" />
+      </span>
+    </div>
+  </section>
+
+  <div class="relative">
+    <div class="shape absolute right-0 sm:-bottom-px -bottom-[2px] left-0 overflow-hidden z-1 text-white dark:text-slate-900">
+      <svg class="w-full h-auto" viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+      </svg>
+    </div>
+  </div>
+  <!-- End Hero -->
+
+  <!-- Start Privacy Policy -->
+  <section class="relative md:py-20 py-16 bg-slate-50 dark:bg-slate-900">
+    <div class="container mx-auto px-4 max-w-4xl">
+      <div id="printArea" class="p-8 sm:p-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700 leading-7 html">
+        <div [innerHTML]="privacyData?.html?.content"></div>
+      </div>
+
+      <div class="mt-4 p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex justify-end">
+        <button
+          type="button"
+          (click)="print('printArea')"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-semibold shadow-md hover:bg-primary-600 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Print Policy</span>
+        </button>
+      </div>
+    </div>
+  </section>
+  <!-- End Privacy Policy -->
+</div>

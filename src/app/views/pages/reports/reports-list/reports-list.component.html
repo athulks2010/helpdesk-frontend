@@ -1,0 +1,58 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Reports</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Generate and view helpdesk reports</p>
+  </div>
+
+  <form class="hd-card" [formGroup]="form" (ngSubmit)="generate()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Report Type</label>
+        <select class="hd-input" formControlName="report_type">
+          <option *ngFor="let t of reportTypes" [value]="t.value">{{ t.label }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date From</label>
+        <input type="date" class="hd-input" formControlName="date_from" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date To</label>
+        <input type="date" class="hd-input" formControlName="date_to" />
+      </div>
+      <div class="flex items-end gap-2">
+        <button type="submit" class="hd-btn-primary" [disabled]="generating">
+          {{ generating ? 'Generating…' : 'Generate' }}
+        </button>
+        <button type="button" class="hd-btn-secondary" (click)="loadResults(lastReportId || undefined)" [disabled]="loading">
+          Refresh
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+  <div *ngIf="success" class="text-sm text-green-600">{{ success }}</div>
+
+  <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading results…</div>
+
+  <div *ngIf="!loading" class="hd-table-wrap">
+    <table class="hd-table">
+      <thead>
+        <tr>
+          <th *ngFor="let col of columns">{{ col }}</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let row of rows">
+          <td *ngFor="let col of columns">{{ row[col] ?? '—' }}</td>
+        </tr>
+        <tr *ngIf="!rows.length">
+          <td [attr.colspan]="columns.length || 1" class="px-4 py-8 text-center text-slate-500">
+            No report results yet. Choose a date range and generate.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

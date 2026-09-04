@@ -1,0 +1,62 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Languages</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Manage system languages and localization</p>
+  </div>
+
+  <form class="hd-card" [formGroup]="form" (ngSubmit)="save()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+        <input type="text" class="hd-input" formControlName="name" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
+        <input type="text" class="hd-input" formControlName="code" placeholder="en" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+        <select class="hd-input" formControlName="status">
+          <option [ngValue]="1">Active</option>
+          <option [ngValue]="0">Inactive</option>
+        </select>
+      </div>
+      <div class="flex items-end gap-2">
+        <button type="submit" class="hd-btn-primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : (editingId ? 'Update' : 'Create') }}
+        </button>
+        <button type="button" class="hd-btn-secondary" (click)="startCreate()" *ngIf="editingId">Cancel</button>
+      </div>
+    </div>
+  </form>
+
+  <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading…</div>
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading" class="hd-table-wrap">
+    <table class="hd-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let row of rows">
+          <td>{{ row.name || '—' }}</td>
+          <td>{{ row.code || '—' }}</td>
+          <td>{{ (row.status === 0 || row.status === false) ? 'Inactive' : 'Active' }}</td>
+          <td class="text-right space-x-2">
+            <button type="button" class="hd-btn-secondary" (click)="startEdit(row)">Edit</button>
+            <button type="button" class="hd-btn-secondary" (click)="remove(row)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="!rows.length">
+          <td colspan="4" class="px-4 py-8 text-center text-slate-500">No languages found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

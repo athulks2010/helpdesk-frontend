@@ -1,0 +1,616 @@
+<div class="space-y-8 animate-fade-in">
+  <!-- Header Banner -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Dashboard
+      </h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Overview of helpdesk activity and real-time support operations
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="loadDashboardData()"
+      [disabled]="loading"
+      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 self-start sm:self-auto disabled:opacity-50"
+    >
+      <hd-icon name="archive" class="w-4 h-4" [class.animate-spin]="loading"></hd-icon>
+      <span>Refresh Data</span>
+    </button>
+  </div>
+
+  <!-- Loading State Banner -->
+  <div *ngIf="loading && !total_tickets" class="p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+    <div class="inline-block w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-3 font-medium">Loading dashboard metrics from API...</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl text-red-700 dark:text-red-300 text-sm flex items-center justify-between">
+    <span>{{ error }}</span>
+    <button (click)="loadDashboardData()" class="underline font-semibold">Retry</button>
+  </div>
+
+  <!-- Top Metric Cards Grid (4 Columns) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <!-- 1. New Tickets Card -->
+    <div
+      (click)="navigateTo('/tickets', { type: 'new' })"
+      class="group cursor-pointer relative bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700/50 border border-slate-200 dark:border-slate-700 p-6 hover:shadow-2xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1 overflow-hidden"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <hd-icon name="dash" class="w-6 h-6 text-blue-600 dark:text-blue-400"></hd-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">New Tickets</p>
+            <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ new_tickets }}</p>
+          </div>
+        </div>
+        <hd-icon name="chevron-right" class="w-5 h-5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></hd-icon>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs font-semibold">
+          <span class="text-slate-400">Share of Total</span>
+          <span class="text-blue-600 dark:text-blue-400">{{ getPercentage(new_tickets) }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 dark:bg-slate-700/80 rounded-full h-2 overflow-hidden">
+          <div
+            class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-700"
+            [style.width.%]="getPercentage(new_tickets)"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Open Tickets Card -->
+    <div
+      (click)="navigateTo('/tickets', { type: 'open' })"
+      class="group cursor-pointer relative bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700/50 border border-slate-200 dark:border-slate-700 p-6 hover:shadow-2xl hover:shadow-amber-500/10 dark:hover:shadow-amber-500/5 hover:border-amber-300 dark:hover:border-amber-600 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1 overflow-hidden"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/40 dark:to-amber-800/40 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <hd-icon name="ticket" class="w-6 h-6 text-amber-600 dark:text-amber-400"></hd-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Open Tickets</p>
+            <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ opened_tickets }}</p>
+          </div>
+        </div>
+        <hd-icon name="chevron-right" class="w-5 h-5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></hd-icon>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs font-semibold">
+          <span class="text-slate-400">Share of Total</span>
+          <span class="text-amber-600 dark:text-amber-400">{{ getPercentage(opened_tickets) }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 dark:bg-slate-700/80 rounded-full h-2 overflow-hidden">
+          <div
+            class="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-700"
+            [style.width.%]="getPercentage(opened_tickets)"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Closed Tickets Card -->
+    <div
+      (click)="navigateTo('/tickets', { type: 'closed' })"
+      class="group cursor-pointer relative bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700/50 border border-slate-200 dark:border-slate-700 p-6 hover:shadow-2xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-500/5 hover:border-emerald-300 dark:hover:border-emerald-600 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1 overflow-hidden"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <hd-icon name="status" class="w-6 h-6 text-emerald-600 dark:text-emerald-400"></hd-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Closed Tickets</p>
+            <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ closed_tickets }}</p>
+          </div>
+        </div>
+        <hd-icon name="chevron-right" class="w-5 h-5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></hd-icon>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs font-semibold">
+          <span class="text-slate-400">Resolution Rate</span>
+          <span class="text-emerald-600 dark:text-emerald-400">{{ getPercentage(closed_tickets) }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 dark:bg-slate-700/80 rounded-full h-2 overflow-hidden">
+          <div
+            class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all duration-700"
+            [style.width.%]="getPercentage(closed_tickets)"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Unassigned Tickets Card -->
+    <div
+      (click)="navigateTo('/tickets', { type: 'unassigned' })"
+      class="group cursor-pointer relative bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700/50 border border-slate-200 dark:border-slate-700 p-6 hover:shadow-2xl hover:shadow-red-500/10 dark:hover:shadow-red-500/5 hover:border-red-300 dark:hover:border-red-600 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1 overflow-hidden"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/40 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <hd-icon name="priorities" class="w-6 h-6 text-red-600 dark:text-red-400"></hd-icon>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Unassigned</p>
+            <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ un_assigned_tickets }}</p>
+          </div>
+        </div>
+        <hd-icon name="chevron-right" class="w-5 h-5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></hd-icon>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs font-semibold">
+          <span class="text-slate-400">Pending Action</span>
+          <span class="text-red-600 dark:text-red-400">{{ getPercentage(un_assigned_tickets) }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 dark:bg-slate-700/80 rounded-full h-2 overflow-hidden">
+          <div
+            class="bg-gradient-to-r from-red-500 to-red-600 h-2 rounded-full transition-all duration-700"
+            [style.width.%]="getPercentage(un_assigned_tickets)"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Overview Section (Admin/Manager) -->
+  <div *ngIf="isAnalyticsAuthorized" class="space-y-6">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-8 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></div>
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Analytics Overview</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Comprehensive insights into your support operations</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- 1. Tickets by Department -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+              <hd-icon name="office" class="w-5 h-5 text-purple-600 dark:text-purple-400"></hd-icon>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Tickets by Department</h3>
+              <p class="text-xs text-slate-400">Distribution across teams</p>
+            </div>
+          </div>
+
+          <!-- Donut Graphic Representation -->
+          <div class="relative w-36 h-36 mx-auto my-4 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-100 dark:text-slate-700" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path
+                *ngFor="let item of top_departments; let i = index"
+                class="transition-all duration-1000"
+                [attr.stroke]="item.color"
+                stroke-width="4.5"
+                [attr.stroke-dasharray]="item.percent + ', 100'"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <div class="absolute text-center">
+              <span class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ total_tickets }}</span>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">Tickets</p>
+            </div>
+          </div>
+
+          <!-- Breakdown Items -->
+          <div class="space-y-2.5 mt-4">
+            <div *ngFor="let item of top_departments" class="space-y-1">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full" [style.background-color]="item.color"></span>
+                  {{ item.name }}
+                </span>
+                <span>{{ item.count }} ({{ item.percent }}%)</span>
+              </div>
+              <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                <div class="h-1.5 rounded-full transition-all duration-700" [style.width.%]="item.percent" [style.background-color]="item.color"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Tickets by Type -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center">
+              <hd-icon name="category" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></hd-icon>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Tickets by Type</h3>
+              <p class="text-xs text-slate-400">Issue categorization</p>
+            </div>
+          </div>
+
+          <!-- Donut Graphic -->
+          <div class="relative w-36 h-36 mx-auto my-4 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-100 dark:text-slate-700" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path
+                *ngFor="let item of top_types; let i = index"
+                class="transition-all duration-1000"
+                [attr.stroke]="item.color"
+                stroke-width="4.5"
+                [attr.stroke-dasharray]="item.percent + ', 100'"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <div class="absolute text-center">
+              <span class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ top_types.length }}</span>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">Types</p>
+            </div>
+          </div>
+
+          <!-- Breakdown Items -->
+          <div class="space-y-2.5 mt-4">
+            <div *ngFor="let item of top_types" class="space-y-1">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full" [style.background-color]="item.color"></span>
+                  {{ item.name }}
+                </span>
+                <span>{{ item.count }} ({{ item.percent }}%)</span>
+              </div>
+              <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                <div class="h-1.5 rounded-full transition-all duration-700" [style.width.%]="item.percent" [style.background-color]="item.color"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Top Ticket Creators -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+              <hd-icon name="users" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></hd-icon>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Top Ticket Creators</h3>
+              <p class="text-xs text-slate-400">Most active users</p>
+            </div>
+          </div>
+
+          <!-- Donut Graphic -->
+          <div class="relative w-36 h-36 mx-auto my-4 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-100 dark:text-slate-700" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path
+                *ngFor="let item of top_creators; let i = index"
+                class="transition-all duration-1000"
+                [attr.stroke]="item.color"
+                stroke-width="4.5"
+                [attr.stroke-dasharray]="item.percent + ', 100'"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <div class="absolute text-center">
+              <span class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ top_creators.length }}</span>
+              <p class="text-[10px] uppercase tracking-wider text-slate-400">Creators</p>
+            </div>
+          </div>
+
+          <!-- Breakdown Items -->
+          <div class="space-y-2.5 mt-4">
+            <div *ngFor="let item of top_creators" class="space-y-1">
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full" [style.background-color]="item.color"></span>
+                  {{ item.name }}
+                </span>
+                <span>{{ item.count }} ({{ item.percent }}%)</span>
+              </div>
+              <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                <div class="h-1.5 rounded-full transition-all duration-700" [style.width.%]="item.percent" [style.background-color]="item.color"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Metrics Section (Ticket History & Response Times) -->
+  <div class="space-y-6">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-8 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-full"></div>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Performance Metrics</h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Ticket History Graph Card (Spans 2 Columns) -->
+      <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                <hd-icon name="dash" class="w-5 h-5 text-blue-600 dark:text-blue-400"></hd-icon>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Ticket History</h3>
+                <p class="text-xs text-slate-400">Monthly ticket creation volume</p>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <p class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ this_month_total }}</p>
+              <p class="text-[11px] text-slate-400">this month <span class="text-slate-300 dark:text-slate-600">| last month: {{ last_month_total }}</span></p>
+            </div>
+          </div>
+
+          <!-- Monthly Bar Graph -->
+          <div class="h-44 flex items-end justify-between gap-2 pt-6 pb-2 px-2 border-b border-slate-100 dark:border-slate-700">
+            <div *ngFor="let bar of monthly_bars" class="flex-1 flex flex-col items-center gap-2 group relative">
+              <!-- Tooltip on hover -->
+              <div class="absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded shadow pointer-events-none z-10">
+                {{ bar.count }} tickets
+              </div>
+              <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-t-md h-32 flex items-end overflow-hidden">
+                <div
+                  class="w-full bg-gradient-to-t from-primary-600 to-primary-400 group-hover:from-primary-500 group-hover:to-primary-300 rounded-t-md transition-all duration-700"
+                  [style.height.%]="bar.percent"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Month Labels Footer -->
+          <div class="flex items-center justify-between gap-2 pt-2 px-2 text-[11px] font-semibold text-slate-400">
+            <span *ngFor="let bar of monthly_bars" class="flex-1 text-center truncate">{{ bar.month }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Response Times Card -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
+              <hd-icon name="ticket" class="w-5 h-5 text-amber-600 dark:text-amber-400"></hd-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">Response Times</h3>
+              <p class="text-xs text-slate-400">Average response benchmarks</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                <span>First Response</span>
+                <span class="font-medium">Average</span>
+              </div>
+              <p class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ first_response_str }}</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/40">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                <span>Last Response</span>
+                <span class="font-medium">Average</span>
+              </div>
+              <p class="text-2xl font-extrabold text-slate-900 dark:text-white">{{ last_response_str }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI System Widgets Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- AI Assistant Widget -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+              <hd-icon name="dash" class="w-5 h-5 text-blue-600 dark:text-blue-400"></hd-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">AI Assistant</h3>
+              <p class="text-xs text-slate-400">Powered by OpenAI</p>
+            </div>
+          </div>
+          <span class="text-xs font-semibold text-red-500 bg-red-50 dark:bg-red-950/50 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Offline
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-center mb-6">
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+            <p class="text-2xl font-extrabold text-slate-900 dark:text-white">0</p>
+            <p class="text-[11px] text-slate-400">Classifications</p>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+            <p class="text-2xl font-extrabold text-slate-900 dark:text-white">0</p>
+            <p class="text-[11px] text-slate-400">Suggestions</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <button (click)="navigateTo('/settings')" class="w-full py-2.5 rounded-xl bg-primary text-white text-xs font-bold shadow hover:bg-primary-600 transition">
+            AI Settings
+          </button>
+          <button (click)="navigateTo('/reports')" class="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-200 transition">
+            View Analytics
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI System Status Widget -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+              <hd-icon name="global_setting" class="w-5 h-5 text-blue-600 dark:text-blue-400"></hd-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">AI System Status</h3>
+              <p class="text-xs text-slate-400">Real-time AI service monitoring</p>
+            </div>
+          </div>
+          <button (click)="loadDashboardData()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400">
+            <hd-icon name="archive" class="w-4 h-4"></hd-icon>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+            <p class="text-xs text-slate-400 mb-1">Overall Status</p>
+            <p class="text-xs font-bold text-red-500">● Offline</p>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/40 rounded-xl">
+            <p class="text-xs text-slate-400 mb-1">Rate Limits</p>
+            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">0/20 min, 0/300 hr</p>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-400">
+          <span>AI Features</span>
+          <div class="flex items-center gap-3 font-medium">
+            <span class="text-emerald-500">● Classification</span>
+            <span class="text-emerald-500">● Sentiment</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Section (Customers & Contacts) -->
+  <div class="space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+      <h3 class="text-xl font-bold text-slate-900 dark:text-white">Quick Stats</h3>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div
+        (click)="navigateTo('/customers')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-lg dark:hover:shadow-blue-500/5 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-300 group-hover:scale-105"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <hd-icon name="users" class="w-6 h-6 text-blue-600 dark:text-blue-400"></hd-icon>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Customers</p>
+              <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ total_customer }}</p>
+            </div>
+          </div>
+          <hd-icon name="chevron-right" class="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors"></hd-icon>
+        </div>
+      </div>
+
+      <div
+        (click)="navigateTo('/contacts')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-lg dark:hover:shadow-cyan-500/5 hover:border-cyan-300 dark:hover:border-cyan-600 transition-all duration-300 group-hover:scale-105"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <hd-icon name="contact" class="w-6 h-6 text-cyan-600 dark:text-cyan-400"></hd-icon>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Contacts</p>
+              <p class="text-3xl font-extrabold text-slate-900 dark:text-white">{{ total_contacts }}</p>
+            </div>
+          </div>
+          <hd-icon name="chevron-right" class="w-5 h-5 text-slate-400 group-hover:text-cyan-500 transition-colors"></hd-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Grid -->
+  <div class="space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-6 bg-primary rounded-full"></div>
+      <h3 class="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h3>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div
+        (click)="navigateTo('/tickets')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-primary hover:shadow-md transition-all duration-200"
+      >
+        <div class="w-10 h-10 mx-auto rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-primary group-hover:scale-110 transition-transform mb-2">
+          <hd-icon name="ticket" class="w-5 h-5"></hd-icon>
+        </div>
+        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">View Tickets</p>
+      </div>
+
+      <div
+        (click)="navigateTo('/chat')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-primary hover:shadow-md transition-all duration-200"
+      >
+        <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform mb-2">
+          <hd-icon name="chat" class="w-5 h-5"></hd-icon>
+        </div>
+        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Start Chat</p>
+      </div>
+
+      <div
+        (click)="navigateTo('/users')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-primary hover:shadow-md transition-all duration-200"
+      >
+        <div class="w-10 h-10 mx-auto rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform mb-2">
+          <hd-icon name="users" class="w-5 h-5"></hd-icon>
+        </div>
+        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Manage Users</p>
+      </div>
+
+      <div
+        (click)="navigateTo('/knowledge-base')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-primary hover:shadow-md transition-all duration-200"
+      >
+        <div class="w-10 h-10 mx-auto rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform mb-2">
+          <hd-icon name="knowledge" class="w-5 h-5"></hd-icon>
+        </div>
+        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Knowledge Base</p>
+      </div>
+
+      <div
+        (click)="navigateTo('/organizations')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-primary hover:shadow-md transition-all duration-200"
+      >
+        <div class="w-10 h-10 mx-auto rounded-xl bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform mb-2">
+          <hd-icon name="office" class="w-5 h-5"></hd-icon>
+        </div>
+        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Organizations</p>
+      </div>
+
+      <div
+        (click)="navigateTo('/settings')"
+        class="group cursor-pointer bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center hover:border-primary hover:shadow-md transition-all duration-200"
+      >
+        <div class="w-10 h-10 mx-auto rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:scale-110 transition-transform mb-2">
+          <hd-icon name="settings" class="w-5 h-5"></hd-icon>
+        </div>
+        <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Settings</p>
+      </div>
+    </div>
+  </div>
+</div>

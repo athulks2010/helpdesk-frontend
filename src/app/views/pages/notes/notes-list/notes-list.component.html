@@ -1,0 +1,125 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Notes</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Create and manage your personal notes</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
+      <button type="button" class="hd-btn-primary" (click)="openCreate()">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        Create New Note
+      </button>
+    </div>
+  </div>
+
+  <div class="hd-card p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div class="relative flex-1">
+        <input
+          type="search"
+          class="hd-input pl-10"
+          placeholder="Search notes..."
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
+        />
+        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+      <div class="text-sm text-slate-500 whitespace-nowrap">
+        Total: {{ rows.length }} · Showing: {{ filtered.length }}
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">
+    <div class="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+    <p>Loading notes…</p>
+  </div>
+
+  <div *ngIf="!loading && error && !panelOpen" class="hd-card p-8 text-center text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div
+      *ngFor="let row of filtered"
+      class="hd-card p-0 cursor-pointer hover:shadow-md transition-shadow group"
+      (click)="openEdit(row)"
+    >
+      <div class="p-6 h-full flex flex-col">
+        <div class="flex items-start justify-between mb-3 gap-2">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 truncate">
+            {{ row.name || 'Untitled' }}
+          </h3>
+          <button
+            type="button"
+            class="text-slate-400 hover:text-blue-600 text-sm font-medium shrink-0"
+            (click)="openEdit(row); $event.stopPropagation()"
+          >Edit</button>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-400 flex-1 line-clamp-6 whitespace-pre-wrap">
+          {{ preview(row.details) }}
+        </p>
+        <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
+          <span class="text-xs text-slate-500">{{ formatDate(row.created_at) }}</span>
+          <button
+            type="button"
+            class="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+            [disabled]="deletingId === rowId(row)"
+            (click)="remove(row, $event)"
+          >Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error && !filtered.length" class="hd-card p-12 text-center">
+    <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-2">No notes found</h3>
+    <p class="text-slate-500 mb-6">Get started by creating your first note.</p>
+    <button type="button" class="hd-btn-primary" (click)="openCreate()">Create Note</button>
+  </div>
+
+  <!-- Create / Edit panel -->
+  <div *ngIf="panelOpen" class="fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
+      <div class="fixed inset-0 bg-slate-900/50" (click)="closePanel()"></div>
+      <div class="relative hd-card w-full max-w-lg z-10 shadow-xl">
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="p-6">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              {{ editingId ? 'Edit Note' : 'Create Note' }}
+            </h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Note Title</label>
+                <input type="text" class="hd-input" formControlName="name" placeholder="Enter note title..." />
+                <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Title is required</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Note Details</label>
+                <textarea class="hd-input min-h-[140px]" formControlName="details" rows="6" placeholder="Enter note details..."></textarea>
+                <p *ngIf="hasError('details')" class="mt-1 text-xs text-red-600">Details are required</p>
+              </div>
+            </div>
+            <p *ngIf="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
+          </div>
+          <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex flex-wrap justify-end gap-2">
+            <button
+              *ngIf="editingId"
+              type="button"
+              class="text-red-600 hover:text-red-800 text-sm font-medium mr-auto disabled:opacity-50"
+              [disabled]="deletingId === editingId || saving"
+              (click)="remove({ id: editingId, name: form.value.name })"
+            >Delete Note</button>
+            <button type="button" class="hd-btn-secondary" (click)="closePanel()" [disabled]="saving">Cancel</button>
+            <button type="submit" class="hd-btn-primary" [disabled]="saving">
+              {{ saving ? 'Saving…' : (editingId ? 'Update Note' : 'Create Note') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

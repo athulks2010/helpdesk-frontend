@@ -1,0 +1,69 @@
+<div class="space-y-6 max-w-4xl">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Notifications</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        {{ unreadCount() }} unread · {{ rows.length }} total
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
+      <button
+        type="button"
+        class="hd-btn-primary"
+        [disabled]="markingAll || !unreadCount()"
+        (click)="markAllRead()"
+      >
+        {{ markingAll ? 'Marking…' : 'Mark all read' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">
+    <div class="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+    <p>Loading notifications…</p>
+  </div>
+
+  <div *ngIf="!loading && error" class="hd-card p-8 text-center text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="hd-card overflow-hidden p-0">
+    <ul class="divide-y divide-slate-200 dark:divide-slate-700" role="list">
+      <li
+        *ngFor="let row of rows"
+        class="transition-colors"
+        [ngClass]="isUnread(row) ? 'bg-blue-50 dark:bg-blue-950/30' : ''"
+      >
+        <div class="flex items-start gap-4 px-4 py-4 sm:px-6">
+          <div class="min-w-0 flex-1">
+            <p
+              class="text-sm truncate"
+              [ngClass]="{
+                'font-bold text-slate-800 dark:text-slate-100': isUnread(row),
+                'text-slate-600 dark:text-slate-400': !isUnread(row)
+              }"
+            >
+              {{ message(row) }}
+            </p>
+            <p *ngIf="subject(row)" class="mt-1 text-sm text-slate-500">
+              Ticket: {{ subject(row) }}
+            </p>
+            <p class="mt-1 text-xs text-slate-400">{{ formatDate(row.created_at) }}</p>
+          </div>
+          <button
+            *ngIf="isUnread(row)"
+            type="button"
+            class="hd-btn-secondary text-sm shrink-0 disabled:opacity-50"
+            [disabled]="markingId === rowId(row)"
+            (click)="markRead(row, $event)"
+          >
+            {{ markingId === rowId(row) ? '…' : 'Mark read' }}
+          </button>
+          <span *ngIf="!isUnread(row)" class="text-xs text-slate-400 shrink-0 pt-1">Read</span>
+        </div>
+      </li>
+      <li *ngIf="!rows.length" class="px-4 py-12 text-center text-slate-500">
+        No notifications yet.
+      </li>
+    </ul>
+  </div>
+</div>

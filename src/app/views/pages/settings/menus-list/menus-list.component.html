@@ -1,0 +1,76 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Navigation Menus</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Manage public site navigation items</p>
+  </div>
+
+  <form class="hd-card" [formGroup]="form" (ngSubmit)="save()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
+        <select class="hd-input" formControlName="location">
+          <option value="header">Header</option>
+          <option value="footer">Footer</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Label</label>
+        <input type="text" class="hd-input" formControlName="label" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">URL</label>
+        <input type="text" class="hd-input" formControlName="url" placeholder="/contact" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Icon</label>
+        <input type="text" class="hd-input" formControlName="icon" placeholder="home" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Order</label>
+        <input type="number" class="hd-input" formControlName="order" />
+      </div>
+      <div class="flex items-end gap-2">
+        <button type="submit" class="hd-btn-primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : (editingId ? 'Update' : 'Create') }}
+        </button>
+        <button type="button" class="hd-btn-secondary" (click)="startCreate()" *ngIf="editingId">Cancel</button>
+      </div>
+    </div>
+  </form>
+
+  <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading…</div>
+  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+
+  <div *ngIf="!loading" class="hd-table-wrap">
+    <table class="hd-table">
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Location</th>
+          <th>Label</th>
+          <th>URL</th>
+          <th>Icon</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let row of rows; let i = index">
+          <td>{{ row.order ?? row.sort_order ?? i }}</td>
+          <td>{{ row.location || '—' }}</td>
+          <td>{{ row.label || '—' }}</td>
+          <td>{{ row.url || row.route_name || '—' }}</td>
+          <td>{{ row.icon || '—' }}</td>
+          <td class="text-right space-x-2">
+            <button type="button" class="hd-btn-secondary" (click)="move(row, -1)" [disabled]="i === 0">Up</button>
+            <button type="button" class="hd-btn-secondary" (click)="move(row, 1)" [disabled]="i === rows.length - 1">Down</button>
+            <button type="button" class="hd-btn-secondary" (click)="startEdit(row)">Edit</button>
+            <button type="button" class="hd-btn-secondary" (click)="remove(row)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="!rows.length">
+          <td colspan="6" class="px-4 py-8 text-center text-slate-500">No menu items found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

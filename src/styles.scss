@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+.hd-input {
+  @apply w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900 placeholder-slate-400;
+}
+
+.hd-btn {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+}
+
+.hd-btn-primary {
+  @apply hd-btn bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.hd-btn-secondary {
+  @apply hd-btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+}
+
+.hd-card {
+  @apply bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden;
+}
+
+.hd-table-wrap {
+  @apply bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden;
+}
+
+.hd-table {
+  @apply min-w-full divide-y divide-slate-200;
+}
+
+.hd-table thead {
+  @apply bg-slate-50;
+}
+
+.hd-table th {
+  @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider;
+}
+
+.hd-table td {
+  @apply px-4 py-3 text-sm text-slate-700 whitespace-nowrap;
+}
+
+.hd-table tbody tr {
+  @apply hover:bg-slate-50 transition-colors duration-150;
+}
+
+/* Landing Custom CSS from Laravel HelpDesk project */
+.layout_landing {
+  .container {
+    width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  @media (min-width: 540px) {
+    .container {
+      max-width: 540px;
+    }
+  }
+  @media (min-width: 720px) {
+    .container {
+      max-width: 720px;
+    }
+  }
+  @media (min-width: 960px) {
+    .container {
+      max-width: 960px;
+    }
+  }
+  @media (min-width: 1140px) {
+    .container {
+      max-width: 1140px;
+    }
+  }
+  @media (min-width: 1320px) {
+    .container {
+      max-width: 1320px;
+    }
+  }
+}
+
+.bg-blog {
+  background-image: url('/landing/images/blog/bg.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.html {
+  line-height: 1.6;
+  h1, h2, h3, h4 {
+    line-height: 1.4;
+    margin-bottom: 0.5em;
+    margin-top: 1.5em;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.4rem; }
+  h3 { font-size: 1.2rem; }
+  p {
+    margin-bottom: 1rem;
+    color: #475569;
+  }
+  ul {
+    padding-top: 0.5rem;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+    li {
+      list-style: disc;
+      margin-bottom: 0.4rem;
+      color: #475569;
+    }
+  }
+  ol {
+    padding-top: 0.5rem;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+    li {
+      list-style: decimal;
+      margin-bottom: 0.4rem;
+      color: #475569;
+    }
+  }
+}
+
+.dark .html {
+  h1, h2, h3, h4 {
+    color: #f8fafc;
+  }
+  p, li {
+    color: #cbd5e1;
+  }
+}

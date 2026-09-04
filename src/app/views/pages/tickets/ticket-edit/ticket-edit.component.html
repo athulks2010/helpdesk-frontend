@@ -1,0 +1,151 @@
+<div class="max-w-6xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a routerLink="/tickets" class="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-xl font-extrabold text-slate-900 dark:text-white">Edit Ticket</h1>
+        <nav class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <a routerLink="/dashboard" class="hover:text-blue-600">Dashboard</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+          <a routerLink="/tickets" class="hover:text-blue-600">Tickets</a>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+          <span class="text-slate-700 dark:text-slate-200 font-medium">Edit #{{ id }}</span>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+    <div *ngIf="loading" class="flex items-center justify-center gap-3 py-16 text-slate-400">
+      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="text-sm">Loading ticket details...</span>
+    </div>
+
+    <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div *ngIf="error" class="flex items-center gap-3 mx-6 mt-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+        <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ error }}
+      </div>
+
+      <div class="p-6 space-y-6">
+        <!-- Row 1: Customer | Priority | Type -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Customer -->
+          <div>
+            <label class="form-label">Customer <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <select formControlName="user_id" class="form-select pr-8"
+                [class.border-red-400]="f['user_id'].touched && f['user_id'].invalid">
+                <option [ngValue]="null" disabled>Start typing / Select customer...</option>
+                <option *ngFor="let c of customers" [value]="c.id">
+                  {{ displayName(c) }} ({{ c.email }})
+                </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+            <p *ngIf="f['user_id'].touched && f['user_id'].invalid" class="form-error">Customer is required</p>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label class="form-label">Priority <span class="text-red-500">*</span></label>
+            <select formControlName="priority_id" class="form-select">
+              <option [ngValue]="null" disabled>— Select Priority —</option>
+              <option *ngFor="let p of priorities" [value]="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+
+          <!-- Type -->
+          <div>
+            <label class="form-label">Type</label>
+            <select formControlName="type_id" class="form-select">
+              <option [ngValue]="null">— Select Type —</option>
+              <option *ngFor="let t of types" [value]="t.id">{{ t.name }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Department | Status | Assigned To -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Department -->
+          <div>
+            <label class="form-label">Department</label>
+            <select formControlName="department_id" class="form-select">
+              <option [ngValue]="null">Select a department</option>
+              <option *ngFor="let d of departments" [value]="d.id">{{ d.name }}</option>
+            </select>
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label class="form-label">Status</label>
+            <select formControlName="status_id" class="form-select">
+              <option [ngValue]="null">— Select Status —</option>
+              <option *ngFor="let s of statuses" [value]="s.id">{{ s.name }}</option>
+            </select>
+          </div>
+
+          <!-- Assigned To -->
+          <div>
+            <label class="form-label">Assigned To</label>
+            <div class="relative">
+              <select formControlName="assigned_to" class="form-select pr-8">
+                <option [ngValue]="null">Start typing / Select assignee...</option>
+                <option *ngFor="let a of assignees" [value]="a.id">
+                  {{ displayName(a) }} ({{ a.email }})
+                </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subject -->
+        <div>
+          <label class="form-label">Subject <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="subject" class="form-input" [class.border-red-400]="f['subject'].touched && f['subject'].invalid"/>
+        </div>
+
+        <!-- Details -->
+        <div>
+          <label class="form-label">Request Details:</label>
+          <textarea formControlName="details" rows="8" class="form-input font-mono resize-y"></textarea>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
+        <a routerLink="/tickets" class="px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-100 transition-colors">
+          Cancel
+        </a>
+        <button type="submit" [disabled]="saving"
+          class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60">
+          {{ saving ? 'Saving...' : 'Update Ticket' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

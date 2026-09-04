@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+/* Select dropdown arrow fix */
+select {
+  background-image: none;
+}
+
+/* Custom animated focus ring */
+input:focus,
+select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Glassmorphism backdrop */
+.backdrop-blur-xl {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Smooth password strength transition */
+.strength-bar {
+  transition: background-color 0.4s ease, width 0.4s ease;
+}
+
+/* Floating background animation */
+@keyframes float-blob {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.05) rotate(5deg); }
+}
