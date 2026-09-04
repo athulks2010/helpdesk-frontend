@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { FormBuilder } from '@angular/forms';
 
 @Component({
   selector: 'app-menus-list',
@@ -19,9 +20,9 @@ export class MenusListComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private settingService: SettingService,
-    private confirmService: ConfirmDialogService
+    private confirmService: ConfirmDialogService,
+    private router: Router
   ) { }
-  constructor(private settingService: SettingService, private router: Router) { }
 
   ngOnInit(): void {
     this.load();
@@ -35,7 +36,6 @@ export class MenusListComponent implements OnInit {
         this.rows = (Array.isArray(data) ? data : data?.items || data?.list || data?.data || []).sort(
           (a: any, b: any) => Number(a.order ?? a.sort_order ?? 0) - Number(b.order ?? b.sort_order ?? 0)
         );
-        this.applyFilter();
         this.loading = false;
       },
       error: () => {

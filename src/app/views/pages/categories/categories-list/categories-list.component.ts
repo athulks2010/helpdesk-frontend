@@ -23,6 +23,7 @@ export class CategoriesListComponent implements OnInit {
     private service: CategoryService,
     private departmentService: DepartmentService,
     private route: ActivatedRoute,
+    private confirmService: ConfirmDialogService,
     private router: Router
   ) { }
 
