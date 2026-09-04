@@ -19,7 +19,22 @@ export class LandingFaqComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.landingService.getFaqs().subscribe((list: any) => {
-      const faqsList: FaqItem[] = Array.isArray(list) ? list : (list?.data || []);
+      // unwrap() in ApiBaseService already strips the outer `data` key,
+      // so list arrives as { items: [...], totalCount: N } or a plain array
+      const raw: any[] = Array.isArray(list)
+        ? list
+        : Array.isArray(list?.items)
+        ? list.items
+        : [];
+
+      // Normalise: map question→name and answer→details when the API returns those aliases
+      const faqsList: FaqItem[] = raw.map((f: any) => ({
+        id: f.id,
+        name: f.name || f.question || '',
+        details: f.details || f.answer || '',
+        category: f.category,
+      }));
+
       this.faqs = faqsList.map((f: FaqItem, i: number) => ({ ...f, active: i === 0 }));
       this.filteredFaqs = [...this.faqs];
 
@@ -48,10 +63,12 @@ export class LandingFaqComponent implements OnInit {
       const matchCat =
         this.selectedCategory === 'All' || faq.category === this.selectedCategory;
       const q = this.searchQuery.toLowerCase().trim();
+      // Strip HTML tags for plain-text matching in the details/answer field
+      const detailsText = (faq.details || '').replace(/<[^>]*>/g, '').toLowerCase();
       const matchSearch =
         !q ||
-        faq.name.toLowerCase().includes(q) ||
-        faq.details.toLowerCase().includes(q);
+        (faq.name || '').toLowerCase().includes(q) ||
+        detailsText.includes(q);
       return matchCat && matchSearch;
     });
   }

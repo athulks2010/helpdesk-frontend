@@ -27,12 +27,33 @@ export class LandingContactComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.landingService.getContactPageData().subscribe((data: any) => {
-      this.pageData = data?.html || data;
+      // unwrap() strips outer `data`, so we get { id, slug, html, content, ... }
+      // The `html` / `content` field is DOUBLE-encoded JSON — parse it up to twice
+      const raw = data?.html ?? data?.content ?? data;
+      let parsed: any = null;
+
+      if (typeof raw === 'string') {
+        try {
+          let once = JSON.parse(raw);
+          // If still a string after first parse, parse again (double-encoded)
+          if (typeof once === 'string') {
+            once = JSON.parse(once);
+          }
+          parsed = once;
+        } catch {
+          parsed = null;
+        }
+      } else if (raw && typeof raw === 'object') {
+        parsed = raw;
+      }
+
+      this.pageData = parsed;
     });
   }
 
   get contact(): any {
-    return this.pageData || {
+    // Static fallbacks for fields not returned by the API
+    const defaults = {
       content_text: 'Connect With Our Support Team',
       content_details:
         'Need help with onboarding, ticket workflows, or account issues? Reach out and our team will connect you with the right specialist.',
@@ -42,6 +63,8 @@ export class LandingContactComponent implements OnInit {
       email_details: 'Use email for product questions, integration requests, and account-related support.',
       phone_details: 'Call for urgent operational issues that require immediate triage.',
     };
+    // Merge API data over defaults so any field present in API wins
+    return this.pageData ? { ...defaults, ...this.pageData } : defaults;
   }
 
   validate(): boolean {
