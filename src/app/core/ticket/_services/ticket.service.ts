@@ -28,6 +28,38 @@ export class TicketService extends ApiBaseService {
   }
 
   /**
+   * GET /dashboard/settings/filter/clients?search=
+   * Returns ticket owners: [{ id, name }]
+   * Empty search → first ~10 distinct ticket owners
+   */
+  filterClients(search?: string): Observable<Array<{ id: number | string; name: string }>> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.filterClients}`, {
+        params: this.toParams({ search: search || undefined }),
+      })
+      .pipe(
+        map((res: any) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data)
+              ? res.data
+              : Array.isArray(res?.data?.items)
+                ? res.data.items
+                : [];
+          return list.map((c: any) => ({
+            id: c.id ?? c.user_id,
+            name:
+              c.name ||
+              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+              c.email ||
+              String(c.id),
+          }));
+        }),
+        catchError(() => of([]))
+      );
+  }
+
+  /**
    * GET /ticket/single?id={id}
    * Response shape:
    * { response: {...}, data: { item: { id, subject, status, priority, ... } } }
@@ -101,11 +133,70 @@ export class TicketService extends ApiBaseService {
   }
 
   getComments(ticketId: string | number): Observable<any> {
-    return this.getSingle(apiUrl.ticketComments, { ticket_id: ticketId, id: ticketId });
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketComments}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map((res: any) => {
+          if (!res) return [];
+          if (Array.isArray(res)) return res;
+          if (res.data?.items) return res.data.items;
+          if (res.data?.comments) return res.data.comments;
+          if (Array.isArray(res.data)) return res.data;
+          if (res.items) return res.items;
+          if (res.comments) return res.comments;
+          return [];
+        })
+      );
   }
 
-  addComment(body: any): Observable<any> {
-    return this.post(apiUrl.ticketComments, body);
+  /**
+   * POST /ticket/comments
+   * Laravel uses { ticket_id, user_id, comment }; Angular API may use body.
+   * Send both comment and body for compatibility.
+   */
+  addComment(payload: {
+    ticket_id: string | number;
+    comment?: string;
+    body?: string;
+    user_id?: string | number;
+  }): Observable<any> {
+    const text = payload.comment ?? payload.body ?? '';
+    return this.http
+      .post(`${this.baseUrl}${apiUrl.ticketComments}`, {
+        ticket_id: payload.ticket_id,
+        user_id: payload.user_id,
+        comment: text,
+        body: text,
+      })
+      .pipe(
+        map((res: any) => {
+          if (res?.data?.item) return res.data.item;
+          if (res?.data?.comment) return res.data.comment;
+          if (res?.item) return res.item;
+          if (res?.data && typeof res.data === 'object' && !Array.isArray(res.data)) return res.data;
+          return res;
+        })
+      );
+  }
+
+  getTicketConversations(ticketId: string | number): Observable<any[]> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketConversations}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map((res: any) => {
+          if (Array.isArray(res)) return res;
+          if (Array.isArray(res?.data)) return res.data;
+          if (Array.isArray(res?.data?.items)) return res.data.items;
+          if (Array.isArray(res?.items)) return res.items;
+          if (Array.isArray(res?.conversations)) return res.conversations;
+          return [];
+        }),
+        catchError(() => of([]))
+      );
   }
 
   toggleFavorite(id: string | number): Observable<any> {

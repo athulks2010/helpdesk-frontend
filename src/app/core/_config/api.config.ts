@@ -15,6 +15,12 @@ export const apiUrl = {
   ticketUpdate: '/ticket/update',
   ticketDelete: '/ticket/delete',
   ticketComments: '/ticket/comments',
+  ticketConversations: '/ticket/conversations',
+
+  /* Filters (Laravel dashboard filter endpoints) */
+  filterClients: '/dashboard/settings/filter/clients',
+  filterAssignees: '/dashboard/settings/filter/assignees',
+  filterCustomers: '/dashboard/settings/filter/customers',
 
   /* Conversations / Chat */
   conversations: '/conversation',
@@ -23,6 +29,8 @@ export const apiUrl = {
   conversationCreate: '/conversation/create',
   conversationMessages: '/conversation/messages',
   conversationMarkRead: '/conversation/mark-read',
+  conversationDelete: '/conversation/delete',
+  conversationUpload: '/conversation/upload-attachments',
 
   /* Users */
   users: '/user',

@@ -5,12 +5,14 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/_services/auth.service';
 import { UserModel } from '../../../core/auth/_models/user.model';
 import { NotificationService } from '../../../core/notification/_services/notification.service';
+import { SettingService } from '../../../core/setting/_services/setting.service';
 
 export interface SubMenuItem {
   name: string;
   path: string;
   icon?: string;
   permission?: string;
+  optionSlug?: string;
   adminOnly?: boolean;
 }
 
@@ -19,6 +21,7 @@ export interface MenuItem {
   path?: string;
   icon: string;
   permission?: string;
+  optionSlug?: string;
   adminOnly?: boolean;
   submenu?: SubMenuItem[];
 }
@@ -39,6 +42,7 @@ export class BaseComponent implements OnInit, OnDestroy {
   currentUser: UserModel | null = null;
   private authSub?: Subscription;
   private routerSub?: Subscription;
+  private settingsSub?: Subscription;
 
   currentUrl = '';
   currentTitle = 'Dashboard';
@@ -75,7 +79,8 @@ export class BaseComponent implements OnInit, OnDestroy {
   constructor(
     private auth: AuthService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private settingService: SettingService
   ) {}
 
   ngOnInit(): void {
@@ -87,6 +92,9 @@ export class BaseComponent implements OnInit, OnDestroy {
     if (this.auth.getToken() && !this.auth.currentUserValue) {
       this.auth.me().subscribe();
     }
+
+    this.settingService.getAll({}).subscribe({ error: () => {} });
+    this.settingsSub = this.settingService.settings$.subscribe();
 
     this.loadNotifications();
 
@@ -116,6 +124,7 @@ export class BaseComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSub?.unsubscribe();
     this.routerSub?.unsubscribe();
+    this.settingsSub?.unsubscribe();
   }
 
   @HostListener('document:click', ['$event'])
@@ -139,11 +148,27 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Checks item visibility based on admin status, module permissions, and setting enable_options
+   */
+  isItemVisible(item: MenuItem | SubMenuItem): boolean {
+    if (item.adminOnly && !this.isAdmin) {
+      return false;
+    }
+    if (item.permission && !this.hasAccess(item.permission, 'read')) {
+      return false;
+    }
+    if (item.optionSlug && !this.settingService.isOptionEnabled(item.optionSlug)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Permission access checking matching Laravel MainMenu.vue:
    * Checks user.access[module][action] or parsed role.access
    */
   hasAccess(module: string, action: 'read' | 'create' | 'update' | 'delete' = 'read'): boolean {
-    if (!this.currentUser) return true; // fallback if loaded before profile
+    if (!this.currentUser) return false; 
 
     const role = this.currentUser.role;
     const roleSlug = typeof role === 'string' ? role : role?.slug;
@@ -178,7 +203,7 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Computes menu groups filtered by authenticated user permissions
+   * Computes menu groups filtered by authenticated user permissions and global setting enable_options
    */
   get menuGroups(): MenuGroup[] {
     const groups: MenuGroup[] = [
@@ -187,16 +212,16 @@ export class BaseComponent implements OnInit, OnDestroy {
         items: [
           { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
           { name: 'Tickets', path: '/tickets', icon: 'ticket', permission: 'ticket' },
-          { name: 'Chat', path: '/chat', icon: 'chat', permission: 'chat' },
-        ].filter((item) => !item.permission || this.hasAccess(item.permission, 'read')),
+          { name: 'Chat', path: '/chat', icon: 'chat', permission: 'chat', optionSlug: 'chat' },
+        ].filter((item) => this.isItemVisible(item)),
       },
       {
         title: 'CONTENT',
         items: [
-          { name: 'Knowledge Base', path: '/knowledge-base', icon: 'knowledge', permission: 'knowledge_base' },
-          { name: 'FAQs', path: '/faqs', icon: 'faq', permission: 'faq' },
-          { name: 'Blog', path: '/blogs', icon: 'blog', permission: 'blog' },
-          { name: 'Services', path: '/admin-services', icon: 'service', permission: 'front_page' },
+          { name: 'Knowledge Base', path: '/knowledge-base', icon: 'knowledge', permission: 'knowledge_base', optionSlug: 'kb' },
+          { name: 'FAQs', path: '/faqs', icon: 'faq', permission: 'faq', optionSlug: 'faq' },
+          { name: 'Blog', path: '/blogs', icon: 'blog', permission: 'blog', optionSlug: 'blog' },
+          { name: 'Services', path: '/admin-services', icon: 'service', permission: 'front_page', optionSlug: 'service' },
           {
             name: 'Front Pages',
             icon: 'settings',
@@ -210,22 +235,19 @@ export class BaseComponent implements OnInit, OnDestroy {
               { name: 'Footer', path: '/front-pages/footer' },
             ],
           },
-        ].filter((item) => !item.permission || this.hasAccess(item.permission, 'read')),
+        ].filter((item) => this.isItemVisible(item)),
       },
       {
         title: 'MANAGEMENT',
         items: [
           { name: 'Customers', path: '/customers', icon: 'users', permission: 'customer' },
-          { name: 'Contacts', path: '/contacts', icon: 'contact', permission: 'contact' },
-          { name: 'Organizations', path: '/organizations', icon: 'office', permission: 'organization' },
-          { name: 'Notes', path: '/notes', icon: 'notes' },
+          { name: 'Contacts', path: '/contacts', icon: 'contact', permission: 'contact', optionSlug: 'contact' },
+          { name: 'Organizations', path: '/organizations', icon: 'office', permission: 'organization', optionSlug: 'organization' },
+          { name: 'Notes', path: '/notes', icon: 'notes', optionSlug: 'note' },
           { name: 'Manage Users', path: '/users', icon: 'users', permission: 'user' },
           { name: 'Pending Users', path: '/pending-users', icon: 'users', permission: 'user', adminOnly: true },
           { name: 'Reports', path: '/reports', icon: 'dashboard', permission: 'global' },
-        ].filter((item) => {
-          if (item.adminOnly) return this.isAdmin;
-          return !item.permission || this.hasAccess(item.permission, 'read');
-        }),
+        ].filter((item) => this.isItemVisible(item)),
       },
       {
         title: 'CONFIGURATION',
@@ -251,16 +273,12 @@ export class BaseComponent implements OnInit, OnDestroy {
       { name: 'Email Templates', path: '/settings/email-templates', icon: 'email', permission: 'email_template' },
       { name: 'SMTP Mail', path: '/settings/smtp', icon: 'email_template', permission: 'smtp' },
       { name: 'Pusher Chat', path: '/settings/pusher', icon: 'chat', permission: 'pusher' },
-      { name: 'Email to ticket', path: '/settings/piping', icon: 'ticket', adminOnly: true },
+      { name: 'Email to ticket', path: '/settings/piping', icon: 'ticket', adminOnly: true, optionSlug: 'enable_piping' },
       { name: 'User Roles', path: '/roles', icon: 'user_role', adminOnly: true },
       { name: 'Ai Settings', path: '/ai', icon: 'settings', adminOnly: true },
       { name: 'License', path: '/settings/license', icon: 'user_role', adminOnly: true },
       { name: 'Latest Updates', path: '/settings', icon: 'archive', adminOnly: true },
-    ].filter((sub) => {
-      if (sub.adminOnly) return this.isAdmin;
-      if (sub.permission) return this.hasAccess(sub.permission, 'read');
-      return true;
-    });
+    ].filter((sub) => this.isItemVisible(sub));
 
     if (settingSubmenus.length > 0) {
       return [
