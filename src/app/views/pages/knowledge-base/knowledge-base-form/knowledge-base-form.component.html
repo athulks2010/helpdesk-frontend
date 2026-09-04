@@ -1,46 +1,68 @@
-<div class="space-y-6 max-w-3xl">
-  <div class="flex items-start justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-        {{ isEditMode ? 'Edit Article' : 'Create Article' }}
-      </h1>
-      <p class="text-sm text-slate-500 mt-0.5">{{ isEditMode ? 'Update existing record' : 'Add a new article' }}</p>
+<div class="bg-white dark:bg-slate-800 rounded-md shadow overflow-hidden max-w-full border border-slate-200 dark:border-slate-700">
+  <div *ngIf="loadingData" class="p-10 text-center text-slate-500">Loading…</div>
+
+  <form *ngIf="!loadingData" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="p-8 -mr-6 -mb-8 flex flex-wrap">
+      <!-- Title -->
+      <div class="pr-6 pb-8 w-full lg:w-1/2">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Title</label>
+        <input type="text" formControlName="title" placeholder=""
+          class="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          [class.border-red-500]="hasError('title')" />
+        <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-600">Title is required</p>
+      </div>
+
+      <!-- Type * -->
+      <div class="pr-6 pb-8 w-full lg:w-1/2">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          Type <span class="text-red-500">*</span>
+        </label>
+        <div class="relative">
+          <select formControlName="type_id"
+            class="w-full px-4 py-3 pr-10 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer"
+            [class.border-red-500]="hasError('type_id')">
+            <option [ngValue]="null">Select type</option>
+            <option *ngFor="let s of types" [ngValue]="s.id || s._id">{{ s.name }}</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+        <p *ngIf="hasError('type_id')" class="mt-1 text-xs text-red-600">Type is required</p>
+      </div>
+
+      <!-- Details: -->
+      <div class="pr-6 pb-8 w-full">
+        <label class="block text-sm font-bold text-slate-900 dark:text-white mb-2">Details:</label>
+        
+        <div class="rich-editor-wrapper">
+          <div class="rich-editor-toolbar">
+            <button type="button" (click)="triggerMediaManager()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 cursor-pointer">
+              <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Add Media
+            </button>
+          </div>
+          <div class="editor-content-area">
+            <textarea id="knowledge-base-editor" class="w-full"></textarea>
+          </div>
+        </div>
+        <p *ngIf="hasError('details')" class="mt-1 text-xs text-red-600">Details is required</p>
+      </div>
     </div>
-    <button type="button" class="hd-btn-secondary" (click)="cancel()">Back</button>
-  </div>
 
-  <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+    <div *ngIf="error" class="px-8 pb-3 text-sm text-red-600">{{ error }}</div>
 
-  <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
-        <input type="text" class="hd-input" formControlName="title" />
-        <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-600">{{ 'Title' }} is required</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
-        <select class="hd-input" formControlName="type_id">
-          <option [ngValue]="null">None</option>
-          <option *ngFor="let opt of types" [ngValue]="opt.id || opt._id">{{ opt.name }}</option>
-        </select>
-
-      </div>
-
-      <div class="sm:col-span-2">
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Details</label>
-        <textarea class="hd-input min-h-[140px]" formControlName="details" rows="6"></textarea>
-        <p *ngIf="hasError('details')" class="mt-1 text-xs text-red-600">{{ 'Details' }} is required</p>
-      </div>
-    </div>
-
-    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
-
-    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
-      <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
-      <button type="submit" class="hd-btn-primary" [disabled]="loading">
-        {{ loading ? 'Saving…' : (isEditMode ? 'Update Article' : 'Create Article') }}
+    <!-- Footer with button -->
+    <div class="px-8 py-4 bg-gray-50 dark:bg-slate-900/40 border-t border-gray-100 dark:border-slate-700 flex justify-end items-center">
+      <button type="submit" [disabled]="loading"
+        class="px-6 py-3 rounded bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-bold whitespace-nowrap shadow transition-colors disabled:opacity-50">
+        {{ loading ? 'Saving…' : (isEditMode ? 'Update Knowledge Base' : 'Create Knowledge Base') }}
       </button>
     </div>
   </form>

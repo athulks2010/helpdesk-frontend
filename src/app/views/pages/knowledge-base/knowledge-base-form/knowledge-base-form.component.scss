@@ -1,0 +1,28 @@
+:host ::ng-deep {
+  .tox-tinymce {
+    border: none !important;
+    border-radius: 0 0 6px 6px !important;
+  }
+  .tox .tox-statusbar {
+    border-top: 1px solid #e2e8f0 !important;
+  }
+}
+
+.rich-editor-wrapper {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.rich-editor-toolbar {
+  padding: 8px 12px;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
