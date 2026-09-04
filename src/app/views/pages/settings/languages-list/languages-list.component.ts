@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
@@ -15,13 +16,28 @@ export class LanguagesListComponent implements OnInit {
   pageSize = 10;
   loading = true;
   error = '';
+  saving = false;
+  editingId: any = null;
+  form: FormGroup;
+
+  Math = Math;
+  currentPage = 1;
+  totalCount = 0;
+  totalPages = 1;
+  pages: number[] = [];
 
   constructor(
     private fb: FormBuilder,
     private settingService: SettingService,
-    private confirmService: ConfirmDialogService
-  ) { }
-  constructor(private settingService: SettingService, private router: Router) { }
+    private confirmService: ConfirmDialogService,
+    private router: Router
+  ) {
+    this.form = this.fb.group({
+      name: ['', Validators.required],
+      code: ['', Validators.required],
+      status: [1],
+    });
+  }
 
   ngOnInit(): void {
     this.load();
@@ -42,12 +58,6 @@ export class LanguagesListComponent implements OnInit {
       },
     });
   }
-
-  Math = Math;
-  currentPage = 1;
-  totalCount = 0;
-  totalPages = 1;
-  pages: number[] = [];
 
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
@@ -83,14 +93,39 @@ export class LanguagesListComponent implements OnInit {
     this.applyFilter();
   }
 
-  createNew(): void {
-    this.router.navigate(['/settings/languages/create']);
+  startCreate(): void {
+    this.editingId = null;
+    this.form.reset({ name: '', code: '', status: 1 });
   }
 
-  edit(row: any): void {
-    const id = row.id || row._id;
-    if (!id) return;
-    this.router.navigate(['/settings/languages', id, 'edit']);
+  startEdit(row: any): void {
+    this.editingId = row.id || row._id;
+    this.form.patchValue({
+      name: row.name || '',
+      code: row.code || '',
+      status: row.status ?? 1,
+    });
+  }
+
+  save(): void {
+    if (this.form.invalid) return;
+    this.saving = true;
+    const payload = this.form.value;
+    const req = this.editingId
+      ? this.settingService.updateLanguage({ id: this.editingId, ...payload })
+      : this.settingService.createLanguage(payload);
+    req.subscribe({
+      next: () => {
+        this.saving = false;
+        this.editingId = null;
+        this.form.reset({ name: '', code: '', status: 1 });
+        this.load();
+      },
+      error: () => {
+        this.saving = false;
+        this.error = 'Failed to save language';
+      },
+    });
   }
 
   async remove(row: any): Promise<void> {

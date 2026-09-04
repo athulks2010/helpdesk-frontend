@@ -14,6 +14,7 @@ import { EmailTemplatesListComponent } from './email-templates-list/email-templa
 import { EmailTemplateEditComponent } from './email-template-edit/email-template-edit.component';
 import { TicketFieldsBuilderComponent } from './ticket-fields-builder/ticket-fields-builder.component';
 import { LicenseComponent } from './license/license.component';
+import { LatestUpdateComponent } from './latest-update/latest-update.component';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import { LicenseComponent } from './license/license.component';
     EmailTemplateEditComponent,
     TicketFieldsBuilderComponent,
     LicenseComponent,
+    LatestUpdateComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, SettingsRoutingModule],
 })

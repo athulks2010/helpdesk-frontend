@@ -76,20 +76,6 @@ export class KnowledgeBaseListComponent implements OnInit {
 
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
-    let res = this.rows;
-    if (q) {
-      res = this.rows.filter((row) =>
-        JSON.stringify(row).toLowerCase().includes(q)
-      );
-    }
-    this.totalCount = res.length;
-    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = 1;
-    }
-    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
-    const start = (this.currentPage - 1) * Number(this.pageSize);
-    this.filtered = res.slice(start, start + Number(this.pageSize));
     let list = [...this.rows];
 
     if (this.typeFilter !== '' && this.typeFilter != null) {
@@ -103,10 +89,29 @@ export class KnowledgeBaseListComponent implements OnInit {
       list = list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
     }
 
-    this.filtered = list;
+    this.totalCount = list.length;
+    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const start = (this.currentPage - 1) * Number(this.pageSize);
+    this.filtered = list.slice(start, start + Number(this.pageSize));
   }
 
   onSearchChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
     this.applyFilter();
   }
 

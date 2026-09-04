@@ -62,7 +62,7 @@ export class MenusFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private settingService: SettingService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.entityId = this.route.snapshot.paramMap.get('id');

@@ -12,9 +12,13 @@ import { EmailTemplatesListComponent } from './email-templates-list/email-templa
 import { EmailTemplateEditComponent } from './email-template-edit/email-template-edit.component';
 import { TicketFieldsBuilderComponent } from './ticket-fields-builder/ticket-fields-builder.component';
 import { LicenseComponent } from './license/license.component';
+import { LatestUpdateComponent } from './latest-update/latest-update.component';
 
 const routes: Routes = [
-  { path: '', component: GlobalSettingsComponent },
+  { path: '', pathMatch: 'full', redirectTo: 'global' },
+  { path: 'global', component: GlobalSettingsComponent },
+  { path: 'latest-update', component: LatestUpdateComponent },
+  { path: 'updates', pathMatch: 'full', redirectTo: 'latest-update' },
   { path: 'smtp', component: SmtpSettingsComponent },
   { path: 'pusher', component: PusherSettingsComponent },
   { path: 'piping', component: PipingSettingsComponent },

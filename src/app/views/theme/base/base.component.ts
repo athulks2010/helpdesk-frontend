@@ -277,7 +277,7 @@ export class BaseComponent implements OnInit, OnDestroy {
 
   private buildConfigurationItems(): MenuItem[] {
     const settingSubmenus: SubMenuItem[] = [
-      { name: 'Global', path: '/settings', icon: 'global_setting', permission: 'global' },
+      { name: 'Global', path: '/settings/global', icon: 'global_setting', permission: 'global' },
       { name: 'Languages', path: '/settings/languages', icon: 'edit', permission: 'language' },
       { name: 'Navigation Menus', path: '/settings/menus', icon: 'page', permission: 'front_page' },
       { name: 'Custom fields', path: '/settings/ticket-fields', icon: 'form-builder', permission: 'global' },
@@ -293,7 +293,7 @@ export class BaseComponent implements OnInit, OnDestroy {
       { name: 'User Roles', path: '/roles', icon: 'user_role', adminOnly: true },
       { name: 'Ai Settings', path: '/ai', icon: 'settings', adminOnly: true },
       { name: 'License', path: '/settings/license', icon: 'user_role', adminOnly: true },
-      { name: 'Latest Updates', path: '/settings', icon: 'archive', adminOnly: true },
+      { name: 'Latest Updates', path: '/settings/latest-update', icon: 'archive', adminOnly: true },
     ].filter((sub) => this.isItemVisible(sub));
 
     if (settingSubmenus.length > 0) {
@@ -402,6 +402,7 @@ export class BaseComponent implements OnInit, OnDestroy {
 
     if (segment === 'settings') {
       const settingsPages: Record<string, string> = {
+        global: 'Global Settings',
         smtp: 'SMTP Settings',
         pusher: 'Pusher Settings',
         piping: 'Email Piping Settings',
@@ -410,9 +411,11 @@ export class BaseComponent implements OnInit, OnDestroy {
         'email-templates': 'Email Templates',
         'ticket-fields': 'Ticket Form Builder',
         license: 'License',
+        'latest-update': 'Latest Updates',
+        updates: 'Latest Updates',
       };
 
-      if (!parts[1]) {
+      if (!parts[1] || parts[1] === 'global') {
         this.setPage('Global Settings', [{ label: 'Global Settings' }]);
         return;
       }

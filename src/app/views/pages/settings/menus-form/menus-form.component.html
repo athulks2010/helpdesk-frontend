@@ -17,7 +17,8 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Internal route (recommended)</label>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Internal route
+          (recommended)</label>
         <select class="hd-input" formControlName="url" (change)="onRouteChange()">
           <option *ngFor="let opt of routes" [ngValue]="opt.value">{{ opt.label }}</option>
         </select>
@@ -25,14 +26,10 @@
 
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">External URL</label>
-        <input
-          type="url"
-          class="hd-input"
-          formControlName="external_url"
-          placeholder="https://example.com"
-          (input)="onExternalChange()"
-        />
-        <p class="mt-1 text-xs text-slate-500">Use this for links outside the app. If filled, it is used instead of the internal route.</p>
+        <input type="url" class="hd-input" formControlName="external_url" placeholder="https://example.com"
+          (input)="onExternalChange()" />
+        <p class="mt-1 text-xs text-slate-500">Use this for links outside the app. If filled, it is used instead of the
+          internal route.</p>
       </div>
 
       <div>
@@ -46,7 +43,8 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Show only when feature is enabled</label>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Show only when feature is
+          enabled</label>
         <select class="hd-input" formControlName="feature">
           <option *ngFor="let opt of features" [ngValue]="opt.value">{{ opt.label }}</option>
         </select>
@@ -72,7 +70,8 @@
 
     <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
 
-    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+    <div
+      class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
       <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
       <button type="submit" class="hd-btn-primary" [disabled]="loading">
         {{ loading ? 'Saving…' : (isEditMode ? 'Update Menu' : 'Create') }}

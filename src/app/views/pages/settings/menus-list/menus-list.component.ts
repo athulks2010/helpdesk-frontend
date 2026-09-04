@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
-import { FormBuilder } from '@angular/forms';
 
 @Component({
   selector: 'app-menus-list',
@@ -16,13 +15,19 @@ export class MenusListComponent implements OnInit {
   pageSize = 10;
   loading = true;
   error = '';
+  deletingId: any = null;
+
+  Math = Math;
+  currentPage = 1;
+  totalCount = 0;
+  totalPages = 1;
+  pages: number[] = [];
 
   constructor(
-    private fb: FormBuilder,
     private settingService: SettingService,
     private confirmService: ConfirmDialogService,
     private router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -36,6 +41,7 @@ export class MenusListComponent implements OnInit {
         this.rows = (Array.isArray(data) ? data : data?.items || data?.list || data?.data || []).sort(
           (a: any, b: any) => Number(a.order ?? a.sort_order ?? 0) - Number(b.order ?? b.sort_order ?? 0)
         );
+        this.applyFilter();
         this.loading = false;
       },
       error: () => {
@@ -45,13 +51,46 @@ export class MenusListComponent implements OnInit {
     });
   }
 
+  applyFilter(): void {
+    const q = (this.search || '').toLowerCase().trim();
+    let res = this.rows;
+    if (q) {
+      res = this.rows.filter((row) =>
+        JSON.stringify(row).toLowerCase().includes(q)
+      );
+    }
+    this.totalCount = res.length;
+    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const start = (this.currentPage - 1) * Number(this.pageSize);
+    this.filtered = res.slice(start, start + Number(this.pageSize));
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.applyFilter();
+  }
+
   createNew(): void {
     this.router.navigate(['/settings/menus/create']);
   }
 
   edit(row: any): void {
     const id = row.id || row._id;
-    if (!id) return;
     this.router.navigate(['/settings/menus', id, 'edit']);
   }
 
@@ -68,9 +107,16 @@ export class MenusListComponent implements OnInit {
     });
     if (!confirmed) return;
 
+    this.deletingId = id;
     this.settingService.deleteMenu(id).subscribe({
-      next: () => this.load(),
-      error: () => (this.error = 'Failed to delete menu item'),
+      next: () => {
+        this.deletingId = null;
+        this.load();
+      },
+      error: () => {
+        this.deletingId = null;
+        this.error = 'Failed to delete menu item';
+      },
     });
   }
 
