@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaqService } from '../../../../core/faq/_services/faq.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-faqs-list',
@@ -17,7 +18,8 @@ export class FaqsListComponent implements OnInit {
 
   constructor(
     private service: FaqService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class FaqsListComponent implements OnInit {
     this.router.navigate(['/faqs', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this faq? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.question || row.title || 'this faq';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete FAQ',
+      message: 'Are you sure you want to delete this faq? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete FAQ',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

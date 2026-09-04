@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../../../../core/user/_services/user.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-pending-users-list',
@@ -14,7 +15,10 @@ export class PendingUsersListComponent implements OnInit {
   search = '';
   actionId: string | number | null = null;
 
-  constructor(private service: UserService) {}
+  constructor(
+    private service: UserService,
+    private confirmService: ConfirmDialogService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -86,12 +90,19 @@ export class PendingUsersListComponent implements OnInit {
     return row?.id || row?._id || null;
   }
 
-  approve(row: any): void {
+  async approve(row: any): Promise<void> {
     const id = this.rowId(row);
     if (!id) return;
-    if (!confirm(`Approve pending user "${this.displayName(row)}"?`)) {
-      return;
-    }
+    const name = this.displayName(row);
+    const confirmed = await this.confirmService.confirm({
+      title: 'Approve Pending User',
+      message: `Are you sure you want to approve pending user "${name}"?`,
+      itemName: `${name}`,
+      confirmText: 'Approve User',
+      type: 'info',
+    });
+    if (!confirmed) return;
+
     this.actionId = id;
     this.service.approvePending(id).subscribe({
       next: () => {
@@ -105,12 +116,19 @@ export class PendingUsersListComponent implements OnInit {
     });
   }
 
-  decline(row: any): void {
+  async decline(row: any): Promise<void> {
     const id = this.rowId(row);
     if (!id) return;
-    if (!confirm(`Decline pending user "${this.displayName(row)}"? This cannot be undone.`)) {
-      return;
-    }
+    const name = this.displayName(row);
+    const confirmed = await this.confirmService.confirm({
+      title: 'Decline Pending User',
+      message: `Are you sure you want to decline pending user "${name}"? This cannot be undone.`,
+      itemName: `${name}`,
+      confirmText: 'Decline User',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.actionId = id;
     this.service.declinePending(id).subscribe({
       next: () => {

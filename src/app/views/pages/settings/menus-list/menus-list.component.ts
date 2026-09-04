@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-menus-list',
@@ -18,7 +19,11 @@ export class MenusListComponent implements OnInit {
   editingId: string | number | null = null;
   form!: FormGroup;
 
-  constructor(private fb: FormBuilder, private settingService: SettingService) {}
+  constructor(
+    private fb: FormBuilder,
+    private settingService: SettingService,
+    private confirmService: ConfirmDialogService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -145,9 +150,19 @@ export class MenusListComponent implements OnInit {
     });
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
-    if (!id || !confirm('Delete this menu item?')) return;
+    if (!id) return;
+    const name = row.label || row.name || 'this menu item';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Menu Item',
+      message: 'Are you sure you want to delete this menu item?',
+      itemName: `${name}`,
+      confirmText: 'Delete Menu Item',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.settingService.deleteMenu(id).subscribe({
       next: () => this.load(),
       error: () => (this.error = 'Failed to delete menu item'),

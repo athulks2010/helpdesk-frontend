@@ -12,6 +12,7 @@ import { ConversationService } from '../../../../core/conversation/_services/con
 import { PusherService } from '../../../../core/realtime/pusher.service';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { UserService } from '../../../../core/user/_services/user.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-chat-list',
@@ -76,7 +77,8 @@ export class ChatListComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private zone: NgZone,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -424,10 +426,19 @@ export class ChatListComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteSelected(): void {
+  async deleteSelected(): Promise<void> {
     if (!this.selected) return;
     const id = this.selected.id ?? this.selected._id;
-    if (!confirm('Delete this conversation?')) return;
+    const name = this.selected.subject || this.selected.title || 'this conversation';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Conversation',
+      message: 'Are you sure you want to delete this conversation? This action cannot be undone.',
+      itemName: `${name}`,
+      confirmText: 'Delete Conversation',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.service.deleteConversation(id).subscribe({
       next: () => {
         this.teardownRealtime();

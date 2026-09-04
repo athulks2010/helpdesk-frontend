@@ -5,6 +5,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-ticket-list',
@@ -76,6 +77,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
     private ticketService: TicketService,
     private authService: AuthService,
     private settingService: SettingService,
+    private confirmService: ConfirmDialogService,
     private router: Router,
     private host: ElementRef<HTMLElement>
   ) {}
@@ -409,9 +411,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/tickets', row.id, 'edit']);
   }
 
-  deleteTicket(row: any, e: Event): void {
+  async deleteTicket(row: any, e: Event): Promise<void> {
     e.stopPropagation();
-    if (!confirm('Delete this ticket?')) return;
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Ticket',
+      message: 'Are you sure you want to delete this ticket? This action cannot be undone.',
+      itemName: this.ticketKey(row) ? `${this.ticketKey(row)}: ${row.subject}` : row.subject,
+      confirmText: 'Delete Ticket',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.ticketService.deleteTicket(row.id).subscribe({
       next: () => {
         this.allTickets = this.allTickets.filter((t) => t.id !== row.id);

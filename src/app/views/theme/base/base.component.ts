@@ -376,7 +376,7 @@ export class BaseComponent implements OnInit, OnDestroy {
       faqs: { title: 'FAQs', singular: 'FAQ', path: '/faqs' },
       blogs: { title: 'Blog Posts', singular: 'blog post', path: '/blogs' },
       'admin-services': { title: 'Services', singular: 'service', path: '/admin-services' },
-      services: { title: 'Services', singular: 'service', path: '/services' },
+      services: { title: 'Services', singular: 'service', path: '/admin-services' },
       departments: { title: 'Departments', singular: 'department', path: '/departments' },
       categories: { title: 'Categories', singular: 'category', path: '/categories' },
       statuses: { title: 'Statuses', singular: 'status', path: '/statuses' },

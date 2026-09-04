@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogService } from '../../../../core/blog/_services/blog.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-blogs-list',
@@ -17,7 +18,8 @@ export class BlogsListComponent implements OnInit {
 
   constructor(
     private service: BlogService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class BlogsListComponent implements OnInit {
     this.router.navigate(['/blogs', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this blog post? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.title || row.name || 'this blog post';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Blog Post',
+      message: 'Are you sure you want to delete this blog post? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete Blog Post',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

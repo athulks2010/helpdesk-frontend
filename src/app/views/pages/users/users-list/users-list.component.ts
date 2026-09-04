@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserService } from '../../../../core/user/_services/user.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-users-list',
@@ -17,7 +18,8 @@ export class UsersListComponent implements OnInit {
 
   constructor(
     private service: UserService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class UsersListComponent implements OnInit {
     this.router.navigate(['/users', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this user? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.name || row.title || row.email || 'this user';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete User',
+      message: 'Are you sure you want to delete this user? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete User',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteUser(id).subscribe({
       next: () => {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContactService } from '../../../../core/contact/_services/contact.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-contacts-list',
@@ -17,7 +18,8 @@ export class ContactsListComponent implements OnInit {
 
   constructor(
     private service: ContactService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class ContactsListComponent implements OnInit {
     this.router.navigate(['/contacts', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this contact? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.name || row.title || row.email || 'this contact';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Contact',
+      message: 'Are you sure you want to delete this contact? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete Contact',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteContact(id).subscribe({
       next: () => {

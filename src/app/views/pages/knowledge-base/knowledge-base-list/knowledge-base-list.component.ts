@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/knowledge-base.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-knowledge-base-list',
@@ -17,7 +18,8 @@ export class KnowledgeBaseListComponent implements OnInit {
 
   constructor(
     private service: KnowledgeBaseService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class KnowledgeBaseListComponent implements OnInit {
     this.router.navigate(['/knowledge-base', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this article? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.name || row.title || 'this article';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Article',
+      message: 'Are you sure you want to delete this article? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete Article',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

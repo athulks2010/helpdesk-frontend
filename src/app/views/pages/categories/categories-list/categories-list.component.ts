@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CategoryService } from '../../../../core/category/_services/category.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-categories-list',
@@ -17,7 +18,8 @@ export class CategoriesListComponent implements OnInit {
 
   constructor(
     private service: CategoryService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class CategoriesListComponent implements OnInit {
     this.router.navigate(['/categories', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this category? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.name || row.title || 'this category';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete this category? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete Category',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

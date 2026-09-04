@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-languages-list',
@@ -18,7 +19,11 @@ export class LanguagesListComponent implements OnInit {
   editingId: string | number | null = null;
   form!: FormGroup;
 
-  constructor(private fb: FormBuilder, private settingService: SettingService) {}
+  constructor(
+    private fb: FormBuilder,
+    private settingService: SettingService,
+    private confirmService: ConfirmDialogService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -126,9 +131,19 @@ export class LanguagesListComponent implements OnInit {
     });
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
-    if (!id || !confirm('Delete this language?')) return;
+    if (!id) return;
+    const name = row.name || row.code || 'this language';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Language',
+      message: 'Are you sure you want to delete this language?',
+      itemName: `${name}`,
+      confirmText: 'Delete Language',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.settingService.deleteLanguage(id).subscribe({
       next: () => this.load(),
       error: () => (this.error = 'Failed to delete language'),

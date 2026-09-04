@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { RoleService } from '../../../../core/role/_services/role.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-roles-list',
@@ -17,7 +18,8 @@ export class RolesListComponent implements OnInit {
 
   constructor(
     private service: RoleService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,12 +92,19 @@ export class RolesListComponent implements OnInit {
     this.router.navigate(['/roles', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm(`Delete role "${row.name || id}"? This action cannot be undone.`)) {
-      return;
-    }
+    const name = row.name || id;
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Role',
+      message: `Are you sure you want to delete role "${name}"? This action cannot be undone.`,
+      itemName: `${name}`,
+      confirmText: 'Delete Role',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

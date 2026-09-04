@@ -1,16 +1,4 @@
 <div class="space-y-8 animate-fade-in">
-  <!-- Header Banner -->
-  <div class="flex justify-end">
-    <button
-      type="button"
-      (click)="loadDashboardData()"
-      [disabled]="loading"
-      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 self-start sm:self-auto disabled:opacity-50"
-    >
-      <hd-icon name="archive" class="w-4 h-4" [class.animate-spin]="loading"></hd-icon>
-      <span>Refresh Data</span>
-    </button>
-  </div>
 
   <!-- Loading State Banner -->
   <div *ngIf="loading && !total_tickets" class="p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 text-center">

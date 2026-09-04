@@ -20,9 +20,6 @@
         <button type="submit" class="hd-btn-primary" [disabled]="generating">
           {{ generating ? 'Generating…' : 'Generate' }}
         </button>
-        <button type="button" class="hd-btn-secondary" (click)="loadResults(lastReportId || undefined)" [disabled]="loading">
-          Refresh
-        </button>
       </div>
     </div>
   </form>

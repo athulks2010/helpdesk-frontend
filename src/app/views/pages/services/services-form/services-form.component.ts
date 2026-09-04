@@ -87,7 +87,7 @@ export class ServicesFormComponent implements OnInit {
     req$.subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigate(['/services']);
+        this.router.navigate(['/admin-services']);
       },
       error: (err) => {
         this.loading = false;
@@ -97,7 +97,7 @@ export class ServicesFormComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/services']);
+    this.router.navigate(['/admin-services']);
   }
 
   hasError(control: string): boolean {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-ticket-fields-builder',
@@ -16,7 +17,11 @@ export class TicketFieldsBuilderComponent implements OnInit {
 
   readonly fieldTypes = ['text', 'textarea', 'select', 'checkbox', 'number', 'date'];
 
-  constructor(private fb: FormBuilder, private settingService: SettingService) {}
+  constructor(
+    private fb: FormBuilder,
+    private settingService: SettingService,
+    private confirmService: ConfirmDialogService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -81,9 +86,19 @@ export class TicketFieldsBuilderComponent implements OnInit {
       });
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
-    if (!id || !confirm('Delete this custom field?')) return;
+    if (!id) return;
+    const name = row.label || row.name || 'this custom field';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Custom Field',
+      message: 'Are you sure you want to delete this custom field? This may affect tickets using it.',
+      itemName: `${name}`,
+      confirmText: 'Delete Field',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.settingService.deleteTicketField(id).subscribe({
       next: () => this.load(),
       error: () => (this.error = 'Failed to delete field'),
