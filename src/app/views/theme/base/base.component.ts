@@ -88,7 +88,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     private router: Router,
     private notificationService: NotificationService,
     public settingService: SettingService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.currentUser$ = this.auth.currentUser$;
@@ -101,7 +101,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     }
 
     this.settingService.loadBrandSettings();
-    this.settingService.getAll({}).subscribe({ error: () => {} });
+    this.settingService.getAll({}).subscribe({ error: () => { } });
     this.settingsSub = this.settingService.settings$.subscribe(() => {
       this.logoFailed = false;
     });
@@ -184,7 +184,7 @@ export class BaseComponent implements OnInit, OnDestroy {
    * Checks user.access[module][action] or parsed role.access
    */
   hasAccess(module: string, action: 'read' | 'create' | 'update' | 'delete' = 'read'): boolean {
-    if (!this.currentUser) return false; 
+    if (!this.currentUser) return false;
 
     const role = this.currentUser.role;
     const roleSlug = typeof role === 'string' ? role : role?.slug;
@@ -261,8 +261,8 @@ export class BaseComponent implements OnInit, OnDestroy {
           { name: 'Organizations', path: '/organizations', icon: 'office', permission: 'organization', optionSlug: 'organization' },
           { name: 'Notes', path: '/notes', icon: 'notes', optionSlug: 'note' },
           { name: 'Manage Users', path: '/users', icon: 'users', permission: 'user' },
-          { name: 'Pending Users', path: '/pending-users', icon: 'users', permission: 'user', adminOnly: true },
-          { name: 'Reports', path: '/reports', icon: 'dashboard', permission: 'global' },
+          // { name: 'Pending Users', path: '/pending-users', icon: 'users', permission: 'user', adminOnly: true },
+          // { name: 'Reports', path: '/reports', icon: 'dashboard', permission: 'global' },
         ].filter((item) => this.isItemVisible(item)),
       },
       {
