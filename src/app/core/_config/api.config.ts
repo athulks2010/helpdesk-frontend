@@ -216,7 +216,7 @@ export const apiUrl = {
   ticketFieldDelete: '/ticket-field/delete',
 
   /* Pending users */
-  pendingUsersAll: '/user/pending/all',
+  pendingUsersAll: '/user/pending',
   pendingUserApprove: '/user/pending/approve',
   pendingUserDecline: '/user/pending/decline',
 

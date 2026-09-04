@@ -1,6 +1,45 @@
-<div class="p-6 h-[calc(100vh-4rem)] flex flex-col">
-  <div class="mb-4 flex items-center justify-end gap-4">
-    <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
+<div class="p-6 h-[calc(100vh-4rem)] flex flex-col space-y-4">
+  <!-- ─── Page Header ─── -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <div
+          class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <span
+          class="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center px-1 ring-2 ring-white shadow">
+          {{ rows.length }}
+        </span>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Live Chat</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real-time messaging, client support and internal team conversations</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button type="button" (click)="load()"
+        class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </button>
+
+      <button type="button" (click)="openCreate()"
+        class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/20 hover:shadow-blue-500/40 transition-all hover:scale-105">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        New Conversation
+      </button>
+    </div>
   </div>
 
   <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading…</div>

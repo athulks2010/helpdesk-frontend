@@ -1,79 +1,187 @@
+<!-- ===== PENDING USERS LIST PAGE ===== -->
 <div class="space-y-6">
-  <div class="flex items-center justify-end gap-2">
-    <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
-  </div>
 
-  <div class="hd-card p-4">
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-      <div class="relative flex-1">
-        <input
-          type="search"
-          class="hd-input pl-10"
-          placeholder="Search pending users..."
-          [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()"
-        />
-        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+  <!-- ─── Page Header ─── -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <div
+          class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        </div>
+        <span
+          class="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center px-1 ring-2 ring-white shadow">
+          {{ rows.length }}
+        </span>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Pending Registrations</h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Review and approve new account registration requests</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button type="button" (click)="load()"
+        class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
-      </div>
-      <div class="text-sm text-slate-500 whitespace-nowrap">
-        Total: {{ rows.length }} · Showing: {{ filtered.length }}
-      </div>
+        Refresh
+      </button>
     </div>
   </div>
 
-  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">
-    <div class="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-    <p>Loading pending users…</p>
-  </div>
+  <!-- ─── Table Container & Filter Card ─── -->
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+    
+    <!-- Search Bar & Counter -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-100 dark:border-slate-700">
+      <div class="relative flex-1 max-w-md">
+        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()"
+          placeholder="Search pending users..."
+          class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 placeholder-slate-400" />
+      </div>
+      <div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 shrink-0">
+        <span class="font-medium">Show</span>
+        <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()"
+          class="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-200 cursor-pointer">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+    </div>
 
-  <div *ngIf="!loading && error" class="hd-card p-8 text-center text-red-600">{{ error }}</div>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="p-12 text-center">
+      <div class="inline-block w-8 h-8 border-3 border-amber-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Loading pending user requests...</p>
+    </div>
 
-  <div *ngIf="!loading && !error" class="hd-table-wrap">
-    <div class="overflow-x-auto">
-      <table class="hd-table">
+    <!-- Error State -->
+    <div *ngIf="!loading && error" class="p-8 text-center bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-medium text-sm">
+      {{ error }}
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!loading && !error" class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
         <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>City</th>
-            <th>Address</th>
-            <th>Created</th>
-            <th class="text-right">Actions</th>
+          <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <th class="px-6 py-3.5">Applicant Name</th>
+            <th class="px-6 py-3.5">Email</th>
+            <th class="px-6 py-3.5">Phone</th>
+            <th class="px-6 py-3.5">City</th>
+            <th class="px-6 py-3.5">Requested Date</th>
+            <th class="px-6 py-3.5 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-          <tr *ngFor="let row of filtered">
-            <td class="font-medium text-slate-900 dark:text-white">{{ displayName(row) }}</td>
-            <td>{{ row.email || '—' }}</td>
-            <td>{{ row.phone || '—' }}</td>
-            <td>{{ row.city || '—' }}</td>
-            <td class="max-w-xs truncate">{{ row.address || '—' }}</td>
-            <td>{{ formatDate(row.created_at) }}</td>
-            <td class="text-right whitespace-nowrap">
-              <button
-                type="button"
-                class="text-green-600 hover:text-green-800 text-sm font-medium mr-3 disabled:opacity-50"
-                [disabled]="actionId === rowId(row)"
-                (click)="approve(row)"
-              >Approve</button>
-              <button
-                type="button"
-                class="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
-                [disabled]="actionId === rowId(row)"
-                (click)="decline(row)"
-              >Decline</button>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 text-sm">
+          <tr *ngFor="let row of filtered" class="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition-colors">
+            <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold flex items-center justify-center text-xs shadow-inner shrink-0">
+                  {{ displayName(row)?.[0] || 'P' }}
+                </div>
+                <div>
+                  <div class="font-bold text-slate-800 dark:text-slate-100">
+                    {{ displayName(row) }}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+              {{ row.email || '—' }}
+            </td>
+            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+              {{ row.phone || '—' }}
+            </td>
+            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
+              {{ row.city || '—' }}
+            </td>
+            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-medium whitespace-nowrap">
+              {{ formatDate(row.created_at) }}
+            </td>
+            <td class="px-6 py-4 text-right whitespace-nowrap">
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button" (click)="approve(row)" title="Approve user"
+                  [disabled]="actionId === rowId(row)"
+                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Approve
+                </button>
+                <button type="button" (click)="decline(row)" title="Decline user"
+                  [disabled]="actionId === rowId(row)"
+                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Decline
+                </button>
+              </div>
             </td>
           </tr>
+
+          <!-- Empty State -->
           <tr *ngIf="!filtered.length">
-            <td colspan="7" class="px-4 py-10 text-center text-slate-500">
-              No pending users found.
+            <td colspan="6" class="py-16 text-center">
+              <div class="flex flex-col items-center gap-3">
+                <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-base font-bold text-slate-800 dark:text-slate-200">No pending requests</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">All registration requests have been reviewed.</p>
+                </div>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- ─── Pagination ─── -->
+    <div *ngIf="!loading && totalCount > 0"
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-700">
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Showing {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }} pending users
+      </p>
+      <div class="flex items-center gap-1">
+        <button type="button" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1"
+          class="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <ng-container *ngFor="let p of pages">
+          <button type="button" (click)="goToPage(p)"
+            class="flex items-center justify-center min-w-[32px] h-8 px-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            [class.bg-blue-600]="p === currentPage" [class.text-white]="p === currentPage" [class.border-blue-600]="p === currentPage"
+            *ngIf="p <= 5 || p === totalPages || Math.abs(p - currentPage) <= 2">
+            {{ p }}
+          </button>
+          <span *ngIf="p === 6 && currentPage < 4 && totalPages > 7" class="px-1 text-slate-400">…</span>
+        </ng-container>
+        <button type="button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+          class="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </div>
