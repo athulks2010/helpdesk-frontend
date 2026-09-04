@@ -56,12 +56,12 @@ export class ServicesListComponent implements OnInit {
   }
 
   createNew(): void {
-    this.router.navigate(['/services/create']);
+    this.router.navigate(['/admin-services/create']);
   }
 
   edit(row: any): void {
     const id = row.id || row._id;
-    this.router.navigate(['/services', id, 'edit']);
+    this.router.navigate(['/admin-services', id, 'edit']);
   }
 
   remove(row: any): void {

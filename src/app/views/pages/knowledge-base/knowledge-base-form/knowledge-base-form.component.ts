@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/knowledge-base.service';
@@ -53,12 +53,15 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
   editorInstance: any = null;
   deleting = false;
 
+  private pendingDetails = '';
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private service: KnowledgeBaseService,
-    private typeService: TypeService
+    private typeService: TypeService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -79,18 +82,22 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
       this.service.getById(this.entityId).subscribe({
         next: (res) => {
           const item = res?.data ?? res?.item ?? res;
+          const details = item?.details ?? item?.content ?? item?.description ?? '';
+          this.pendingDetails = details;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
             title: item.title ?? '',
             type_id: item.type_id ?? item.type?.id ?? item.type?._id ?? null,
-            details: item.details ?? '',
+            details,
           });
           this.loadingData = false;
+          this.cdr.detectChanges();
           setTimeout(() => this.initEditor(), 0);
         },
         error: () => {
           this.error = 'Failed to load article';
           this.loadingData = false;
+          this.cdr.detectChanges();
           setTimeout(() => this.initEditor(), 0);
         },
       });
@@ -104,14 +111,19 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
   }
 
   initEditor(): void {
-    if (!document.getElementById('knowledge-base-editor')) {
+    const el = document.getElementById('knowledge-base-editor') as HTMLTextAreaElement | null;
+    if (!el) {
       return;
     }
-    if (this.editorInstance) {
-      try {
-        this.editorInstance.destroy();
-      } catch {}
-      this.editorInstance = null;
+
+    try {
+      tinymce.remove('#knowledge-base-editor');
+    } catch {}
+    this.editorInstance = null;
+
+    const initialContent = this.pendingDetails || this.form.get('details')?.value || '';
+    if (initialContent) {
+      el.value = initialContent;
     }
 
     tinymce.init({
@@ -141,13 +153,15 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
       setup: (editor: any) => {
         this.editorInstance = editor;
         editor.on('init', () => {
-          if (this.form.get('details')?.value) {
-            editor.setContent(this.form.get('details')?.value || '');
+          const content = this.pendingDetails || this.form.get('details')?.value || '';
+          if (content) {
+            editor.setContent(content);
           }
         });
-        editor.on('input change undo redo SetContent keyup', () => {
+        editor.on('input change undo redo keyup', () => {
           const val = editor.getContent();
           this.form.patchValue({ details: val }, { emitEvent: false });
+          this.pendingDetails = val;
         });
       },
     });
@@ -224,11 +238,9 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngOnDestroy(): void {
-    if (this.editorInstance) {
-      try {
-        this.editorInstance.destroy();
-      } catch {}
-      this.editorInstance = null;
-    }
+    try {
+      tinymce.remove('#knowledge-base-editor');
+    } catch {}
+    this.editorInstance = null;
   }
 }

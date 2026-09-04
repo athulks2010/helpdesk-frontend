@@ -16,6 +16,7 @@ export class FaqsFormComponent implements OnInit {
   error = '';
   isEditMode = false;
   entityId: string | null = null;
+  deleting = false;
 
 
   constructor(
@@ -94,6 +95,25 @@ export class FaqsFormComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/faqs']);
+  }
+
+  remove(): void {
+    if (!this.entityId) return;
+    if (!confirm('Delete this FAQ? This can usually be restored from the API if soft-delete is enabled.')) {
+      return;
+    }
+    this.deleting = true;
+    this.error = '';
+    this.service.deleteById(this.entityId).subscribe({
+      next: () => {
+        this.deleting = false;
+        this.router.navigate(['/faqs']);
+      },
+      error: (err) => {
+        this.deleting = false;
+        this.error = err?.error?.message || err?.message || 'Failed to delete FAQ';
+      },
+    });
   }
 
   hasError(control: string): boolean {
