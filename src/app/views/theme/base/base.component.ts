@@ -416,6 +416,24 @@ export class BaseComponent implements OnInit, OnDestroy {
         return;
       }
 
+      if (parts[1] === 'menus' && parts[2] === 'create') {
+        this.setPage('Create a new menu item', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Navigation Menus', path: '/settings/menus' },
+          { label: 'Create a new menu item' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'menus' && parts[3] === 'edit') {
+        this.setPage('Edit menu item', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Navigation Menus', path: '/settings/menus' },
+          { label: 'Edit menu item' },
+        ]);
+        return;
+      }
+
       const nestedTitle = settingsPages[parts[1]] || 'Settings';
       this.setPage(nestedTitle, [
         { label: 'Settings', path: '/settings' },

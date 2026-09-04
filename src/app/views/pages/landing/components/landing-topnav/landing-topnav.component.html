@@ -24,15 +24,27 @@
 
       <!-- Desktop Navigation Menu -->
       <nav class="hidden lg:flex items-center gap-1 xl:gap-2">
-        <a
-          *ngFor="let item of navItems"
-          [routerLink]="item.route"
-          [routerLinkActiveOptions]="{ exact: !!item.exact }"
-          routerLinkActive="!bg-primary/10 !text-primary shadow-sm"
-          class="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-slate-700 hover:text-primary hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          {{ item.label }}
-        </a>
+        <ng-container *ngFor="let item of navItems">
+          <a
+            *ngIf="!item.external"
+            [routerLink]="item.route"
+            [target]="item.target === '_blank' ? '_blank' : '_self'"
+            [routerLinkActiveOptions]="{ exact: !!item.exact }"
+            routerLinkActive="!bg-primary/10 !text-primary shadow-sm"
+            class="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-slate-700 hover:text-primary hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {{ item.label }}
+          </a>
+          <a
+            *ngIf="item.external"
+            [href]="item.route"
+            [target]="item.target || '_blank'"
+            rel="noopener noreferrer"
+            class="px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-slate-700 hover:text-primary hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {{ item.label }}
+          </a>
+        </ng-container>
 
         <!-- Submit Ticket Highlight Button -->
         <a
@@ -196,16 +208,29 @@
 
       <!-- Mobile Navigation Links -->
       <nav class="py-6 space-y-1">
-        <a
-          *ngFor="let item of navItems"
-          [routerLink]="item.route"
-          [routerLinkActiveOptions]="{ exact: !!item.exact }"
-          routerLinkActive="bg-primary/10 text-primary font-semibold"
-          (click)="closeMobileMenu()"
-          class="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-        >
-          {{ item.label }}
-        </a>
+        <ng-container *ngFor="let item of navItems">
+          <a
+            *ngIf="!item.external"
+            [routerLink]="item.route"
+            [target]="item.target === '_blank' ? '_blank' : '_self'"
+            [routerLinkActiveOptions]="{ exact: !!item.exact }"
+            routerLinkActive="bg-primary/10 text-primary font-semibold"
+            (click)="closeMobileMenu()"
+            class="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            {{ item.label }}
+          </a>
+          <a
+            *ngIf="item.external"
+            [href]="item.route"
+            [target]="item.target || '_blank'"
+            rel="noopener noreferrer"
+            (click)="closeMobileMenu()"
+            class="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            {{ item.label }}
+          </a>
+        </ng-container>
 
         <a
           routerLink="/ticket/open"

@@ -100,7 +100,11 @@ export class SettingService extends ApiBaseService {
   }
 
   getMenus(params?: Record<string, any>): Observable<any> {
-    return this.getCollection(apiUrl.menusAll, params);
+    return this.getCollection(apiUrl.menusAll, {
+      pageNumber: 1,
+      pageSize: 10000000,
+      ...(params || {}),
+    });
   }
 
   createMenu(body: any): Observable<any> {

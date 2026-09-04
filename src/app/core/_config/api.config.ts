@@ -174,12 +174,12 @@ export const apiUrl = {
   languageDelete: '/language/delete',
 
   /* Navigation Menus */
-  menus: '/menu',
-  menusAll: '/menu/all',
-  menuCreate: '/menu/create',
-  menuUpdate: '/menu/update',
-  menuDelete: '/menu/delete',
-  menuReorder: '/menu/reorder',
+  menus: '/navigation-menu',
+  menusAll: '/navigation-menu/all',
+  menuCreate: '/navigation-menu/create',
+  menuUpdate: '/navigation-menu/update',
+  menuDelete: '/navigation-menu/delete',
+  menuReorder: '/navigation-menu/reorder',
 
   /* Email Templates */
   emailTemplates: '/email-template',

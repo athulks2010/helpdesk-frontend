@@ -9,6 +9,7 @@ import { PipingSettingsComponent } from './piping-settings/piping-settings.compo
 import { LanguagesListComponent } from './languages-list/languages-list.component';
 import { LanguagesFormComponent } from './languages-form/languages-form.component';
 import { MenusListComponent } from './menus-list/menus-list.component';
+import { MenusFormComponent } from './menus-form/menus-form.component';
 import { EmailTemplatesListComponent } from './email-templates-list/email-templates-list.component';
 import { EmailTemplateEditComponent } from './email-template-edit/email-template-edit.component';
 import { TicketFieldsBuilderComponent } from './ticket-fields-builder/ticket-fields-builder.component';
@@ -23,6 +24,7 @@ import { LicenseComponent } from './license/license.component';
     LanguagesListComponent,
     LanguagesFormComponent,
     MenusListComponent,
+    MenusFormComponent,
     EmailTemplatesListComponent,
     EmailTemplateEditComponent,
     TicketFieldsBuilderComponent,
