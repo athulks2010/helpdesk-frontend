@@ -1,42 +1,12 @@
-<div *ngIf="loadingData"
-  class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-10 text-center text-slate-500">
-  Loading…
-</div>
+<div class="space-y-6">
+  <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
-<!-- Form card -->
-<form *ngIf="!loadingData" [formGroup]="form" (ngSubmit)="submit()"
-  class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-    <div class="p-6 sm:p-8 space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <!-- Article Title -->
-        <div class="lg:col-span-2">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Article Title</label>
-          <input type="text" formControlName="title" placeholder="Enter article title"
-            class="w-full px-4 py-2.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            [class.border-red-500]="hasError('title')" />
-          <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-600">Article Title is required</p>
-        </div>
-
-        <!-- Article Type -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Article Type <span class="text-red-500">*</span>
-          </label>
-          <div class="relative">
-            <select formControlName="type_id"
-              class="w-full px-4 py-2.5 pr-10 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer"
-              [class.border-red-500]="hasError('type_id')">
-              <option [ngValue]="null">Select type</option>
-              <option *ngFor="let s of types" [ngValue]="s.id || s._id">{{ s.name }}</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          <p *ngIf="hasError('type_id')" class="mt-1 text-xs text-red-600">Article Type is required</p>
-        </div>
+  <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
+        <input type="text" class="hd-input" formControlName="title" />
+        <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-600">{{ 'Title' }} is required</p>
       </div>
 
       <!-- Article Content -->

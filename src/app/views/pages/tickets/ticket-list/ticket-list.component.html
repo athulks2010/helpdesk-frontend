@@ -2,9 +2,7 @@
 <div class="space-y-6">
 
   <!-- ─── Page Header ─── -->
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-    <div class="flex items-center gap-4">
-      <!-- Icon badge -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="relative">
         <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
           <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,11 +14,6 @@
           {{ totalCount }}
         </span>
       </div>
-      <div>
-        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Tickets</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage and track support tickets efficiently</p>
-      </div>
-    </div>
 
     <!-- View toggle + Actions -->
     <div class="flex items-center gap-2 flex-wrap">
@@ -172,15 +165,56 @@
     <!-- Advanced Filters -->
     <div class="p-4 space-y-4">
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <!-- Client -->
-        <div>
+        <!-- Client autocomplete → filter by user_id (ticket owners only) -->
+        <div *ngIf="showClientFilter" class="relative" data-client-filter>
           <label class="filter-label">Client</label>
           <div class="relative">
-            <input type="text" [(ngModel)]="filters.clientSearch" (ngModelChange)="onFilterChange()"
-              placeholder="Client" class="filter-input pl-3 pr-8"/>
-            <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <input
+              type="text"
+              [ngModel]="clientQuery"
+              (ngModelChange)="onClientInput($event)"
+              (focus)="onClientFocus()"
+              placeholder="Client"
+              autocomplete="off"
+              class="filter-input pl-3 pr-8"
+            />
+            <button
+              *ngIf="clientQuery || selectedClient"
+              type="button"
+              (click)="clearClient($event)"
+              class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              aria-label="Clear client"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+            <svg
+              *ngIf="!clientQuery && !selectedClient"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
+
+            <div
+              *ngIf="showClientDropdown"
+              class="absolute z-30 left-0 right-0 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 shadow-lg"
+            >
+              <div *ngIf="clientLoading" class="px-3 py-2 text-xs text-slate-500">Loading…</div>
+              <button
+                *ngFor="let c of clients"
+                type="button"
+                (click)="selectClient(c)"
+                class="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                [ngClass]="selectedClient?.id === c.id ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
+              >
+                {{ c.name }}
+              </button>
+              <div *ngIf="!clientLoading && clients.length === 0" class="px-3 py-2 text-xs text-slate-500">
+                No clients found
+              </div>
+            </div>
           </div>
         </div>
 

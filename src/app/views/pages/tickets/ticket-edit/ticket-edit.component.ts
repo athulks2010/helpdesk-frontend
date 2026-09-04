@@ -43,15 +43,15 @@ export class TicketEditComponent implements OnInit {
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id') || '';
     this.form = this.fb.group({
-      id: [this.id],
-      user_id: [null, Validators.required],
-      priority_id: [null, Validators.required],
-      status_id: [null],
-      type_id: [null],
-      department_id: [null],
-      assigned_to: [null],
+      id: [Number(this.id) || 0],
+      user_id: [0],
+      priority_id: [0],
+      status_id: [0],
+      type_id: [0],
+      department_id: [0],
+      assigned_to: [0],
       subject: ['', Validators.required],
-      details: [''],
+      body: ['', Validators.required],
     });
 
     this.loadData();
@@ -72,15 +72,15 @@ export class TicketEditComponent implements OnInit {
           const t = res?.ticket || res;
           if (t) {
             this.form.patchValue({
-              id: t.id || this.id,
-              user_id: t.user_id || t.user?.id || null,
-              priority_id: t.priority_id || t.priority?.id || null,
-              status_id: t.status_id || t.status?.id || null,
-              type_id: t.type_id || t.type?.id || null,
-              department_id: t.department_id || t.department?.id || null,
-              assigned_to: t.assigned_to || t.assignee?.id || null,
+              id: Number(t.id || this.id) || 0,
+              user_id: Number(t.user_id || t.user?.id) || 0,
+              priority_id: Number(t.priority_id || t.priority?.id) || 0,
+              status_id: Number(t.status_id || t.status?.id) || 0,
+              type_id: Number(t.type_id || t.type?.id) || 0,
+              department_id: Number(t.department_id || t.department?.id) || 0,
+              assigned_to: Number(t.assigned_to || t.assignee?.id || t.assignedTo?.id) || 0,
               subject: t.subject || t.title || '',
-              details: t.details || t.body || t.description || '',
+              body: t.body || t.details || t.description || '',
             });
 
             if (t.user) {

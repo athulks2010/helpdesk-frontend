@@ -1,12 +1,8 @@
-<div class="space-y-6 max-w-4xl">
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Notifications</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+<div class="space-y-6">
+  <div class="flex items-center justify-end gap-2">
+      <span class="text-sm text-slate-500 dark:text-slate-400 mr-2">
         {{ unreadCount() }} unread · {{ rows.length }} total
-      </p>
-    </div>
-    <div class="flex items-center gap-2">
+      </span>
       <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
       <button
         type="button"
@@ -17,7 +13,6 @@
         {{ markingAll ? 'Marking…' : 'Mark all read' }}
       </button>
     </div>
-  </div>
 
   <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">
     <div class="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>

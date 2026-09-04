@@ -13,48 +13,50 @@ body {
   @apply bg-slate-50 text-slate-900 antialiased;
 }
 
-.hd-input {
-  @apply w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900 placeholder-slate-400;
-}
+@layer components {
+  .hd-input {
+    @apply w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900 placeholder-slate-400;
+  }
 
-.hd-btn {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors duration-200;
-}
+  .hd-btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
 
-.hd-btn-primary {
-  @apply hd-btn bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed;
-}
+  .hd-btn-primary {
+    @apply hd-btn bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-.hd-btn-secondary {
-  @apply hd-btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
-}
+  .hd-btn-secondary {
+    @apply hd-btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+  }
 
-.hd-card {
-  @apply bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden;
-}
+  .hd-card {
+    @apply bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden;
+  }
 
-.hd-table-wrap {
-  @apply bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden;
-}
+  .hd-table-wrap {
+    @apply bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden;
+  }
 
-.hd-table {
-  @apply min-w-full divide-y divide-slate-200;
-}
+  .hd-table {
+    @apply min-w-full divide-y divide-slate-200;
+  }
 
-.hd-table thead {
-  @apply bg-slate-50;
-}
+  .hd-table thead {
+    @apply bg-slate-50;
+  }
 
-.hd-table th {
-  @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider;
-}
+  .hd-table th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider;
+  }
 
-.hd-table td {
-  @apply px-4 py-3 text-sm text-slate-700 whitespace-nowrap;
-}
+  .hd-table td {
+    @apply px-4 py-3 text-sm text-slate-700 whitespace-nowrap;
+  }
 
-.hd-table tbody tr {
-  @apply hover:bg-slate-50 transition-colors duration-150;
+  .hd-table tbody tr {
+    @apply hover:bg-slate-50 transition-colors duration-150;
+  }
 }
 
 /* Landing Custom CSS from Laravel HelpDesk project */

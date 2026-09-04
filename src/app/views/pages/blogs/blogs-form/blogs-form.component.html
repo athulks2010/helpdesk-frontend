@@ -1,4 +1,4 @@
-<div class="max-w-3xl">
+<div class="space-y-6">
   <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
   <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
