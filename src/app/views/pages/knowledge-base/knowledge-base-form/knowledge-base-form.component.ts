@@ -4,39 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/knowledge-base.service';
 import { TypeService } from '../../../../core/type/_services/type.service';
 
-import tinymce from 'tinymce/tinymce';
-import 'tinymce/themes/silver/theme';
-import 'tinymce/icons/default/icons';
-import 'tinymce/models/dom/model';
-
-import 'tinymce/plugins/preview';
-import 'tinymce/plugins/importcss';
-import 'tinymce/plugins/searchreplace';
-import 'tinymce/plugins/autolink';
-import 'tinymce/plugins/autosave';
-import 'tinymce/plugins/save';
-import 'tinymce/plugins/directionality';
-import 'tinymce/plugins/code';
-import 'tinymce/plugins/visualblocks';
-import 'tinymce/plugins/visualchars';
-import 'tinymce/plugins/fullscreen';
-import 'tinymce/plugins/image';
-import 'tinymce/plugins/link';
-import 'tinymce/plugins/media';
-import 'tinymce/plugins/codesample';
-import 'tinymce/plugins/table';
-import 'tinymce/plugins/charmap';
-import 'tinymce/plugins/pagebreak';
-import 'tinymce/plugins/nonbreaking';
-import 'tinymce/plugins/anchor';
-import 'tinymce/plugins/insertdatetime';
-import 'tinymce/plugins/advlist';
-import 'tinymce/plugins/lists';
-import 'tinymce/plugins/wordcount';
-import 'tinymce/plugins/help';
-import 'tinymce/plugins/quickbars';
-import 'tinymce/plugins/emoticons';
-
 @Component({
   selector: 'app-knowledge-base-form',
   templateUrl: './knowledge-base-form.component.html',
@@ -107,6 +74,29 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
     if (!document.getElementById('knowledge-base-editor')) {
       return;
     }
+    this.loadTinyMce().then((tinymce) => this.createEditor(tinymce)).catch(() => {
+      this.error = this.error || 'Failed to load editor';
+    });
+  }
+
+  private loadTinyMce(): Promise<any> {
+    const existing = (window as any).tinymce;
+    if (existing) {
+      return Promise.resolve(existing);
+    }
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = '/js/tinymce/tinymce.min.js';
+      script.onload = () => resolve((window as any).tinymce);
+      script.onerror = () => reject(new Error('TinyMCE failed to load'));
+      document.body.appendChild(script);
+    });
+  }
+
+  private createEditor(tinymce: any): void {
+    if (!tinymce || !document.getElementById('knowledge-base-editor')) {
+      return;
+    }
     if (this.editorInstance) {
       try {
         this.editorInstance.destroy();
@@ -116,11 +106,10 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
 
     tinymce.init({
       selector: '#knowledge-base-editor',
-      base_url: 'https://cdn.jsdelivr.net/npm/tinymce@6.8.3',
+      base_url: '/js/tinymce',
       suffix: '.min',
-      skin_url: 'https://cdn.jsdelivr.net/npm/tinymce@6.8.3/skins/ui/oxide',
       skin: 'oxide',
-      content_css: 'https://cdn.jsdelivr.net/npm/tinymce@6.8.3/skins/content/default/content.min.css',
+      content_css: '/js/tinymce/skins/content/default/content.min.css',
       content_style: `
         body {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

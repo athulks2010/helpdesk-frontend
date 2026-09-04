@@ -32,7 +32,6 @@ export class DepartmentsFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
-      color: ['#3b82f6'],
     });
 
 
@@ -45,8 +44,7 @@ export class DepartmentsFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          color: item.color ?? null,
+            name: item.name ?? null,
           });
 
           this.loadingData = false;
