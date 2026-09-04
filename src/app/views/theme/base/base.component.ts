@@ -31,6 +31,11 @@ export interface MenuGroup {
   items: MenuItem[];
 }
 
+export interface Breadcrumb {
+  label: string;
+  path?: string;
+}
+
 @Component({
   selector: 'app-base',
   templateUrl: './base.component.html',
@@ -46,6 +51,7 @@ export class BaseComponent implements OnInit, OnDestroy {
 
   currentUrl = '';
   currentTitle = 'Dashboard';
+  breadcrumbs: Breadcrumb[] = [];
 
   // Submenu toggle state
   expandedMenus = new Set<string>();
@@ -346,35 +352,129 @@ export class BaseComponent implements OnInit, OnDestroy {
     return item.submenu.some((sub) => this.isSubItemActive(sub));
   }
 
+  private setPage(title: string, breadcrumbs: Breadcrumb[]): void {
+    this.currentTitle = title;
+    this.breadcrumbs = breadcrumbs;
+  }
+
   private updateCurrentTitle(url: string): void {
     const clean = url.split('?')[0].split('#')[0];
-    const segment = clean.replace(/^\//, '').split('/')[0];
-    const titles: Record<string, string> = {
-      dashboard: 'Dashboard',
-      tickets: 'Tickets',
-      chat: 'Chat',
-      'knowledge-base': 'Knowledge Base',
-      faqs: 'FAQs',
-      blogs: 'Blog',
-      'admin-services': 'Services',
-      services: 'Services',
-      customers: 'Customers',
-      contacts: 'Contacts',
-      organizations: 'Organizations',
-      notes: 'Notes',
-      users: 'Manage Users',
-      settings: 'Settings',
-      departments: 'Departments',
-      categories: 'Categories',
-      statuses: 'Statuses',
-      priorities: 'Priorities',
-      types: 'Ticket Types',
-      roles: 'User Roles',
-      ai: 'AI Settings',
-      reports: 'Reports',
-      notifications: 'Notifications',
+    const parts = clean.replace(/^\//, '').split('/').filter(Boolean);
+    const segment = parts[0] || 'dashboard';
+
+    const modules: Record<string, { title: string; singular: string; path: string }> = {
+      dashboard: { title: 'Dashboard', singular: 'dashboard', path: '/dashboard' },
+      tickets: { title: 'Tickets', singular: 'ticket', path: '/tickets' },
+      chat: { title: 'Chat', singular: 'chat', path: '/chat' },
+      customers: { title: 'Customers', singular: 'customer', path: '/customers' },
+      contacts: { title: 'Contacts', singular: 'contact', path: '/contacts' },
+      organizations: { title: 'Organizations', singular: 'organization', path: '/organizations' },
+      notes: { title: 'Notes', singular: 'note', path: '/notes' },
+      users: { title: 'Users', singular: 'user', path: '/users' },
+      'pending-users': { title: 'Pending Users', singular: 'pending user', path: '/pending-users' },
+      'knowledge-base': { title: 'Knowledge Base', singular: 'article', path: '/knowledge-base' },
+      faqs: { title: 'FAQs', singular: 'FAQ', path: '/faqs' },
+      blogs: { title: 'Blog Posts', singular: 'blog post', path: '/blogs' },
+      'admin-services': { title: 'Services', singular: 'service', path: '/admin-services' },
+      services: { title: 'Services', singular: 'service', path: '/services' },
+      departments: { title: 'Departments', singular: 'department', path: '/departments' },
+      categories: { title: 'Categories', singular: 'category', path: '/categories' },
+      statuses: { title: 'Statuses', singular: 'status', path: '/statuses' },
+      priorities: { title: 'Priorities', singular: 'priority', path: '/priorities' },
+      types: { title: 'Types', singular: 'type', path: '/types' },
+      roles: { title: 'Roles', singular: 'role', path: '/roles' },
+      ai: { title: 'AI Settings', singular: 'AI setting', path: '/ai' },
+      reports: { title: 'Reports', singular: 'report', path: '/reports' },
+      notifications: { title: 'Notifications', singular: 'notification', path: '/notifications' },
+      settings: { title: 'Settings', singular: 'setting', path: '/settings' },
+      'front-pages': { title: 'Front Pages', singular: 'front page', path: '/front-pages' },
     };
-    this.currentTitle = titles[segment] || 'Dashboard';
+
+    if (segment === 'settings') {
+      const settingsPages: Record<string, string> = {
+        smtp: 'SMTP Settings',
+        pusher: 'Pusher Settings',
+        piping: 'Email Piping Settings',
+        languages: 'Languages',
+        menus: 'Navigation Menus',
+        'email-templates': 'Email Templates',
+        'ticket-fields': 'Custom Ticket Fields',
+        license: 'License',
+      };
+
+      if (!parts[1]) {
+        this.setPage('Global Settings', [{ label: 'Global Settings' }]);
+        return;
+      }
+
+      if (parts[1] === 'email-templates' && parts[3] === 'edit') {
+        this.setPage('Edit email template', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Email Templates', path: '/settings/email-templates' },
+          { label: 'Edit email template' },
+        ]);
+        return;
+      }
+
+      const nestedTitle = settingsPages[parts[1]] || 'Settings';
+      this.setPage(nestedTitle, [
+        { label: 'Settings', path: '/settings' },
+        { label: nestedTitle },
+      ]);
+      return;
+    }
+
+    if (segment === 'front-pages') {
+      const frontPages: Record<string, string> = {
+        home: 'Home',
+        services: 'Services',
+        contact: 'Contact',
+        privacy: 'Privacy Policy',
+        terms: 'Terms of Services',
+        footer: 'Footer',
+      };
+      const pageKey = parts[1] || 'home';
+      const label = frontPages[pageKey] || 'Front Pages';
+      this.setPage(label, [
+        { label: 'Front Pages', path: '/front-pages/home' },
+        { label },
+      ]);
+      return;
+    }
+
+    const mod = modules[segment];
+    if (!mod) {
+      this.setPage('Dashboard', [{ label: 'Dashboard' }]);
+      return;
+    }
+
+    if (parts[1] === 'create') {
+      const title = `Create a new ${mod.singular}`;
+      this.setPage(title, [
+        { label: mod.title, path: mod.path },
+        { label: title },
+      ]);
+      return;
+    }
+
+    if (parts[2] === 'edit') {
+      const title = `Edit ${mod.singular}`;
+      this.setPage(title, [
+        { label: mod.title, path: mod.path },
+        { label: title },
+      ]);
+      return;
+    }
+
+    if (segment === 'tickets' && parts[1]) {
+      this.setPage('Ticket details', [
+        { label: 'Tickets', path: '/tickets' },
+        { label: 'Ticket details' },
+      ]);
+      return;
+    }
+
+    this.setPage(mod.title, [{ label: mod.title }]);
   }
 
   switchMode(): void {
