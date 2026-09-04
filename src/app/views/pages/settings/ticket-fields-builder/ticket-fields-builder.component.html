@@ -1,67 +1,195 @@
 <div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      Create custom fields for your ticket forms
+    </p>
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+      Fields: {{ rows.length }}
+    </span>
+  </div>
 
-  <form class="hd-card" [formGroup]="form" (ngSubmit)="save()">
-    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Type</label>
-        <select class="hd-input" formControlName="type">
-          <option *ngFor="let t of fieldTypes" [value]="t">{{ t }}</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Label</label>
-        <input type="text" class="hd-input" formControlName="label" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-        <input type="text" class="hd-input" formControlName="name" placeholder="custom_field_1" />
-      </div>
-      <div class="flex items-center gap-2 pt-6">
-        <input id="tf-required" type="checkbox" class="w-4 h-4" formControlName="required" />
-        <label for="tf-required" class="text-sm text-slate-700 dark:text-slate-300">Required</label>
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Options (comma-separated)</label>
-        <input type="text" class="hd-input" formControlName="options" placeholder="Option A, Option B" />
-      </div>
-      <div class="flex items-end">
-        <button type="submit" class="hd-btn-primary" [disabled]="saving">
-          {{ saving ? 'Saving…' : 'Create Field' }}
-        </button>
-      </div>
-    </div>
-  </form>
-
-  <div *ngIf="loading" class="hd-card p-8 text-center text-slate-500">Loading…</div>
   <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+  <div *ngIf="success" class="text-sm text-green-600">{{ success }}</div>
 
-  <div *ngIf="!loading" class="hd-table-wrap">
-    <table class="hd-table">
-      <thead>
-        <tr>
-          <th>Label</th>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Required</th>
-          <th>Options</th>
-          <th class="text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-slate-200">
-        <tr *ngFor="let row of rows">
-          <td>{{ row.label || '—' }}</td>
-          <td>{{ row.name || '—' }}</td>
-          <td>{{ row.type || '—' }}</td>
-          <td>{{ row.required ? 'Yes' : 'No' }}</td>
-          <td>{{ optionsLabel(row) }}</td>
-          <td class="text-right">
-            <button type="button" class="hd-btn-secondary" (click)="remove(row)">Delete</button>
-          </td>
-        </tr>
-        <tr *ngIf="!rows.length">
-          <td colspan="6" class="px-4 py-8 text-center text-slate-500">No custom fields found</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <!-- Form Preview -->
+    <section class="hd-card">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Form Preview</h3>
+        </div>
+        <span class="text-xs font-medium text-blue-600">Live Preview</span>
+      </div>
+
+      <div class="p-6 min-h-[420px]">
+        <div *ngIf="loading" class="text-center text-slate-500 py-16">Loading…</div>
+
+        <div *ngIf="!loading && !rows.length" class="flex flex-col items-center justify-center text-center py-16 text-slate-500">
+          <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <p class="text-sm font-medium text-slate-700 dark:text-slate-200">No fields yet</p>
+          <p class="text-sm mt-1">Start by adding your first custom field.</p>
+        </div>
+
+        <div *ngIf="!loading && rows.length" class="space-y-4">
+          <div
+            *ngFor="let row of rows"
+            class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-900/40"
+          >
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <label class="block text-sm font-medium text-slate-800 dark:text-slate-100">
+                  {{ row.label || row.name }}
+                  <span *ngIf="row.required" class="text-red-500">*</span>
+                </label>
+                <p class="text-xs text-slate-400 mt-0.5">{{ row.name }} · {{ row.type }}</p>
+              </div>
+              <button
+                type="button"
+                class="text-xs font-medium text-red-600 hover:text-red-800"
+                (click)="remove(row)"
+              >
+                Delete
+              </button>
+            </div>
+
+            <ng-container [ngSwitch]="row.type">
+              <textarea
+                *ngSwitchCase="'textarea'"
+                class="hd-input"
+                rows="3"
+                disabled
+                [placeholder]="row.placeholder || ''"
+              ></textarea>
+              <select *ngSwitchCase="'select'" class="hd-input" disabled>
+                <option value="">{{ row.placeholder || 'Select…' }}</option>
+                <option *ngFor="let opt of asOptions(row)" [value]="opt">{{ opt }}</option>
+              </select>
+              <label *ngSwitchCase="'checkbox'" class="inline-flex items-center gap-2 text-sm text-slate-600">
+                <input type="checkbox" class="w-4 h-4" disabled />
+                {{ row.placeholder || row.label || 'Checkbox' }}
+              </label>
+              <input *ngSwitchCase="'file'" type="file" class="hd-input" disabled />
+              <input
+                *ngSwitchCase="'email'"
+                type="email"
+                class="hd-input"
+                disabled
+                [placeholder]="row.placeholder || ''"
+              />
+              <input
+                *ngSwitchCase="'number'"
+                type="number"
+                class="hd-input"
+                disabled
+                [placeholder]="row.placeholder || ''"
+              />
+              <input
+                *ngSwitchDefault
+                type="text"
+                class="hd-input"
+                disabled
+                [placeholder]="row.placeholder || ''"
+              />
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Add New Field -->
+    <section class="hd-card">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Add New Field</h3>
+      </div>
+
+      <form class="p-5 space-y-5" [formGroup]="form" (ngSubmit)="save()">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Field Type</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <button
+              *ngFor="let t of fieldTypes"
+              type="button"
+              class="flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors text-left"
+              [class.border-blue-500]="form.get('type')?.value === t.id"
+              [class.bg-blue-50]="form.get('type')?.value === t.id"
+              [class.text-blue-700]="form.get('type')?.value === t.id"
+              [class.border-slate-200]="form.get('type')?.value !== t.id"
+              [class.text-slate-700]="form.get('type')?.value !== t.id"
+              [class.hover:border-blue-300]="form.get('type')?.value !== t.id"
+              (click)="form.patchValue({ type: t.id })"
+            >
+              <span class="text-base leading-none">{{ t.icon }}</span>
+              {{ t.label }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Required Field</label>
+          <div class="flex items-center gap-5">
+            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="radio"
+                name="requiredField"
+                class="w-4 h-4"
+                [checked]="form.get('required')?.value === true"
+                (change)="form.patchValue({ required: true })"
+              />
+              Yes
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="radio"
+                name="requiredField"
+                class="w-4 h-4"
+                [checked]="form.get('required')?.value === false"
+                (change)="form.patchValue({ required: false })"
+              />
+              No
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Field Label</label>
+          <input type="text" class="hd-input" formControlName="label" placeholder="e.g. Full Name" />
+          <p *ngIf="hasError('label')" class="mt-1 text-xs text-red-600">Label is required</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Field Name</label>
+          <input
+            type="text"
+            class="hd-input"
+            formControlName="name"
+            placeholder="e.g. full_name"
+            (focus)="markNameTouched()"
+          />
+          <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Placeholder Text</label>
+          <input type="text" class="hd-input" formControlName="placeholder" placeholder="e.g. Enter your full name" />
+        </div>
+
+        <div *ngIf="form.get('type')?.value === 'select'">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Options (comma-separated)</label>
+          <input type="text" class="hd-input" formControlName="options" placeholder="Option A, Option B" />
+        </div>
+
+        <button type="submit" class="hd-btn-primary w-full" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Add Field' }}
+        </button>
+      </form>
+    </section>
   </div>
 </div>

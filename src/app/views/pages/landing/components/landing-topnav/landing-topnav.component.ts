@@ -1,13 +1,16 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../../../core/auth/_services/auth.service';
+import { SettingService } from '../../../../../core/setting/_services/setting.service';
 
 interface NavItem {
   label: string;
   route: string;
   exact?: boolean;
+  target?: string;
+  external?: boolean;
 }
 
 @Component({
@@ -15,12 +18,15 @@ interface NavItem {
   templateUrl: './landing-topnav.component.html',
   styleUrls: ['./landing-topnav.component.scss'],
 })
-export class LandingTopNavComponent implements OnInit {
+export class LandingTopNavComponent implements OnInit, OnDestroy {
   isScrolled = false;
   mobileMenuOpen = false;
   userDropdownOpen = false;
   langDropdownOpen = false;
   selectedLanguage = { code: 'en', name: 'English' };
+  logoFailed = false;
+  private settingsSub?: Subscription;
+  private routerSub?: Subscription;
 
   languages = [
     { code: 'en', name: 'English' },
@@ -29,33 +35,77 @@ export class LandingTopNavComponent implements OnInit {
     { code: 'de', name: 'Deutsch' },
   ];
 
-  navItems: NavItem[] = [
-    { label: 'Home', route: '/', exact: true },
-    { label: 'Services', route: '/services' },
-    { label: 'Knowledge Base', route: '/kb' },
-    { label: 'FAQs', route: '/faq' },
-    { label: 'Contact', route: '/contact' },
-  ];
+  navItems: NavItem[] = [];
 
   currentUser$!: Observable<any>;
   isLoggedIn$!: Observable<boolean>;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    public settingService: SettingService
   ) {
     this.currentUser$ = this.authService.currentUser$;
     this.isLoggedIn$ = this.authService.isLoggedIn$;
   }
 
   ngOnInit(): void {
-    this.router.events
+    this.settingService.loadBrandSettings();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
+    this.loadNavMenus();
+    this.routerSub = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
         this.mobileMenuOpen = false;
         this.userDropdownOpen = false;
         this.langDropdownOpen = false;
       });
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+    this.routerSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
+  }
+
+  private loadNavMenus(): void {
+    this.settingService.getMenus({ location: 'header', is_active: 1 }).subscribe({
+      next: (data) => {
+        const rows = Array.isArray(data) ? data : data?.items || data?.list || data?.data || [];
+        this.navItems = rows
+          .filter((row: any) => (row.location || 'header') === 'header')
+          .filter((row: any) => this.isActiveMenu(row))
+          .sort((a: any, b: any) => (Number(a.order ?? a.sort_order ?? 0) - Number(b.order ?? b.sort_order ?? 0)))
+          .map((row: any) => this.toNavItem(row));
+      },
+      error: () => {
+        this.navItems = [];
+      },
+    });
+  }
+
+  private isActiveMenu(row: any): boolean {
+    const value = row?.is_active ?? row?.status ?? row?.active;
+    return value !== false && value !== 0 && value !== '0' && value !== 'false';
+  }
+
+  private toNavItem(row: any): NavItem {
+    const route = String(row.url || row.route_name || '/').trim() || '/';
+    const external = /^https?:\/\//i.test(route);
+    return {
+      label: row.label || row.name || 'Link',
+      route,
+      exact: route === '/' || row.active_key === 'home',
+      target: row.target || '_self',
+      external,
+    };
   }
 
   @HostListener('window:scroll', [])
@@ -113,3 +163,4 @@ export class LandingTopNavComponent implements OnInit {
     return this.router.url.startsWith(route);
   }
 }
+

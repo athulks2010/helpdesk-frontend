@@ -56,9 +56,18 @@ export class RolesFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
-      slug: ['', Validators.required],
+      slug: [''],
       access: this.buildAccessGroup(),
     });
+
+    if (!this.isEditMode) {
+      this.form.get('name')?.valueChanges.subscribe((name: string) => {
+        this.form.patchValue({ slug: this.toSlug(name) }, { emitEvent: false });
+      });
+    } else {
+      this.form.get('slug')?.setValidators([Validators.required]);
+      this.form.get('slug')?.updateValueAndValidity();
+    }
 
     if (this.isEditMode && this.entityId) {
       this.loadingData = true;
@@ -80,6 +89,14 @@ export class RolesFormComponent implements OnInit {
         },
       });
     }
+  }
+
+  /** "Support Agent" → "support_agent" */
+  private toSlug(value: string): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
   }
 
   private buildAccessGroup(source?: Record<string, any>): FormGroup {
@@ -130,6 +147,9 @@ export class RolesFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
+    if (!this.isEditMode) {
+      raw.slug = this.toSlug(raw.name);
+    }
     // Send access as object (not JSON string)
     raw.access = { ...raw.access };
 

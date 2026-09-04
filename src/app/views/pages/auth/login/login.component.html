@@ -8,16 +8,16 @@
       <a
         routerLink="/"
         class="inline-flex items-center justify-center gap-3 group transition-transform duration-200 hover:scale-105 mb-2 focus:outline-none"
-        title="Back to HelpDesk Home"
+        [title]="'Back to ' + settingService.appName + ' Home'"
       >
         <img
-          src="/images/logo.png"
-          alt="HelpDesk Logo"
+          [src]="settingService.logoUrl"
+          [alt]="settingService.appName + ' Logo'"
           class="h-10 w-auto max-w-[200px] object-contain drop-shadow-sm"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';"
+          (error)="onLogoError($event)"
         />
-        <div class="hidden items-center justify-center h-12 w-12 rounded-xl bg-blue-600 text-white font-bold text-xl shadow-lg">
-          H
+        <div *ngIf="logoFailed" class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-blue-600 text-white font-bold text-xl shadow-lg">
+          {{ settingService.appName.charAt(0) || 'H' }}
         </div>
       </a>
       <p class="mt-1 text-slate-600 text-sm font-medium">Welcome back! Please sign in to your account</p>

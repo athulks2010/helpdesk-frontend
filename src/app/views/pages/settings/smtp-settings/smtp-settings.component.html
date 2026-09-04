@@ -1,69 +1,208 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-end gap-2">
-    <button type="button" class="hd-btn-secondary" (click)="test()" [disabled]="testing || loading">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        Configure your email server settings for sending notifications and emails.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shrink-0"
+      (click)="test()"
+      [disabled]="testing || loading"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01M5.636 13.95a9 9 0 0112.728 0M2.343 10.5a14 14 0 0119.314 0"/>
+      </svg>
       {{ testing ? 'Testing…' : 'Test Connection' }}
     </button>
   </div>
 
   <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
-  <form *ngIf="!loading" class="hd-card" [formGroup]="form" (ngSubmit)="save()">
-    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SMTP Host</label>
-        <input type="text" class="hd-input" formControlName="host" placeholder="smtp.gmail.com" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Port</label>
-        <input type="number" class="hd-input" formControlName="port" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
-        <input type="text" class="hd-input" formControlName="username" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
-        <input type="password" class="hd-input" formControlName="password" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Encryption</label>
-        <select class="hd-input" formControlName="encryption">
-          <option value="none">None</option>
-          <option value="tls">TLS</option>
-          <option value="ssl">SSL</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">From Address</label>
-        <input type="email" class="hd-input" formControlName="from_address" />
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">From Name</label>
-        <input type="text" class="hd-input" formControlName="from_name" />
-      </div>
-    </div>
+  <div *ngIf="!loading" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <form class="hd-card xl:col-span-2" [formGroup]="form" (ngSubmit)="save()">
+      <div class="p-6 space-y-8">
+        <!-- Server Configuration -->
+        <section>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+              </svg>
+            </span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Server Configuration</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                SMTP Host <span class="text-red-500">*</span>
+              </label>
+              <input type="text" class="hd-input" formControlName="host" placeholder="smtp.gmail.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                SMTP Port <span class="text-red-500">*</span>
+              </label>
+              <input type="number" class="hd-input" formControlName="port" placeholder="587" />
+            </div>
+          </div>
+        </section>
 
-    <div *ngIf="testResult" class="px-6 pb-2">
-      <div
-        class="p-3 rounded-lg text-sm border"
-        [class.bg-green-50]="testResult.success"
-        [class.border-green-200]="testResult.success"
-        [class.text-green-800]="testResult.success"
-        [class.bg-red-50]="!testResult.success"
-        [class.border-red-200]="!testResult.success"
-        [class.text-red-800]="!testResult.success"
-      >
-        {{ testResult.message }}
+        <!-- Authentication -->
+        <section>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Authentication</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SMTP Username</label>
+              <input type="text" class="hd-input" formControlName="username" placeholder="your-email@gmail.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SMTP Password</label>
+              <div class="relative">
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="hd-input pr-10"
+                  formControlName="password"
+                  placeholder="App password or account password"
+                />
+                <button
+                  type="button"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  (click)="showPassword = !showPassword"
+                >
+                  <svg *ngIf="!showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  <svg *ngIf="showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Security -->
+        <section>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Security &amp; Encryption</h3>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mail Encryption</label>
+            <select class="hd-input" formControlName="encryption">
+              <option value="none">None</option>
+              <option value="tls">TLS</option>
+              <option value="ssl">SSL</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Email Settings -->
+        <section>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Email Settings</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                From Address <span class="text-red-500">*</span>
+              </label>
+              <input type="email" class="hd-input" formControlName="from_address" placeholder="noreply@yourdomain.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                From Name <span class="text-red-500">*</span>
+              </label>
+              <input type="text" class="hd-input" formControlName="from_name" placeholder="Help Desk" />
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
 
-    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
-    <div *ngIf="success" class="px-6 pb-2 text-sm text-green-600">{{ success }}</div>
+      <div *ngIf="testResult" class="px-6 pb-2">
+        <div
+          class="p-3 rounded-lg text-sm border"
+          [class.bg-green-50]="testResult.success"
+          [class.border-green-200]="testResult.success"
+          [class.text-green-800]="testResult.success"
+          [class.bg-red-50]="!testResult.success"
+          [class.border-red-200]="!testResult.success"
+          [class.text-red-800]="!testResult.success"
+        >
+          {{ testResult.message }}
+        </div>
+      </div>
+      <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+      <div *ngIf="success" class="px-6 pb-2 text-sm text-green-600">{{ success }}</div>
 
-    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
-      <button type="submit" class="hd-btn-primary" [disabled]="saving">
-        {{ saving ? 'Saving…' : 'Save Settings' }}
-      </button>
-    </div>
-  </form>
+      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+        <p class="text-sm text-slate-500">Changes will be applied immediately after saving.</p>
+        <button type="submit" class="hd-btn-primary" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Save Settings' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- Help sidebar -->
+    <aside class="rounded-2xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/20 dark:border-blue-800 p-5 h-fit">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">?</span>
+        <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-100">SMTP Configuration Help</h3>
+      </div>
+
+      <div class="space-y-5 text-sm text-blue-800 dark:text-blue-200">
+        <div>
+          <p class="font-semibold mb-1">Gmail</p>
+          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300">
+            <li>Host: smtp.gmail.com</li>
+            <li>Port: 587 (TLS) or 465 (SSL)</li>
+            <li>Username: your full Gmail address</li>
+          </ul>
+          <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 p-2.5 text-xs">
+            <strong>Important:</strong> Use an App Password (Google Account → Security → 2-Step Verification → App passwords).
+          </div>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-1">Outlook / Hotmail</p>
+          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300">
+            <li>Host: smtp.office365.com</li>
+            <li>Port: 587</li>
+            <li>Encryption: TLS</li>
+          </ul>
+          <div class="mt-2 rounded-lg border border-blue-200 bg-white/70 text-blue-800 p-2.5 text-xs dark:bg-blue-900/30 dark:border-blue-700">
+            <strong>Note:</strong> Use your Microsoft account email and password (or app password if enabled).
+          </div>
+        </div>
+
+        <div>
+          <p class="font-semibold mb-1">Yahoo</p>
+          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300">
+            <li>Host: smtp.mail.yahoo.com</li>
+            <li>Port: 465 or 587</li>
+            <li>Encryption: SSL / TLS</li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+  </div>
 </div>

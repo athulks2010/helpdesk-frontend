@@ -148,6 +148,7 @@ export const apiUrl = {
   settings: '/setting',
   settingsAll: '/setting/all',
   settingSingle: '/setting/single',
+  settingBySlug: '/setting/by-slug',
   settingUpdate: '/setting/update',
 
   /* Dashboard */
@@ -182,12 +183,12 @@ export const apiUrl = {
   languageDelete: '/language/delete',
 
   /* Navigation Menus */
-  menus: '/menu',
-  menusAll: '/menu/all',
-  menuCreate: '/menu/create',
-  menuUpdate: '/menu/update',
-  menuDelete: '/menu/delete',
-  menuReorder: '/menu/reorder',
+  menus: '/navigation-menu',
+  menusAll: '/navigation-menu/all',
+  menuCreate: '/navigation-menu/create',
+  menuUpdate: '/navigation-menu/update',
+  menuDelete: '/navigation-menu/delete',
+  menuReorder: '/navigation-menu/reorder',
 
   /* Email Templates */
   emailTemplates: '/email-template',
@@ -202,8 +203,9 @@ export const apiUrl = {
   pusherSettings: '/setting/pusher',
   pusherUpdate: '/setting/pusher/update',
   pusherTest: '/setting/pusher/test',
-  pipingSettings: '/setting/piping',
-  pipingUpdate: '/setting/piping/update',
+  pipingSettings: '/setting/email-piping',
+  pipingUpdate: '/setting/email-piping/update',
+  pipingTest: '/setting/email-piping/test',
 
   /* Ticket extras */
   ticketRestore: '/ticket/restore',

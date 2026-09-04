@@ -11,14 +11,16 @@
 
     <!-- Logo & Header -->
     <div class="text-center mb-8">
-      <a routerLink="/" class="inline-flex items-center justify-center gap-2 group transition-transform duration-200 hover:scale-105 mb-4">
+      <a routerLink="/" class="inline-flex items-center justify-center gap-2 group transition-transform duration-200 hover:scale-105 mb-4" [title]="'Back to ' + settingService.appName + ' Home'">
         <img
-          src="/images/logo.png"
-          alt="HelpDesk Logo"
+          [src]="settingService.logoUrl"
+          [alt]="settingService.appName + ' Logo'"
           class="h-10 w-auto object-contain drop-shadow-sm"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          (error)="onLogoError($event)"
         />
-        <div class="hidden items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-lg shadow-lg">H</div>
+        <div *ngIf="logoFailed" class="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-lg shadow-lg">
+          {{ settingService.appName.charAt(0) || 'H' }}
+        </div>
       </a>
       <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Create Your Account</h1>
       <p class="text-slate-500 text-sm">Join our helpdesk community and get started today</p>

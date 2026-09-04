@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
@@ -8,14 +10,25 @@ import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dial
   templateUrl: './ticket-fields-builder.component.html',
   styleUrls: ['./ticket-fields-builder.component.scss'],
 })
-export class TicketFieldsBuilderComponent implements OnInit {
+export class TicketFieldsBuilderComponent implements OnInit, OnDestroy {
   rows: any[] = [];
   loading = true;
   saving = false;
   error = '';
+  success = '';
   form!: FormGroup;
+  private nameTouched = false;
+  private destroy$ = new Subject<void>();
 
-  readonly fieldTypes = ['text', 'textarea', 'select', 'checkbox', 'number', 'date'];
+  readonly fieldTypes = [
+    { id: 'text', label: 'Text', icon: 'Aa' },
+    { id: 'textarea', label: 'Textarea', icon: '¶' },
+    { id: 'select', label: 'Select', icon: '▾' },
+    { id: 'checkbox', label: 'Checkbox', icon: '☑' },
+    { id: 'file', label: 'File', icon: '📎' },
+    { id: 'email', label: 'Email', icon: '@' },
+    { id: 'number', label: 'Number', icon: '#' },
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -28,10 +41,39 @@ export class TicketFieldsBuilderComponent implements OnInit {
       type: ['text', Validators.required],
       label: ['', Validators.required],
       name: ['', Validators.required],
+      placeholder: [''],
       required: [false],
       options: [''],
     });
+
+    this.form
+      .get('label')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe((label: string) => {
+        if (this.nameTouched) return;
+        this.form.patchValue({ name: this.toFieldName(label) }, { emitEvent: false });
+      });
+
     this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  markNameTouched(): void {
+    this.nameTouched = true;
+  }
+
+  private toFieldName(label: string): string {
+    return String(label || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s_]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
   }
 
   load(): void {
@@ -39,7 +81,9 @@ export class TicketFieldsBuilderComponent implements OnInit {
     this.error = '';
     this.settingService.getTicketFields({}).subscribe({
       next: (data) => {
-        this.rows = Array.isArray(data) ? data : data?.items || data?.list || data?.data || [];
+        this.rows = Array.isArray(data)
+          ? data
+          : data?.items || data?.list || data?.data || data?.fields || [];
         this.loading = false;
       },
       error: () => {
@@ -56,6 +100,7 @@ export class TicketFieldsBuilderComponent implements OnInit {
     }
     this.saving = true;
     this.error = '';
+    this.success = '';
     const raw = this.form.getRawValue();
     const options =
       typeof raw.options === 'string'
@@ -65,25 +110,37 @@ export class TicketFieldsBuilderComponent implements OnInit {
             .filter(Boolean)
         : raw.options;
 
-    this.settingService
-      .createTicketField({
-        type: raw.type,
-        label: raw.label,
-        name: raw.name,
-        required: !!raw.required,
-        options,
-      })
-      .subscribe({
-        next: () => {
-          this.saving = false;
-          this.form.reset({ type: 'text', label: '', name: '', required: false, options: '' });
-          this.load();
-        },
-        error: (err) => {
-          this.saving = false;
-          this.error = err?.error?.message || err?.message || 'Create failed';
-        },
-      });
+    const body: any = {
+      type: raw.type,
+      label: raw.label,
+      name: raw.name,
+      placeholder: raw.placeholder || '',
+      required: !!raw.required,
+    };
+    if (raw.type === 'select' || raw.type === 'checkbox') {
+      body.options = options;
+    }
+
+    this.settingService.createTicketField(body).subscribe({
+      next: () => {
+        this.saving = false;
+        this.success = 'Field added';
+        this.nameTouched = false;
+        this.form.reset({
+          type: 'text',
+          label: '',
+          name: '',
+          placeholder: '',
+          required: false,
+          options: '',
+        });
+        this.load();
+      },
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.message || err?.message || 'Create failed';
+      },
+    });
   }
 
   async remove(row: any): Promise<void> {
@@ -105,9 +162,20 @@ export class TicketFieldsBuilderComponent implements OnInit {
     });
   }
 
-  optionsLabel(row: any): string {
-    const opts = row.options;
-    if (Array.isArray(opts)) return opts.join(', ');
-    return opts || '—';
+  asOptions(row: any): string[] {
+    const opts = row?.options;
+    if (Array.isArray(opts)) return opts.map(String);
+    if (typeof opts === 'string') {
+      return opts
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  hasError(control: string): boolean {
+    const c = this.form.get(control);
+    return !!(c && c.invalid && (c.dirty || c.touched));
   }
 }

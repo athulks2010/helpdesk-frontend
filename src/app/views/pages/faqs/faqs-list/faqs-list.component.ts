@@ -14,13 +14,14 @@ export class FaqsListComponent implements OnInit {
   loading = true;
   error = '';
   search = '';
+  statusFilter = '';
   deletingId: string | number | null = null;
 
   constructor(
     private service: FaqService,
     private router: Router,
     private confirmService: ConfirmDialogService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.load();
@@ -121,6 +122,19 @@ export class FaqsListComponent implements OnInit {
   cell(row: any, key: string): any {
     if (!key.includes('.')) return row?.[key];
     return key.split('.').reduce((acc: any, k: string) => (acc == null ? null : acc[k]), row);
+  }
+
+  isActive(row: any): boolean {
+    const s = row?.status;
+    if (s === 0 || s === false || s === '0' || s === 'inactive' || s === 'Inactive' || s === 'draft' || s === 'Draft') {
+      return false;
+    }
+    return true;
+  }
+
+  plainText(value: any): string {
+    if (!value) return '';
+    return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
   formatDate(value: any): string {

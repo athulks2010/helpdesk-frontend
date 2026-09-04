@@ -1,0 +1,44 @@
+.kb-type-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 11rem;
+  z-index: 30;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #64748b;
+  border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+.kb-type-option {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 14px;
+  color: #334155;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.kb-type-option:hover,
+.kb-type-option.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+:host-context(.dark) {
+  .kb-type-menu {
+    background: #1e293b;
+    border-color: #64748b;
+  }
+  .kb-type-option {
+    color: #e2e8f0;
+  }
+}

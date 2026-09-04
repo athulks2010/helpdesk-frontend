@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BlogService } from '../../../../core/blog/_services/blog.service';
+import { TypeService } from '../../../../core/type/_services/type.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
@@ -11,19 +12,24 @@ import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dial
 export class BlogsListComponent implements OnInit {
   rows: any[] = [];
   filtered: any[] = [];
+  types: any[] = [];
   loading = true;
   error = '';
   search = '';
+  typeFilter: string | number = '';
+  statusFilter = '';
   deletingId: string | number | null = null;
 
   constructor(
     private service: BlogService,
+    private typeService: TypeService,
     private router: Router,
     private confirmService: ConfirmDialogService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.load();
+    this.loadTypes();
   }
 
   load(): void {
@@ -42,6 +48,14 @@ export class BlogsListComponent implements OnInit {
     });
   }
 
+  loadTypes(): void {
+    this.typeService.getAll().subscribe({
+      next: (d) => {
+        this.types = Array.isArray(d) ? d : (d?.items || d?.list || d?.data || []);
+      },
+    });
+  }
+
   Math = Math;
   pageSize = 10;
   currentPage = 1;
@@ -51,20 +65,26 @@ export class BlogsListComponent implements OnInit {
 
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
-    let res = this.rows;
+    let list = [...this.rows];
+
+    if (this.typeFilter !== '' && this.typeFilter != null) {
+      list = list.filter((row) => {
+        const id = row.type_id ?? row.type?.id ?? row.type?._id;
+        return String(id) === String(this.typeFilter);
+      });
+    }
+
+    if (this.statusFilter === 'published') {
+      list = list.filter((row) => this.isActive(row));
+    } else if (this.statusFilter === 'draft') {
+      list = list.filter((row) => !this.isActive(row));
+    }
+
     if (q) {
-      res = this.rows.filter((row) =>
-        JSON.stringify(row).toLowerCase().includes(q)
-      );
+      list = list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
     }
-    this.totalCount = res.length;
-    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = 1;
-    }
-    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
-    const start = (this.currentPage - 1) * Number(this.pageSize);
-    this.filtered = res.slice(start, start + Number(this.pageSize));
+
+    this.filtered = list;
   }
 
   onSearchChange(): void {
@@ -121,6 +141,14 @@ export class BlogsListComponent implements OnInit {
   cell(row: any, key: string): any {
     if (!key.includes('.')) return row?.[key];
     return key.split('.').reduce((acc: any, k: string) => (acc == null ? null : acc[k]), row);
+  }
+
+  isActive(row: any): boolean {
+    const s = row?.is_active ?? row?.status;
+    if (s === 0 || s === false || s === '0' || s === 'draft' || s === 'Draft' || s === 'inactive' || s === 'Inactive') {
+      return false;
+    }
+    return true;
   }
 
   formatDate(value: any): string {

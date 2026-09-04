@@ -54,6 +54,19 @@ body {
     @apply px-4 py-3 text-sm text-slate-700 whitespace-nowrap;
   }
 
+  .hd-table th:last-child,
+  .hd-table td:last-child {
+    @apply px-8 text-right whitespace-nowrap;
+  }
+
+  .hd-table td:last-child {
+    white-space: nowrap;
+  }
+
+  .hd-actions {
+    @apply inline-flex items-center justify-end gap-3 whitespace-nowrap;
+  }
+
   .hd-table tbody tr {
     @apply hover:bg-slate-50 transition-colors duration-150;
   }

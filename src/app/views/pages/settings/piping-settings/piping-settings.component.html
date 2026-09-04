@@ -1,52 +1,177 @@
 <div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        Configure email piping to automatically create tickets from incoming email.
+      </p>
+    </div>
+    <button
+      *ngIf="form.get('enabled')?.value"
+      type="button"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shrink-0"
+      (click)="test()"
+      [disabled]="testing || loading || saving"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01M5.636 13.95a9 9 0 0112.728 0M2.343 10.5a14 14 0 0119.314 0"/>
+      </svg>
+      {{ testing ? 'Testing…' : 'Test Connection' }}
+    </button>
+  </div>
 
   <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
-  <form *ngIf="!loading" class="hd-card" [formGroup]="form" (ngSubmit)="save()">
-    <div class="p-6 space-y-6">
-      <label class="flex items-center justify-between gap-4 p-4 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 cursor-pointer">
-        <div>
-          <div class="font-medium text-blue-900 dark:text-blue-100">Enable Email Piping</div>
-          <div class="text-sm text-blue-700 dark:text-blue-200">Automatically create tickets from incoming emails</div>
+  <ng-container *ngIf="!loading">
+    <form [formGroup]="form" (ngSubmit)="save()" class="space-y-6">
+      <!-- Enable toggle -->
+      <div
+        class="hd-card flex items-center justify-between gap-4 p-5 border-blue-200 bg-blue-50/80 dark:bg-blue-950/20 dark:border-blue-800"
+      >
+        <div class="flex items-start gap-3">
+          <span class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </span>
+          <div>
+            <div class="font-semibold text-slate-900 dark:text-white">Enable Email Piping</div>
+            <div class="text-sm text-slate-600 dark:text-slate-300">
+              Automatically create tickets from incoming emails including attachments.
+            </div>
+          </div>
         </div>
-        <input type="checkbox" class="w-4 h-4" formControlName="enabled" />
-      </label>
+        <button
+          type="button"
+          role="switch"
+          class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors disabled:opacity-50"
+          [class.bg-blue-600]="form.get('enabled')?.value"
+          [class.bg-slate-300]="!form.get('enabled')?.value"
+          [disabled]="saving"
+          [attr.aria-checked]="form.get('enabled')?.value"
+          (click)="onToggleEnabled()"
+        >
+          <span
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-y-0.5"
+            [class.translate-x-5]="form.get('enabled')?.value"
+            [class.translate-x-0.5]="!form.get('enabled')?.value"
+          ></span>
+        </button>
+      </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5" *ngIf="form.get('enabled')?.value">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Host</label>
-          <input type="text" class="hd-input" formControlName="host" placeholder="imap.gmail.com" />
+      <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
+      <div *ngIf="success" class="text-sm text-green-600">{{ success }}</div>
+
+      <!-- IMAP Configuration — only when enabled -->
+      <div class="hd-card" *ngIf="form.get('enabled')?.value">
+        <div class="p-6 space-y-5">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+              </svg>
+            </span>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">IMAP Configuration</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Host</label>
+              <input type="text" class="hd-input" formControlName="host" placeholder="imap.gmail.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                IMAP Port <span class="text-red-500">*</span>
+              </label>
+              <input type="number" class="hd-input" formControlName="port" placeholder="993" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Protocol</label>
+              <input type="text" class="hd-input" formControlName="protocol" placeholder="imap" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Encryption</label>
+              <select class="hd-input" formControlName="encryption">
+                <option value="">None</option>
+                <option value="ssl">SSL</option>
+                <option value="tls">TLS</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Username</label>
+              <input type="text" class="hd-input" formControlName="username" placeholder="your-email@gmail.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                IMAP Password <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="hd-input pr-10"
+                  formControlName="password"
+                  placeholder="your email password or app password"
+                />
+                <button
+                  type="button"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  (click)="showPassword = !showPassword"
+                >
+                  <svg *ngIf="!showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  <svg *ngIf="showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">IMAP Port</label>
-          <input type="number" class="hd-input" formControlName="port" />
+
+        <div *ngIf="testResult" class="px-6 pb-2">
+          <div
+            class="p-3 rounded-lg text-sm border"
+            [class.bg-green-50]="testResult.success"
+            [class.border-green-200]="testResult.success"
+            [class.text-green-800]="testResult.success"
+            [class.bg-red-50]="!testResult.success"
+            [class.border-red-200]="!testResult.success"
+            [class.text-red-800]="!testResult.success"
+          >
+            {{ testResult.message }}
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
-          <input type="text" class="hd-input" formControlName="username" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
-          <input type="password" class="hd-input" formControlName="password" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Encryption</label>
-          <select class="hd-input" formControlName="encryption">
-            <option value="">None</option>
-            <option value="ssl">SSL</option>
-            <option value="tls">TLS</option>
-          </select>
+
+        <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p class="text-sm text-slate-500">Email piping will be enabled after saving and setting up cron job.</p>
+          <button type="submit" class="inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Save Settings' }}
+          </button>
         </div>
       </div>
-    </div>
+    </form>
 
-    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
-    <div *ngIf="success" class="px-6 pb-2 text-sm text-green-600">{{ success }}</div>
+    <!-- Cron instructions — only when enabled -->
+    <div class="hd-card p-6 space-y-4" *ngIf="form.get('enabled')?.value">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </span>
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Cron Job Setup Instructions</h3>
+      </div>
 
-    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-      <button type="submit" class="hd-btn-primary" [disabled]="saving">
-        {{ saving ? 'Saving…' : 'Save Settings' }}
-      </button>
+      <div>
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">For VPS/Dedicated Servers:</p>
+        <pre class="rounded-xl bg-slate-900 text-slate-100 text-xs sm:text-sm p-4 overflow-x-auto">{{ vpsCron }}</pre>
+      </div>
+
+      <div>
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">For Shared Hosting (cPanel):</p>
+        <pre class="rounded-xl bg-slate-900 text-slate-100 text-xs sm:text-sm p-4 overflow-x-auto">{{ sharedCron }}</pre>
+      </div>
     </div>
-  </form>
+  </ng-container>
 </div>

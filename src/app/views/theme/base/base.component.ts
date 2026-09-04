@@ -48,6 +48,7 @@ export class BaseComponent implements OnInit, OnDestroy {
   private authSub?: Subscription;
   private routerSub?: Subscription;
   private settingsSub?: Subscription;
+  logoFailed = false;
 
   currentUrl = '';
   currentTitle = 'Dashboard';
@@ -86,7 +87,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private router: Router,
     private notificationService: NotificationService,
-    private settingService: SettingService
+    public settingService: SettingService
   ) {}
 
   ngOnInit(): void {
@@ -99,8 +100,11 @@ export class BaseComponent implements OnInit, OnDestroy {
       this.auth.me().subscribe();
     }
 
+    this.settingService.loadBrandSettings();
     this.settingService.getAll({}).subscribe({ error: () => {} });
-    this.settingsSub = this.settingService.settings$.subscribe();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
 
     this.loadNotifications();
 
@@ -131,6 +135,12 @@ export class BaseComponent implements OnInit, OnDestroy {
     this.authSub?.unsubscribe();
     this.routerSub?.unsubscribe();
     this.settingsSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
   }
 
   @HostListener('document:click', ['$event'])
@@ -314,7 +324,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     const cleanUrl = url.split('?')[0].split('#')[0];
     if (
       cleanUrl.startsWith('/front-pages') ||
-      cleanUrl.startsWith('/services') ||
+      cleanUrl.startsWith('/admin-services') ||
       cleanUrl.startsWith('/landing')
     ) {
       this.expandedMenus.add('Front Pages');
@@ -398,7 +408,7 @@ export class BaseComponent implements OnInit, OnDestroy {
         languages: 'Languages',
         menus: 'Navigation Menus',
         'email-templates': 'Email Templates',
-        'ticket-fields': 'Custom Ticket Fields',
+        'ticket-fields': 'Ticket Form Builder',
         license: 'License',
       };
 
@@ -412,6 +422,42 @@ export class BaseComponent implements OnInit, OnDestroy {
           { label: 'Settings', path: '/settings' },
           { label: 'Email Templates', path: '/settings/email-templates' },
           { label: 'Edit email template' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'languages' && parts[2] === 'create') {
+        this.setPage('Create a new language', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Languages', path: '/settings/languages' },
+          { label: 'Create a new language' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'languages' && parts[3] === 'edit') {
+        this.setPage('Edit language', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Languages', path: '/settings/languages' },
+          { label: 'Edit language' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'menus' && parts[2] === 'create') {
+        this.setPage('Create a new menu item', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Navigation Menus', path: '/settings/menus' },
+          { label: 'Create a new menu item' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'menus' && parts[3] === 'edit') {
+        this.setPage('Edit menu item', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Navigation Menus', path: '/settings/menus' },
+          { label: 'Edit menu item' },
         ]);
         return;
       }

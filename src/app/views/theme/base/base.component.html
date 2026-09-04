@@ -17,17 +17,16 @@
       <div class="relative h-16 px-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
         <a routerLink="/dashboard" class="flex items-center gap-2 group">
           <img
-            src="/images/logo.png"
-            alt="Logo"
+            [src]="settingService.logoUrl"
+            [alt]="settingService.appName"
             class="h-8 w-auto max-w-[170px] object-contain transition-transform duration-300 group-hover:scale-105"
-            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+            (error)="onLogoError($event)"
           />
-          <!-- Fallback Brand Logo if image fails -->
-          <div class="hidden items-center gap-2.5">
+          <div *ngIf="logoFailed" class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary-500 to-primary-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary-500/30">
-              H
+              {{ settingService.appName.charAt(0) || 'H' }}
             </div>
-            <span class="font-bold text-lg text-slate-800 dark:text-white tracking-tight">HelpDesk</span>
+            <span class="font-bold text-lg text-slate-800 dark:text-white tracking-tight">{{ settingService.appName }}</span>
           </div>
         </a>
 

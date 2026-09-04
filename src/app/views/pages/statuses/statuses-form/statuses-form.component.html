@@ -3,18 +3,19 @@
 
   <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
     <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-        <input type="text" class="hd-input" formControlName="name" />
-        <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">{{ 'Name' }} is required</p>
+      <div [class.sm:col-span-2]="!isEditMode">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Status Name <span class="text-red-500">*</span>
+        </label>
+        <input type="text" class="hd-input" formControlName="name" placeholder="e.g. Open" />
+        <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
       </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Color</label>
-        <div class="flex items-center gap-3">
-          <input type="color" class="h-10 w-14 rounded border border-slate-300 cursor-pointer" formControlName="color" />
-          <input type="text" class="hd-input" formControlName="color" placeholder="#3b82f6" />
-        </div>
+      <div *ngIf="isEditMode">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Slug <span class="text-red-500">*</span>
+        </label>
+        <input type="text" class="hd-input" formControlName="slug" />
+        <p *ngIf="hasError('slug')" class="mt-1 text-xs text-red-600">Slug is required</p>
       </div>
     </div>
 

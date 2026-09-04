@@ -1,122 +1,235 @@
 <div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <p class="text-sm text-slate-500 dark:text-slate-400">Configure your helpdesk system settings</p>
+    <span class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </span>
+  </div>
 
   <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
   <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="space-y-6">
-    <nav class="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+    <!-- Tabs with icons -->
+    <nav class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-700">
       <button
         *ngFor="let tab of tabs"
         type="button"
-        class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-        [class.bg-blue-600]="activeTab === tab.id"
-        [class.text-white]="activeTab === tab.id"
-        [class.text-slate-600]="activeTab !== tab.id"
-        [class.hover:bg-slate-100]="activeTab !== tab.id"
+        class="inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors"
+        [class.border-blue-600]="activeTab === tab.id"
+        [class.text-blue-600]="activeTab === tab.id"
+        [class.border-transparent]="activeTab !== tab.id"
+        [class.text-slate-500]="activeTab !== tab.id"
+        [class.hover:text-slate-800]="activeTab !== tab.id"
         (click)="setTab(tab.id)"
       >
+        <svg *ngIf="tab.icon === 'globe'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        <svg *ngIf="tab.icon === 'palette'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+        <svg *ngIf="tab.icon === 'eye'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        <svg *ngIf="tab.icon === 'bell'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <svg *ngIf="tab.icon === 'monitor'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <svg *ngIf="tab.icon === 'doc'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         {{ tab.name }}
       </button>
     </nav>
 
-    <!-- General -->
+    <!-- GENERAL -->
     <div *ngIf="activeTab === 'general'" class="hd-card">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">General Settings</h3>
         <p class="text-sm text-slate-500">Basic application configuration</p>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">App Name</label>
-          <input type="text" class="hd-input" formControlName="app_name" />
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">App Name</label>
+            <input type="text" class="hd-input" formControlName="app_name" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Google ReCaptcha Site Key</label>
+            <input type="text" class="hd-input" formControlName="site_key" placeholder="Enter CAPTCHA site key" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Default Language</label>
+            <select class="hd-input" formControlName="default_language">
+              <option value="en">English</option>
+              <option *ngFor="let lang of languages" [value]="lang.code || lang.slug">{{ lang.name }}</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Google ReCaptcha Site Key</label>
-          <input type="text" class="hd-input" formControlName="site_key" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Default Language</label>
-          <select class="hd-input" formControlName="default_language">
-            <option value="en">English</option>
-            <option *ngFor="let lang of languages" [value]="lang.code || lang.slug">{{ lang.name }}</option>
-          </select>
+
+        <div class="rounded-xl border border-blue-200 bg-blue-50/80 dark:bg-blue-950/20 dark:border-blue-800 p-4 space-y-3">
+          <div class="flex items-center gap-2 text-blue-900 dark:text-blue-100 font-semibold text-sm">
+            <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center">i</span>
+            Cron Job Instructions
+          </div>
+          <p class="text-sm text-blue-800 dark:text-blue-200">To send emails without delay, set up a cron job to run every 2-3 minutes:</p>
+          <pre class="rounded-lg bg-slate-900 text-slate-100 text-xs p-3 overflow-x-auto">{{ queueCron }}</pre>
+          <p class="text-sm text-blue-800 dark:text-blue-200">For shared hosting (cPanel), use this URL-based approach:</p>
+          <pre class="rounded-lg bg-slate-900 text-slate-100 text-xs p-3 overflow-x-auto">{{ sharedCron }}</pre>
+          <p class="text-sm text-blue-800 dark:text-blue-200">After setting up cron, enable queue processing by adding to your .env file:</p>
+          <pre class="rounded-lg bg-slate-900 text-emerald-400 text-xs p-3 overflow-x-auto">QUEUE_ENABLE=true</pre>
         </div>
       </div>
     </div>
 
-    <!-- Branding -->
+    <!-- BRANDING -->
     <div *ngIf="activeTab === 'branding'" class="hd-card">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Branding & Assets</h3>
-        <p class="text-sm text-slate-500">Logo and favicon paths (URL or relative path)</p>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Branding &amp; Assets</h3>
+        <p class="text-sm text-slate-500">Upload logos and customize your brand.</p>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Main Logo</label>
-          <input type="text" class="hd-input" formControlName="main_logo" placeholder="/images/logo.png" />
+      <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div *ngFor="let asset of brandingAssets">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ asset.label }}</label>
+          <div class="flex items-center">
+            <label class="cursor-pointer hd-btn-secondary !rounded-r-none !py-2 !px-3 text-sm whitespace-nowrap">
+              {{ uploading[asset.key] ? '…' : 'Browse' }}
+              <input type="file" class="hidden" accept="image/*" (change)="onFileSelected(asset.key, $event)" />
+            </label>
+            <input type="text" class="hd-input !rounded-l-none" [formControlName]="asset.key" readonly />
+          </div>
+          <p class="mt-2 text-xs text-slate-500">{{ asset.tip }}</p>
+          <div class="mt-3 flex items-center gap-2">
+            <div
+              class="w-16 h-16 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center"
+              [class.bg-slate-900]="asset.dark"
+              [class.bg-white]="!asset.dark"
+            >
+              <img *ngIf="form.get(asset.key)?.value" [src]="assetUrl(asset.key)" alt="" class="max-w-full max-h-full object-contain" />
+            </div>
+            <span *ngIf="form.get(asset.key)?.value" class="w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center">✓</span>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">White Logo</label>
-          <input type="text" class="hd-input" formControlName="main_logo_white" placeholder="/images/logo_white.png" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Favicon</label>
-          <input type="text" class="hd-input" formControlName="main_favicon" placeholder="/favicon.png" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Footer Text</label>
-          <input type="text" class="hd-input" formControlName="footer_text" />
-        </div>
+      </div>
+      <div class="px-6 pb-6">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Footer Text</label>
+        <input type="text" class="hd-input" formControlName="footer_text" />
       </div>
     </div>
 
-    <!-- Features -->
+    <!-- FEATURES -->
     <div *ngIf="activeTab === 'features'" class="hd-card">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Feature Settings</h3>
         <p class="text-sm text-slate-500">Enable or disable system features</p>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" formArrayName="enable_options">
-        <label
-          *ngFor="let opt of enableOptions.controls; let i = index"
-          [formGroupName]="i"
-          class="flex items-center justify-between gap-3 p-4 border border-slate-200 dark:border-slate-600 rounded-xl cursor-pointer hover:border-blue-300"
-        >
-          <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ opt.get('name')?.value }}</span>
-          <input type="checkbox" class="w-4 h-4" formControlName="value" />
-        </label>
+      <div class="p-6">
+        <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4">Enable Options</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" formArrayName="enable_options">
+          <div
+            *ngFor="let opt of enableOptions.controls; let i = index"
+            [formGroupName]="i"
+            class="flex items-start gap-3 p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900/30"
+          >
+            <button
+              type="button"
+              role="switch"
+              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors mt-0.5"
+              [class.bg-blue-600]="opt.get('value')?.value"
+              [class.bg-slate-300]="!opt.get('value')?.value"
+              [attr.aria-checked]="opt.get('value')?.value"
+              (click)="opt.get('value')?.setValue(!opt.get('value')?.value)"
+            >
+              <span
+                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-y-0.5"
+                [class.translate-x-5]="opt.get('value')?.value"
+                [class.translate-x-0.5]="!opt.get('value')?.value"
+              ></span>
+            </button>
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">{{ opt.get('name')?.value }}</div>
+              <div class="text-xs text-slate-500 mt-0.5">{{ featureDescription(opt.get('slug')?.value) }}</div>
+              <div class="text-xs mt-1.5 font-medium" [class.text-emerald-600]="opt.get('value')?.value" [class.text-slate-400]="!opt.get('value')?.value">
+                ● {{ opt.get('value')?.value ? 'Enabled' : 'Disabled' }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Email Notifications -->
+    <!-- EMAIL NOTIFICATIONS -->
     <div *ngIf="activeTab === 'email_notification'" class="hd-card">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Email Notifications</h3>
         <p class="text-sm text-slate-500">Configure email notification for different actions</p>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" formArrayName="email_notifications">
-        <label
-          *ngFor="let opt of emailNotifications.controls; let i = index"
-          [formGroupName]="i"
-          class="flex items-center justify-between gap-3 p-4 border border-slate-200 dark:border-slate-600 rounded-xl cursor-pointer hover:border-blue-300"
-        >
-          <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ opt.get('name')?.value }}</span>
-          <input type="checkbox" class="w-4 h-4" formControlName="value" />
-        </label>
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" formArrayName="email_notifications">
+          <div
+            *ngFor="let opt of emailNotifications.controls; let i = index"
+            [formGroupName]="i"
+            class="flex items-start gap-3 p-4 border border-slate-200 dark:border-slate-700 rounded-xl"
+          >
+            <button
+              type="button"
+              role="switch"
+              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors mt-0.5"
+              [class.bg-blue-600]="opt.get('value')?.value"
+              [class.bg-slate-300]="!opt.get('value')?.value"
+              (click)="opt.get('value')?.setValue(!opt.get('value')?.value)"
+            >
+              <span
+                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition translate-y-0.5"
+                [class.translate-x-5]="opt.get('value')?.value"
+                [class.translate-x-0.5]="!opt.get('value')?.value"
+              ></span>
+            </button>
+            <div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">{{ opt.get('name')?.value }}</div>
+              <div class="text-xs text-slate-500 mt-0.5">Configure email notification settings</div>
+              <div class="text-xs mt-1.5 font-medium" [class.text-emerald-600]="opt.get('value')?.value" [class.text-slate-400]="!opt.get('value')?.value">
+                ● {{ opt.get('value')?.value ? 'Enabled' : 'Disabled' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Default Email Recipient for customer ticket
+          </label>
+          <select class="hd-input" formControlName="default_recipient">
+            <option *ngFor="let u of recipients" [value]="u.id || u._id">{{ recipientLabel(u) }}</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <!-- Customization -->
+    <!-- CUSTOMIZATION -->
     <div *ngIf="activeTab === 'customization'" class="hd-card">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Custom CSS</h3>
         <p class="text-sm text-slate-500">Add custom styles to your helpdesk</p>
       </div>
-      <div class="p-6">
-        <textarea class="hd-input min-h-[240px] font-mono text-sm" formControlName="custom_css" rows="12" placeholder="Enter your custom CSS here..."></textarea>
+      <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Custom CSS Code</label>
+          <textarea
+            class="hd-input min-h-[280px] font-mono text-sm"
+            formControlName="custom_css"
+            rows="14"
+            placeholder=".font-bold { font-weight: 700; }"
+          ></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Live Preview</label>
+          <p class="text-xs text-slate-500 mb-3">Preview of your custom styles:</p>
+          <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-5 bg-slate-50 dark:bg-slate-900/40">
+            <div [innerHTML]="cssPreviewStyle"></div>
+            <div class="css-preview-box rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div class="font-bold text-slate-900 mb-1">Sample Ticket</div>
+              <p class="text-sm text-slate-600">This is how your custom styles will look</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Ticket Fields -->
+    <!-- TICKET FIELDS -->
     <div *ngIf="activeTab === 'ticket-fields'" class="hd-card">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Ticket Field Configuration</h3>
@@ -126,7 +239,7 @@
         <div>
           <h4 class="text-md font-medium text-slate-900 dark:text-white mb-3">Hide ticket fields</h4>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <label *ngFor="let field of ticketFieldOptions" class="flex items-center gap-2 p-3 border border-slate-200 rounded-lg cursor-pointer">
+            <label *ngFor="let field of ticketFieldOptions" class="flex items-center gap-2 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-300">
               <input
                 type="checkbox"
                 class="w-4 h-4"
@@ -140,7 +253,7 @@
         <div>
           <h4 class="text-md font-medium text-slate-900 dark:text-white mb-3">Required fields to submit ticket</h4>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <label *ngFor="let field of ticketFieldOptions" class="flex items-center gap-2 p-3 border border-slate-200 rounded-lg cursor-pointer">
+            <label *ngFor="let field of ticketFieldOptions" class="flex items-center gap-2 p-3 border border-slate-200 rounded-lg cursor-pointer hover:border-blue-300">
               <input
                 type="checkbox"
                 class="w-4 h-4"
@@ -158,7 +271,10 @@
     <div *ngIf="success" class="text-sm text-green-600">{{ success }}</div>
 
     <div class="flex justify-end">
-      <button type="submit" class="hd-btn-primary" [disabled]="saving">
+      <button type="submit" class="hd-btn-primary inline-flex items-center gap-2" [disabled]="saving">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+        </svg>
         {{ saving ? 'Saving…' : 'Save Settings' }}
       </button>
     </div>

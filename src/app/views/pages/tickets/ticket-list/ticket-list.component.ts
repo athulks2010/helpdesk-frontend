@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
@@ -77,12 +77,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
     private ticketService: TicketService,
     private authService: AuthService,
     private settingService: SettingService,
+    private route: ActivatedRoute,
     private confirmService: ConfirmDialogService,
     private router: Router,
     private host: ElementRef<HTMLElement>
-  ) {}
+  ) { }
 
   ngOnInit(): void {
+    this.applyQueryFilters();
     this.loadDropdowns();
     this.load();
 
@@ -96,6 +98,21 @@ export class TicketListComponent implements OnInit, OnDestroy {
     this.clientSearchSubject
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((search) => this.fetchClients(search));
+  }
+
+  private applyQueryFilters(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const departmentId = qp.get('department_id');
+    const userId = qp.get('user_id') || qp.get('customer_id');
+
+    if (departmentId) {
+      this.filters.department_id = departmentId;
+    }
+    if (userId) {
+      this.filters.user_id = userId;
+      this.clientQuery = `Customer #${userId}`;
+      this.selectedClient = { id: userId, name: this.clientQuery };
+    }
   }
 
   ngOnDestroy(): void {
@@ -304,7 +321,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
       let aVal = a[this.sortField] || a.created_at || '';
       let bVal = b[this.sortField] || b.created_at || '';
       if (this.sortField === 'priority') { aVal = a.priority?.name || ''; bVal = b.priority?.name || ''; }
-      if (this.sortField === 'status')   { aVal = a.status?.name || '';   bVal = b.status?.name || ''; }
+      if (this.sortField === 'status') { aVal = a.status?.name || ''; bVal = b.status?.name || ''; }
       return this.sortOrder === 'asc'
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));

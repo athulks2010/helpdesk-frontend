@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/knowledge-base.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { TypeService } from '../../../../core/type/_services/type.service';
 
 @Component({
   selector: 'app-knowledge-base-list',
@@ -11,19 +12,35 @@ import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dial
 export class KnowledgeBaseListComponent implements OnInit {
   rows: any[] = [];
   filtered: any[] = [];
+  types: any[] = [];
   loading = true;
   error = '';
   search = '';
+  typeFilter: string | number = '';
+  typeMenuOpen = false;
   deletingId: string | number | null = null;
 
   constructor(
     private service: KnowledgeBaseService,
+    private typeService: TypeService,
     private router: Router,
     private confirmService: ConfirmDialogService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.load();
+    this.loadTypes();
+  }
+
+  get selectedTypeLabel(): string {
+    if (this.typeFilter === '' || this.typeFilter == null) return 'All Types';
+    const match = this.types.find((t) => (t.id || t._id) == this.typeFilter);
+    return match?.name || 'All Types';
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.typeMenuOpen = false;
   }
 
   load(): void {
@@ -49,6 +66,14 @@ export class KnowledgeBaseListComponent implements OnInit {
   totalPages = 1;
   pages: number[] = [];
 
+  loadTypes(): void {
+    this.typeService.getAll().subscribe({
+      next: (d) => {
+        this.types = Array.isArray(d) ? d : (d?.items || d?.list || d?.data || []);
+      },
+    });
+  }
+
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
     let res = this.rows;
@@ -65,22 +90,38 @@ export class KnowledgeBaseListComponent implements OnInit {
     this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
     const start = (this.currentPage - 1) * Number(this.pageSize);
     this.filtered = res.slice(start, start + Number(this.pageSize));
+    let list = [...this.rows];
+
+    if (this.typeFilter !== '' && this.typeFilter != null) {
+      list = list.filter((row) => {
+        const id = row.type_id ?? row.type?.id ?? row.type?._id;
+        return String(id) === String(this.typeFilter);
+      });
+    }
+
+    if (q) {
+      list = list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
+    }
+
+    this.filtered = list;
   }
 
   onSearchChange(): void {
-    this.currentPage = 1;
     this.applyFilter();
   }
 
-  onPageSizeChange(): void {
-    this.currentPage = 1;
+  toggleTypeMenu(): void {
+    this.typeMenuOpen = !this.typeMenuOpen;
+  }
+
+  selectType(id: string | number): void {
+    this.typeFilter = id;
+    this.typeMenuOpen = false;
     this.applyFilter();
   }
 
-  goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
-    this.applyFilter();
+  isTypeSelected(t: any): boolean {
+    return String(this.typeFilter) === String(t.id || t._id);
   }
 
   createNew(): void {

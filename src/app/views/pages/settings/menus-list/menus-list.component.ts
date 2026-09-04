@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
@@ -14,37 +14,27 @@ export class MenusListComponent implements OnInit {
   search = '';
   pageSize = 10;
   loading = true;
-  saving = false;
   error = '';
-  editingId: string | number | null = null;
-  form!: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private settingService: SettingService,
     private confirmService: ConfirmDialogService
-  ) {}
+  ) { }
+  constructor(private settingService: SettingService, private router: Router) { }
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      id: [null],
-      location: ['header', Validators.required],
-      label: ['', Validators.required],
-      url: [''],
-      icon: [''],
-      order: [0],
-      sort_order: [0],
-      is_active: [true],
-    });
     this.load();
   }
 
   load(): void {
     this.loading = true;
     this.error = '';
-    this.settingService.getMenus({}).subscribe({
+    this.settingService.getMenus().subscribe({
       next: (data) => {
-        this.rows = Array.isArray(data) ? data : data?.items || data?.list || data?.data || [];
+        this.rows = (Array.isArray(data) ? data : data?.items || data?.list || data?.data || []).sort(
+          (a: any, b: any) => Number(a.order ?? a.sort_order ?? 0) - Number(b.order ?? b.sort_order ?? 0)
+        );
         this.applyFilter();
         this.loading = false;
       },
@@ -55,99 +45,14 @@ export class MenusListComponent implements OnInit {
     });
   }
 
-  Math = Math;
-  currentPage = 1;
-  totalCount = 0;
-  totalPages = 1;
-  pages: number[] = [];
-
-  applyFilter(): void {
-    const q = (this.search || '').toLowerCase().trim();
-    let res = this.rows;
-    if (q) {
-      res = this.rows.filter((row) =>
-        JSON.stringify(row).toLowerCase().includes(q)
-      );
-    }
-    this.totalCount = res.length;
-    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = 1;
-    }
-    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
-    const start = (this.currentPage - 1) * Number(this.pageSize);
-    this.filtered = res.slice(start, start + Number(this.pageSize));
+  createNew(): void {
+    this.router.navigate(['/settings/menus/create']);
   }
 
-  onSearchChange(): void {
-    this.currentPage = 1;
-    this.applyFilter();
-  }
-
-  onPageSizeChange(): void {
-    this.currentPage = 1;
-    this.applyFilter();
-  }
-
-  goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
-    this.applyFilter();
-  }
-
-  startCreate(): void {
-    this.editingId = null;
-    this.form.reset({
-      id: null,
-      location: 'header',
-      label: '',
-      url: '',
-      icon: '',
-      order: 0,
-      sort_order: 0,
-      is_active: true,
-    });
-  }
-
-  startEdit(row: any): void {
-    this.editingId = row.id || row._id;
-    const order = row.order ?? row.sort_order ?? 0;
-    this.form.patchValue({
-      id: this.editingId,
-      location: row.location || 'header',
-      label: row.label || '',
-      url: row.url || '',
-      icon: row.icon || '',
-      order,
-      sort_order: order,
-      is_active: row.is_active !== false,
-    });
-  }
-
-  save(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.saving = true;
-    this.error = '';
-    const body = { ...this.form.getRawValue() };
-    body.sort_order = body.order;
-    const req$ = this.editingId
-      ? this.settingService.updateMenu(body)
-      : this.settingService.createMenu(body);
-
-    req$.subscribe({
-      next: () => {
-        this.saving = false;
-        this.startCreate();
-        this.load();
-      },
-      error: (err) => {
-        this.saving = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
-      },
-    });
+  edit(row: any): void {
+    const id = row.id || row._id;
+    if (!id) return;
+    this.router.navigate(['/settings/menus', id, 'edit']);
   }
 
   async remove(row: any): Promise<void> {
