@@ -51,6 +51,7 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
   entityId: string | null = null;
   types: any[] = [];
   editorInstance: any = null;
+  deleting = false;
 
   constructor(
     private fb: FormBuilder,
@@ -81,27 +82,38 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
             title: item.title ?? '',
-            type_id: item.type_id ?? null,
+            type_id: item.type_id ?? item.type?.id ?? item.type?._id ?? null,
             details: item.details ?? '',
           });
-          if (this.editorInstance) {
-            this.editorInstance.setContent(item.details || '');
-          }
           this.loadingData = false;
+          setTimeout(() => this.initEditor(), 0);
         },
         error: () => {
           this.error = 'Failed to load article';
           this.loadingData = false;
+          setTimeout(() => this.initEditor(), 0);
         },
       });
     }
   }
 
   ngAfterViewInit(): void {
-    this.initEditor();
+    if (!this.loadingData) {
+      this.initEditor();
+    }
   }
 
   initEditor(): void {
+    if (!document.getElementById('knowledge-base-editor')) {
+      return;
+    }
+    if (this.editorInstance) {
+      try {
+        this.editorInstance.destroy();
+      } catch {}
+      this.editorInstance = null;
+    }
+
     tinymce.init({
       selector: '#knowledge-base-editor',
       base_url: 'https://cdn.jsdelivr.net/npm/tinymce@6.8.3',
@@ -125,7 +137,7 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
       menubar: 'file edit view insert format tools table help',
       toolbar_mode: 'wrap',
       toolbar: 'undo redo bold italic underline strikethrough fontfamily fontsize blocks alignleft aligncenter alignright alignjustify | outdent indent numlist bullist | forecolor backcolor removeformat pagebreak | charmap emoticons fullscreen preview | anchor codesample ltr rtl | code | image media link',
-      height: 380,
+      height: 420,
       setup: (editor: any) => {
         this.editorInstance = editor;
         editor.on('init', () => {
@@ -185,6 +197,25 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
 
   cancel(): void {
     this.router.navigate(['/knowledge-base']);
+  }
+
+  remove(): void {
+    if (!this.entityId) return;
+    if (!confirm('Delete this article? This can usually be restored from the API if soft-delete is enabled.')) {
+      return;
+    }
+    this.deleting = true;
+    this.error = '';
+    this.service.deleteById(this.entityId).subscribe({
+      next: () => {
+        this.deleting = false;
+        this.router.navigate(['/knowledge-base']);
+      },
+      error: (err) => {
+        this.deleting = false;
+        this.error = err?.error?.message || err?.message || 'Failed to delete article';
+      },
+    });
   }
 
   hasError(control: string): boolean {
