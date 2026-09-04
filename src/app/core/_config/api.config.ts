@@ -17,10 +17,10 @@ export const apiUrl = {
   ticketComments: '/ticket/comments',
   ticketConversations: '/ticket/conversations',
 
-  /* Filters (Laravel dashboard filter endpoints) */
-  filterClients: '/dashboard/settings/filter/clients',
-  filterAssignees: '/dashboard/settings/filter/assignees',
-  filterCustomers: '/dashboard/settings/filter/customers',
+  /* Filters (Node.js backend endpoints) */
+  filterClients: '/organization/all',
+  filterAssignees: '/user/all',
+  filterCustomers: '/contact/all',
 
   /* Conversations / Chat */
   conversations: '/conversation',

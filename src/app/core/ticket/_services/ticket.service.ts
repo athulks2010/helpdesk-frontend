@@ -28,9 +28,8 @@ export class TicketService extends ApiBaseService {
   }
 
   /**
-   * GET /dashboard/settings/filter/clients?search=
-   * Returns ticket owners: [{ id, name }]
-   * Empty search → first ~10 distinct ticket owners
+   * GET /organization/all?search=
+   * Returns organizations: [{ id, name }]
    */
   filterClients(search?: string): Observable<Array<{ id: number | string; name: string }>> {
     return this.http
@@ -41,13 +40,82 @@ export class TicketService extends ApiBaseService {
         map((res: any) => {
           const list = Array.isArray(res)
             ? res
-            : Array.isArray(res?.data)
-              ? res.data
-              : Array.isArray(res?.data?.items)
-                ? res.data.items
-                : [];
+            : Array.isArray(res?.data?.items)
+              ? res.data.items
+              : Array.isArray(res?.items)
+                ? res.items
+                : Array.isArray(res?.data)
+                  ? res.data
+                  : [];
           return list.map((c: any) => ({
-            id: c.id ?? c.user_id,
+            id: c.id ?? c.user_id ?? c._id,
+            name:
+              c.name ||
+              c.title ||
+              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+              c.email ||
+              String(c.id),
+          }));
+        }),
+        catchError(() => of([]))
+      );
+  }
+
+  /**
+   * GET /user/all?role_id=6&search=
+   * Returns assignees/agents: [{ id, name }]
+   */
+  filterAssignees(search?: string): Observable<Array<{ id: number | string; name: string }>> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.filterAssignees}`, {
+        params: this.toParams({ search: search || undefined, role_id: 6 }),
+      })
+      .pipe(
+        map((res: any) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data?.items)
+              ? res.data.items
+              : Array.isArray(res?.items)
+                ? res.items
+                : Array.isArray(res?.data)
+                  ? res.data
+                  : [];
+          return list.map((c: any) => ({
+            id: c.id ?? c.user_id ?? c._id,
+            name:
+              c.name ||
+              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+              c.email ||
+              String(c.id),
+          }));
+        }),
+        catchError(() => of([]))
+      );
+  }
+
+  /**
+   * GET /contact/all?search=
+   * Returns contacts/customers: [{ id, name }]
+   */
+  filterCustomers(search?: string): Observable<Array<{ id: number | string; name: string }>> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.filterCustomers}`, {
+        params: this.toParams({ search: search || undefined }),
+      })
+      .pipe(
+        map((res: any) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data?.items)
+              ? res.data.items
+              : Array.isArray(res?.items)
+                ? res.items
+                : Array.isArray(res?.data)
+                  ? res.data
+                  : [];
+          return list.map((c: any) => ({
+            id: c.id ?? c.user_id ?? c._id,
             name:
               c.name ||
               [c.first_name, c.last_name].filter(Boolean).join(' ') ||
