@@ -46,9 +46,9 @@ export class FaqsFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          status: item.status ?? 1,
-          details: item.details ?? null,
+            name: item.name ?? null,
+            status: this.toStatusValue(item.status),
+            details: item.details ?? null,
           });
 
           this.loadingData = false;
@@ -76,10 +76,6 @@ export class FaqsFormComponent implements OnInit {
     this.error = '';
     const raw = { ...this.form.getRawValue() };
 
-    if (!raw.password) {
-      delete raw.password;
-    }
-
     const req$ = this.isEditMode
       ? this.service.update(raw)
       : this.service.create(raw);
@@ -103,5 +99,12 @@ export class FaqsFormComponent implements OnInit {
   hasError(control: string): boolean {
     const c = this.form.get(control);
     return !!(c && c.invalid && (c.dirty || c.touched));
+  }
+
+  private toStatusValue(status: any): number {
+    if (status === 0 || status === false || status === '0' || status === 'inactive' || status === 'Inactive' || status === 'draft' || status === 'Draft') {
+      return 0;
+    }
+    return 1;
   }
 }

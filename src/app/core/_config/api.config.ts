@@ -15,6 +15,12 @@ export const apiUrl = {
   ticketUpdate: '/ticket/update',
   ticketDelete: '/ticket/delete',
   ticketComments: '/ticket/comments',
+  ticketConversations: '/ticket/conversations',
+
+  /* Filters (Node.js backend endpoints) */
+  filterClients: '/organization/all',
+  filterAssignees: '/user/all',
+  filterCustomers: '/contact/all',
 
   /* Conversations / Chat */
   conversations: '/conversation',
@@ -23,6 +29,8 @@ export const apiUrl = {
   conversationCreate: '/conversation/create',
   conversationMessages: '/conversation/messages',
   conversationMarkRead: '/conversation/mark-read',
+  conversationDelete: '/conversation/delete',
+  conversationUpload: '/conversation/upload-attachments',
 
   /* Users */
   users: '/user',

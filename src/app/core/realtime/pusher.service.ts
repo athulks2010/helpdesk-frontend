@@ -30,7 +30,13 @@ export class PusherService {
   subscribe(channelName: string): Channel | null {
     const client = this.ensureClient();
     if (!client) return null;
+    // Public channels (Laravel Channel, not PrivateChannel) use name as-is: chat.{id}
     return client.subscribe(channelName);
+  }
+
+  /** True when pusherKey is configured */
+  get isEnabled(): boolean {
+    return !!environment.pusherKey;
   }
 
   unsubscribe(channelName: string): void {

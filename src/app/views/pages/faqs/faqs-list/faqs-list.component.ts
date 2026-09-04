@@ -13,6 +13,7 @@ export class FaqsListComponent implements OnInit {
   loading = true;
   error = '';
   search = '';
+  statusFilter = '';
   deletingId: string | number | null = null;
 
   constructor(
@@ -42,13 +43,19 @@ export class FaqsListComponent implements OnInit {
 
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
-    if (!q) {
-      this.filtered = [...this.rows];
-      return;
+    let list = [...this.rows];
+
+    if (this.statusFilter === 'active') {
+      list = list.filter((row) => this.isActive(row));
+    } else if (this.statusFilter === 'inactive') {
+      list = list.filter((row) => !this.isActive(row));
     }
-    this.filtered = this.rows.filter((row) =>
-      JSON.stringify(row).toLowerCase().includes(q)
-    );
+
+    if (q) {
+      list = list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
+    }
+
+    this.filtered = list;
   }
 
   onSearchChange(): void {
@@ -86,6 +93,19 @@ export class FaqsListComponent implements OnInit {
   cell(row: any, key: string): any {
     if (!key.includes('.')) return row?.[key];
     return key.split('.').reduce((acc: any, k: string) => (acc == null ? null : acc[k]), row);
+  }
+
+  isActive(row: any): boolean {
+    const s = row?.status;
+    if (s === 0 || s === false || s === '0' || s === 'inactive' || s === 'Inactive' || s === 'draft' || s === 'Draft') {
+      return false;
+    }
+    return true;
+  }
+
+  plainText(value: any): string {
+    if (!value) return '';
+    return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
   formatDate(value: any): string {

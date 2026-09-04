@@ -44,10 +44,11 @@ export class GlobalSettingsComponent implements OnInit {
     { name: 'Show Login on front page', slug: 'show_login', value: true },
     { name: 'Email to tickets (piping)', slug: 'enable_piping', value: true },
     { name: 'Service Page', slug: 'service', value: true },
+    { name: 'Show Color Picker', slug: 'color_picker', value: true },
     { name: 'Require Login to Submit Ticket', slug: 'require_login_submit_ticket', value: false },
     { name: 'Contact Page', slug: 'contact_page', value: true },
-    { name: 'Terms of Services', slug: 'terms', value: true },
-    { name: 'Privacy Policy', slug: 'privacy', value: true },
+    { name: 'Terms of Services', slug: 'terms_of_services', value: true },
+    { name: 'Privacy Policy', slug: 'privacy_policy', value: true },
     { name: 'Newsletter', slug: 'newsletter', value: true },
     { name: 'Enable Registration', slug: 'enable_registration', value: true },
   ];
@@ -67,6 +68,7 @@ export class GlobalSettingsComponent implements OnInit {
     this.form = this.fb.group({
       app_name: [''],
       site_key: [''],
+      default_recipient: ['1'],
       default_language: ['en'],
       main_logo: [''],
       main_logo_white: [''],
@@ -103,8 +105,9 @@ export class GlobalSettingsComponent implements OnInit {
       next: (raw) => {
         const settings = this.normalizeSettings(raw);
         this.form.patchValue({
-          app_name: this.settingValue(settings, 'app_name', ''),
+          app_name: this.settingValue(settings, 'app_name', 'Help Desk'),
           site_key: this.settingValue(settings, 'site_key', ''),
+          default_recipient: this.settingValue(settings, 'default_recipient', '1'),
           default_language: this.settingValue(settings, 'default_language', 'en'),
           main_logo: this.settingValue(settings, 'main_logo', '/images/logo.png'),
           main_logo_white: this.settingValue(settings, 'main_logo_white', '/images/logo_white.png'),
@@ -212,22 +215,7 @@ export class GlobalSettingsComponent implements OnInit {
   }
 
   private normalizeSettings(raw: any): Record<string, any> {
-    const data = raw?.data ?? raw?.settings ?? raw;
-    if (!data) return {};
-
-    if (Array.isArray(data)) {
-      const map: Record<string, any> = {};
-      data.forEach((row) => {
-        const key = row?.slug || row?.key || row?.name;
-        if (key) map[key] = row;
-      });
-      return map;
-    }
-
-    if (typeof data === 'object') {
-      return data;
-    }
-    return {};
+    return this.settingService.getSettingsMap(raw);
   }
 
   private settingValue(settings: Record<string, any>, key: string, fallback: any): any {
@@ -269,13 +257,30 @@ export class GlobalSettingsComponent implements OnInit {
     }
 
     const bySlug = new Map(list.map((item: any) => [item.slug, item]));
-    return defaults.map((d) => {
+    const result: Array<{ name: string; slug: string; value: boolean }> = [];
+    const processed = new Set<string>();
+
+    defaults.forEach((d) => {
       const found = bySlug.get(d.slug);
-      return {
+      processed.add(d.slug);
+      result.push({
         name: found?.name || d.name,
         slug: d.slug,
         value: found ? !!found.value : d.value,
-      };
+      });
     });
+
+    list.forEach((item: any) => {
+      if (item?.slug && !processed.has(item.slug)) {
+        processed.add(item.slug);
+        result.push({
+          name: item.name || item.slug,
+          slug: item.slug,
+          value: !!item.value,
+        });
+      }
+    });
+
+    return result;
   }
 }
