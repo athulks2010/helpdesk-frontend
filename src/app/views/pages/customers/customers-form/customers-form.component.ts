@@ -157,6 +157,12 @@ export class CustomersFormComponent implements OnInit {
     this.router.navigate(['/customers']);
   }
 
+  goToTickets(): void {
+    this.router.navigate(['/tickets'], {
+      queryParams: { user_id: this.entityId },
+    });
+  }
+
   hasError(control: string): boolean {
     const c = this.form.get(control);
     return !!(c && c.invalid && (c.dirty || c.touched));

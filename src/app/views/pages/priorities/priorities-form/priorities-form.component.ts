@@ -32,11 +32,7 @@ export class PrioritiesFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
-      color: ['#3b82f6'],
     });
-
-
-    this.loadExtras();
 
     if (this.isEditMode && this.entityId) {
       this.loadingData = true;
@@ -45,8 +41,7 @@ export class PrioritiesFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          color: item.color ?? null,
+            name: item.name ?? null,
           });
 
           this.loadingData = false;
@@ -56,13 +51,7 @@ export class PrioritiesFormComponent implements OnInit {
           this.loadingData = false;
         },
       });
-    } else {
-
     }
-  }
-
-  loadExtras(): void {
-    // no extras
   }
 
   submit(): void {
@@ -73,10 +62,6 @@ export class PrioritiesFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
-
-    if (!raw.password) {
-      delete raw.password;
-    }
 
     const req$ = this.isEditMode
       ? this.service.update(raw)

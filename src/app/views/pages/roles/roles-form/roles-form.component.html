@@ -3,12 +3,12 @@
 
   <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
     <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
+      <div [class.sm:col-span-2]="!isEditMode">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
         <input type="text" class="hd-input" formControlName="name" />
         <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
       </div>
-      <div>
+      <div *ngIf="isEditMode">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Slug</label>
         <input type="text" class="hd-input" formControlName="slug" />
         <p *ngIf="hasError('slug')" class="mt-1 text-xs text-red-600">Slug is required</p>

@@ -3,7 +3,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StatusService } from '../../../../core/status/_services/status.service';
 
-
 @Component({
   selector: 'app-statuses-form',
   templateUrl: './statuses-form.component.html',
@@ -16,7 +15,6 @@ export class StatusesFormComponent implements OnInit {
   error = '';
   isEditMode = false;
   entityId: string | null = null;
-
 
   constructor(
     private fb: FormBuilder,
@@ -32,11 +30,17 @@ export class StatusesFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
-      color: ['#3b82f6'],
+      slug: [''],
     });
 
-
-    this.loadExtras();
+    if (!this.isEditMode) {
+      this.form.get('name')?.valueChanges.subscribe((name: string) => {
+        this.form.patchValue({ slug: this.toSlug(name) }, { emitEvent: false });
+      });
+    } else {
+      this.form.get('slug')?.setValidators([Validators.required]);
+      this.form.get('slug')?.updateValueAndValidity();
+    }
 
     if (this.isEditMode && this.entityId) {
       this.loadingData = true;
@@ -45,10 +49,9 @@ export class StatusesFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          color: item.color ?? null,
+            name: item.name ?? null,
+            slug: item.slug ?? this.toSlug(item.name ?? ''),
           });
-
           this.loadingData = false;
         },
         error: () => {
@@ -56,13 +59,14 @@ export class StatusesFormComponent implements OnInit {
           this.loadingData = false;
         },
       });
-    } else {
-
     }
   }
 
-  loadExtras(): void {
-    // no extras
+  private toSlug(value: string): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
   }
 
   submit(): void {
@@ -73,9 +77,8 @@ export class StatusesFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
-
-    if (!raw.password) {
-      delete raw.password;
+    if (!this.isEditMode) {
+      raw.slug = this.toSlug(raw.name);
     }
 
     const req$ = this.isEditMode

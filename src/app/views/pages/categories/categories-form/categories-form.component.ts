@@ -30,15 +30,15 @@ export class CategoriesFormComponent implements OnInit {
   ngOnInit(): void {
     this.entityId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.entityId;
+    const presetDepartmentId = this.route.snapshot.queryParamMap.get('department_id');
 
     this.form = this.fb.group({
       id: [this.entityId],
-      department_id: [''],
+      department_id: [presetDepartmentId || ''],
       parent_id: [''],
       name: ['', Validators.required],
       color: ['#3b82f6'],
     });
-
 
     this.loadExtras();
 
@@ -49,10 +49,10 @@ export class CategoriesFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          department_id: item.department_id ?? null,
-          parent_id: item.parent_id ?? null,
-          name: item.name ?? null,
-          color: item.color ?? null,
+            department_id: item.department_id ?? null,
+            parent_id: item.parent_id ?? null,
+            name: item.name ?? null,
+            color: item.color || '#3b82f6',
           });
 
           this.loadingData = false;
@@ -62,8 +62,6 @@ export class CategoriesFormComponent implements OnInit {
           this.loadingData = false;
         },
       });
-    } else {
-
     }
   }
 
@@ -80,6 +78,9 @@ export class CategoriesFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
+    if (!this.isEditMode) {
+      delete raw.color;
+    }
 
     const req$ = this.isEditMode
       ? this.service.update(raw)
@@ -88,7 +89,10 @@ export class CategoriesFormComponent implements OnInit {
     req$.subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigate(['/categories']);
+        const departmentId = raw.department_id;
+        this.router.navigate(['/categories'], {
+          queryParams: departmentId ? { department_id: departmentId } : {},
+        });
       },
       error: (err) => {
         this.loading = false;
@@ -98,7 +102,10 @@ export class CategoriesFormComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/categories']);
+    const departmentId = this.form.get('department_id')?.value;
+    this.router.navigate(['/categories'], {
+      queryParams: departmentId ? { department_id: departmentId } : {},
+    });
   }
 
   hasError(control: string): boolean {

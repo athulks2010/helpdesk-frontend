@@ -11,7 +11,11 @@ export class CategoryService extends ApiBaseService {
   }
 
   getAll(params?: Record<string, any>): Observable<any> {
-    return this.getCollection(apiUrl.categoriesAll, params);
+    return this.getCollection(apiUrl.categoriesAll, {
+      pageNumber: 1,
+      pageSize: 10000000,
+      ...(params || {}),
+    });
   }
 
   getById(id: string | number): Observable<any> {
