@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NoteService } from '../../../../core/note/_services/note.service';
+import { AuthService } from '../../../../core/auth/_services/auth.service';
 
 @Component({
   selector: 'app-notes-list',
@@ -22,7 +23,8 @@ export class NotesListComponent implements OnInit {
 
   constructor(
     private service: NoteService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -30,6 +32,7 @@ export class NotesListComponent implements OnInit {
       id: [null],
       name: ['', Validators.required],
       details: ['', Validators.required],
+      user_id: [this.currentUserId()],
     });
     this.load();
   }
@@ -67,7 +70,12 @@ export class NotesListComponent implements OnInit {
 
   openCreate(): void {
     this.editingId = null;
-    this.form.reset({ id: null, name: '', details: '' });
+    this.form.reset({
+      id: null,
+      name: '',
+      details: '',
+      user_id: this.currentUserId(),
+    });
     this.panelOpen = true;
   }
 
@@ -78,6 +86,7 @@ export class NotesListComponent implements OnInit {
       id,
       name: row.name ?? '',
       details: row.details ?? '',
+      user_id: row.user_id ?? this.currentUserId(),
     });
     this.panelOpen = true;
   }
@@ -85,7 +94,12 @@ export class NotesListComponent implements OnInit {
   closePanel(): void {
     this.panelOpen = false;
     this.editingId = null;
-    this.form.reset({ id: null, name: '', details: '' });
+    this.form.reset({
+      id: null,
+      name: '',
+      details: '',
+      user_id: this.currentUserId(),
+    });
   }
 
   submit(): void {
@@ -96,6 +110,10 @@ export class NotesListComponent implements OnInit {
     this.saving = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
+    if (!this.editingId) {
+      raw.user_id = this.currentUserId();
+      delete raw.id;
+    }
     const req$ = this.editingId
       ? this.service.update(raw)
       : this.service.create(raw);
@@ -108,7 +126,11 @@ export class NotesListComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        this.error =
+          err?.error?.response?.message ||
+          err?.error?.message ||
+          err?.message ||
+          'Save failed';
       },
     });
   }
@@ -162,5 +184,15 @@ export class NotesListComponent implements OnInit {
 
   rowId(row: any): string | number | null {
     return row?.id || row?._id || null;
+  }
+
+  private currentUserId(): number | null {
+    const user = this.auth.currentUserValue;
+    const id = user?.id ?? user?._id;
+    if (id == null || id === '') {
+      return null;
+    }
+    const n = Number(id);
+    return Number.isFinite(n) ? n : null;
   }
 }

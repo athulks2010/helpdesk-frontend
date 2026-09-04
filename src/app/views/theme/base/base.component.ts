@@ -324,7 +324,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     const cleanUrl = url.split('?')[0].split('#')[0];
     if (
       cleanUrl.startsWith('/front-pages') ||
-      cleanUrl.startsWith('/services') ||
+      cleanUrl.startsWith('/admin-services') ||
       cleanUrl.startsWith('/landing')
     ) {
       this.expandedMenus.add('Front Pages');

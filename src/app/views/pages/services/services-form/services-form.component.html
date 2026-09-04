@@ -1,32 +1,127 @@
-<div class="space-y-6">
-  <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+<div class="bg-white dark:bg-slate-800 rounded-md shadow overflow-hidden max-w-full border border-slate-200 dark:border-slate-700">
+  <div *ngIf="loadingData" class="p-10 text-center text-slate-500">Loading…</div>
 
-  <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
-        <input type="text" class="hd-input" formControlName="title" />
-        <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-600">{{ 'Title' }} is required</p>
+  <form *ngIf="!loadingData" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="p-8 -mr-6 -mb-8 flex flex-wrap">
+      <!-- Title / Service Title -->
+      <div class="pr-6 pb-8 w-full lg:w-2/3">
+        <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+          {{ isEditMode ? 'Service Title' : 'Title' }}
+        </label>
+        <input type="text" formControlName="title"
+          class="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+          [class.border-red-500]="hasError('title')" />
+        <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-600">Title is required</p>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Icon</label>
-        <input type="text" class="hd-input" formControlName="icon" />
-
+      <!-- Icon / Service Icon -->
+      <div class="pr-6 pb-8 w-full lg:w-1/3">
+        <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+          {{ isEditMode ? 'Service Icon' : 'Icon' }}
+        </label>
+        <input type="text" formControlName="icon"
+          class="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
       </div>
 
-      <div class="sm:col-span-2">
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Details</label>
-        <textarea class="hd-input min-h-[140px]" formControlName="details" rows="6"></textarea>
-        <p *ngIf="hasError('details')" class="mt-1 text-xs text-red-600">{{ 'Details' }} is required</p>
+      <!-- Edit: Status + Feature Image -->
+      <ng-container *ngIf="isEditMode">
+        <div class="pr-6 pb-8 w-full lg:w-1/3">
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Status</label>
+          <div class="relative">
+            <select formControlName="status"
+              class="w-full px-4 py-3 pr-10 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer">
+              <option [ngValue]="1">Published</option>
+              <option [ngValue]="0">Draft</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="pr-6 pb-8 w-full lg:w-2/3">
+          <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Feature Image</label>
+          <div class="flex items-stretch border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden bg-white dark:bg-slate-700">
+            <label
+              class="cursor-pointer inline-flex items-center px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium whitespace-nowrap">
+              Browse
+              <input type="file" class="hidden" accept="image/*" (change)="onFileSelected($event)" />
+            </label>
+            <input type="text" readonly [value]="imageFileName"
+              class="flex-1 px-3 py-2.5 bg-white dark:bg-slate-700 text-sm text-slate-700 dark:text-slate-200 border-0 focus:ring-0 min-w-0" />
+          </div>
+          <div *ngIf="imagePreviewUrl" class="mt-3">
+            <img [src]="imagePreviewUrl" alt="Feature image preview"
+              class="h-20 w-28 object-cover rounded border border-slate-200 dark:border-slate-600 shadow-sm" />
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Details / Service Content -->
+      <div class="pr-6 pb-8 w-full">
+        <label class="block text-sm font-bold text-slate-900 dark:text-white mb-2">
+          {{ isEditMode ? 'Service Content' : 'Details:' }}
+        </label>
+        <div class="rich-editor-wrapper">
+          <div class="rich-editor-toolbar">
+            <button type="button" (click)="triggerMediaManager()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Add Media
+            </button>
+          </div>
+          <div class="editor-content-area">
+            <textarea id="service-editor" class="w-full"></textarea>
+          </div>
+        </div>
+        <p *ngIf="hasError('details')" class="mt-1 text-xs text-red-600">Details is required</p>
+      </div>
+
+      <!-- Create: Feature image under editor -->
+      <div *ngIf="!isEditMode" class="pr-6 pb-8 w-full">
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Feature image</label>
+        <div class="flex items-stretch border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden bg-white dark:bg-slate-700 max-w-full">
+          <label
+            class="cursor-pointer inline-flex items-center px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium whitespace-nowrap">
+            Browse
+            <input type="file" class="hidden" accept="image/*" (change)="onFileSelected($event)" />
+          </label>
+          <input type="text" readonly [value]="imageFileName"
+            class="flex-1 px-3 py-2.5 bg-white dark:bg-slate-700 text-sm text-slate-700 dark:text-slate-200 border-0 focus:ring-0 min-w-0" />
+        </div>
+        <div *ngIf="imagePreviewUrl" class="mt-3">
+          <img [src]="imagePreviewUrl" alt="Feature image preview"
+            class="h-20 w-28 object-cover rounded border border-slate-200 dark:border-slate-600 shadow-sm" />
+        </div>
       </div>
     </div>
 
-    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+    <div *ngIf="error" class="px-8 pb-3 text-sm text-red-600">{{ error }}</div>
 
-    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
-      <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
-      <button type="submit" class="hd-btn-primary" [disabled]="loading">
+    <div class="px-8 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+      <button *ngIf="isEditMode" type="button" (click)="remove()" [disabled]="deleting || loading"
+        class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 text-sm font-medium border border-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        {{ deleting ? 'Deleting…' : 'Delete Service' }}
+      </button>
+      <span *ngIf="!isEditMode"></span>
+
+      <button type="submit" [disabled]="loading || deleting"
+        class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium shadow-sm transition-colors disabled:opacity-50">
+        <svg *ngIf="isEditMode" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h8l4 4v12a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3v6h8V3M7 21v-7h10v7" />
+        </svg>
         {{ loading ? 'Saving…' : (isEditMode ? 'Update Service' : 'Create Service') }}
       </button>
     </div>

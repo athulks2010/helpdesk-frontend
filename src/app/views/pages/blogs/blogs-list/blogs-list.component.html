@@ -1,27 +1,53 @@
 <div class="space-y-6">
   <div class="flex items-center justify-end gap-2">
-      <button type="button" class="hd-btn-secondary" (click)="load()">Refresh</button>
       <button type="button" class="hd-btn-primary" (click)="createNew()">
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
         </svg>
-        Create Blog Post
+        Create New Post
       </button>
   </div>
 
-  <div class="hd-card p-4">
+  <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
       <div class="relative flex-1">
-        <input type="search" class="hd-input pl-10" placeholder="Search blog posts..." [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()" />
-        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor"
-          viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none"
+          stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
+        <input type="search"
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 focus:border-slate-300"
+          placeholder="Search posts..." [(ngModel)]="search" (ngModelChange)="onSearchChange()" />
       </div>
-      <div class="text-sm text-slate-500 whitespace-nowrap">
-        Total: {{ rows.length }} · Showing: {{ filtered.length }}
+
+      <div class="relative sm:w-40">
+        <select
+          class="w-full appearance-none pl-3.5 pr-9 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300"
+          [(ngModel)]="typeFilter" (ngModelChange)="onSearchChange()">
+          <option [ngValue]="''">All Types</option>
+          <option *ngFor="let t of types" [ngValue]="t.id || t._id">{{ t.name }}</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="relative sm:w-40">
+        <select
+          class="w-full appearance-none pl-3.5 pr-9 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300"
+          [(ngModel)]="statusFilter" (ngModelChange)="onSearchChange()">
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -50,7 +76,17 @@
           <tr *ngFor="let row of filtered">
             <td>{{ cell(row, 'title') || '—' }}</td>
             <td>{{ cell(row, 'type.name') || '—' }}</td>
-            <td>{{ formatDate(cell(row, 'created_at')) }}</td>
+            <td>
+              <span *ngIf="isActive(row)"
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                Published
+              </span>
+              <span *ngIf="!isActive(row)"
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                Draft
+              </span>
+            </td>
+            <td>{{ formatDate(cell(row, 'created_at') || cell(row, 'createdAt')) }}</td>
             <td class="text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-5">
                 <button type="button"
@@ -75,7 +111,7 @@
             </td>
           </tr>
           <tr *ngIf="!filtered.length">
-            <td colspan="4" class="px-4 py-10 text-center text-slate-500">
+            <td colspan="5" class="px-4 py-10 text-center text-slate-500">
               No blog posts found. Create one to get started.
             </td>
           </tr>
