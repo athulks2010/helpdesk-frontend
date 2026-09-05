@@ -348,26 +348,66 @@ export class LandingService extends ApiBaseService {
     );
   }
 
+  getDefaultContactPageHtml(): any {
+    return {
+      content_text: 'Connect With Our Support Team',
+      content_details:
+        'Need help with onboarding, ticket workflows, or account issues? Reach out and our team will connect you with the right specialist.',
+      email: 'support@yourhelpdesk.com',
+      phone: '+1 (415) 555-0198',
+      location: '8013 Alderwood St, South San Francisco, CA 94080',
+      location_map: '',
+      email_details:
+        'Use email for product questions, integration requests, and account-related support.',
+      phone_details:
+        'Call for urgent operational issues that require immediate triage.',
+      contact_recipient: 'support@yourhelpdesk.com',
+    };
+  }
+
+  parseContactPageHtml(data: any): any {
+    const defaults = this.getDefaultContactPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && raw.html.content_text !== undefined
+        ? raw.html
+        : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return { ...defaults, ...parsed };
+  }
+
   getContactPageData(): Observable<any> {
     const defaultData = {
       title: 'Contact',
-      html: {
-        content_text: 'Connect With Our Support Team',
-        content_details:
-          'Need help with onboarding, ticket workflows, or account issues? Reach out and our team will connect you with the right specialist.',
-        email: 'support@yourhelpdesk.com',
-        phone: '+1 (415) 555-0198',
-        location: '8013 Alderwood St, South San Francisco, CA 94080',
-        location_map: '',
-        email_details:
-          'Use email for product questions, integration requests, and account-related support.',
-        phone_details:
-          'Call for urgent operational issues that require immediate triage.',
-        contact_recipient: 'support@yourhelpdesk.com',
-      },
+      html: this.getDefaultContactPageHtml(),
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'contact' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseContactPageHtml(item || defaultData),
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }

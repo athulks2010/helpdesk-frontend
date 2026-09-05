@@ -27,43 +27,12 @@ export class LandingContactComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.landingService.getContactPageData().subscribe((data: any) => {
-      // unwrap() strips outer `data`, so we get { id, slug, html, content, ... }
-      // The `html` / `content` field is DOUBLE-encoded JSON — parse it up to twice
-      const raw = data?.html ?? data?.content ?? data;
-      let parsed: any = null;
-
-      if (typeof raw === 'string') {
-        try {
-          let once = JSON.parse(raw);
-          // If still a string after first parse, parse again (double-encoded)
-          if (typeof once === 'string') {
-            once = JSON.parse(once);
-          }
-          parsed = once;
-        } catch {
-          parsed = null;
-        }
-      } else if (raw && typeof raw === 'object') {
-        parsed = raw;
-      }
-
-      this.pageData = parsed;
+      this.pageData = data?.html ?? data;
     });
   }
 
   get contact(): any {
-    // Static fallbacks for fields not returned by the API
-    const defaults = {
-      content_text: 'Connect With Our Support Team',
-      content_details:
-        'Need help with onboarding, ticket workflows, or account issues? Reach out and our team will connect you with the right specialist.',
-      email: 'support@yourhelpdesk.com',
-      phone: '+1 (415) 555-0198',
-      location: '8013 Alderwood St, South San Francisco, CA 94080',
-      email_details: 'Use email for product questions, integration requests, and account-related support.',
-      phone_details: 'Call for urgent operational issues that require immediate triage.',
-    };
-    // Merge API data over defaults so any field present in API wins
+    const defaults = this.landingService.getDefaultContactPageHtml();
     return this.pageData ? { ...defaults, ...this.pageData } : defaults;
   }
 
