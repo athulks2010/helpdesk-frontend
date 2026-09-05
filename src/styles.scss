@@ -161,3 +161,20 @@ body {
     color: #cbd5e1;
   }
 }
+
+/*
+ * TinyMCE mounts .tox-tinymce-aux on document.body with a high z-index.
+ * An empty / full-viewport sink intercepts clicks on the app sidebar (z-50).
+ * Disable pointer events on the sink; re-enable only for real UI popups.
+ */
+.tox-tinymce-aux {
+  pointer-events: none !important;
+}
+.tox-tinymce-aux .tox-menu,
+.tox-tinymce-aux .tox-collection,
+.tox-tinymce-aux .tox-pop,
+.tox-tinymce-aux .tox-dialog-wrap,
+.tox-tinymce-aux .tox-dialog,
+.tox-tinymce-aux .tox-selected-menu {
+  pointer-events: auto !important;
+}
