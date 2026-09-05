@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { getApiErrorMessage } from '../../../../core/shared/api-error.util';
 
 @Component({
   selector: 'app-piping-settings',
@@ -107,14 +108,12 @@ export class PipingSettingsComponent implements OnInit {
     const next = !this.form.get('enabled')?.value;
 
     if (next) {
-      // Turn on → show form, user saves manually
       this.form.patchValue({ enabled: true });
       this.error = '';
       this.success = '';
       return;
     }
 
-    // Turn off → hide form and immediately save false + empty fields
     this.form.patchValue({ enabled: false });
     this.saving = true;
     this.error = '';
@@ -136,9 +135,8 @@ export class PipingSettingsComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        // Revert toggle if API fails
         this.form.patchValue({ enabled: true });
-        this.error = err?.error?.message || err?.message || 'Failed to disable piping';
+        this.error = getApiErrorMessage(err, 'Failed to disable piping');
       },
     });
   }
@@ -155,7 +153,7 @@ export class PipingSettingsComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        this.error = getApiErrorMessage(err, 'Save failed');
       },
     });
   }
@@ -176,7 +174,7 @@ export class PipingSettingsComponent implements OnInit {
         this.testing = false;
         this.testResult = {
           success: false,
-          message: err?.error?.message || err?.message || 'Connection failed',
+          message: getApiErrorMessage(err, 'Connection failed'),
         };
       },
     });
