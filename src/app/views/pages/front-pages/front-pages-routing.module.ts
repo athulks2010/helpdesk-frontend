@@ -5,6 +5,7 @@ import { HomePageEditorComponent } from './home-page-editor/home-page-editor.com
 import { ServicesPageEditorComponent } from './services-page-editor/services-page-editor.component';
 import { ContactPageEditorComponent } from './contact-page-editor/contact-page-editor.component';
 import { PrivacyPageEditorComponent } from './privacy-page-editor/privacy-page-editor.component';
+import { TermsPageEditorComponent } from './terms-page-editor/terms-page-editor.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -12,6 +13,7 @@ const routes: Routes = [
   { path: 'services', component: ServicesPageEditorComponent },
   { path: 'contact', component: ContactPageEditorComponent },
   { path: 'privacy', component: PrivacyPageEditorComponent },
+  { path: 'terms', component: TermsPageEditorComponent },
   { path: ':page', component: FrontPageEditorComponent },
 ];
 

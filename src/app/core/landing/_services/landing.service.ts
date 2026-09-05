@@ -494,13 +494,10 @@ export class LandingService extends ApiBaseService {
     );
   }
 
-  getTermsData(): Observable<any> {
-    const defaultData = {
+  getDefaultTermsPageHtml(): any {
+    return {
       title: 'Terms of Services',
-      updated_at: 'March 1, 2026',
-      html: {
-        title: 'Terms of Services',
-        content: `
+      content: `
           <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Agreement to Terms</h2>
           <p class="text-slate-600 mb-6 leading-relaxed">
             By accessing or using the HelpDesk platform, services, and associated websites, you agree to be bound by these Terms of Services and our Privacy Policy. If you do not agree with any part of these terms, you may not access or use our services.
@@ -532,10 +529,62 @@ export class LandingService extends ApiBaseService {
             We may suspend or terminate your access immediately, without prior notice or liability, for any reason, including breach of these Terms.
           </p>
         `,
-      },
+    };
+  }
+
+  parseTermsPageHtml(data: any): any {
+    const defaults = this.getDefaultTermsPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = { content: raw };
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed =
+        raw.html &&
+        typeof raw.html === 'object' &&
+        (raw.html.content !== undefined || raw.html.title !== undefined)
+          ? raw.html
+          : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      title: parsed.title || defaults.title,
+      content: parsed.content || defaults.content,
+    };
+  }
+
+  getTermsData(): Observable<any> {
+    const defaultHtml = this.getDefaultTermsPageHtml();
+    const defaultData = {
+      title: defaultHtml.title,
+      updated_at: 'March 1, 2026',
+      html: defaultHtml,
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'terms' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        const html = this.parseTermsPageHtml(item || defaultData);
+        return {
+          title: html.title || item?.title || defaultData.title,
+          updated_at: item?.updated_at || defaultData.updated_at,
+          html,
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }
