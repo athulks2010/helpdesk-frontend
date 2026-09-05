@@ -211,7 +211,8 @@ export const apiUrl = {
 
   /* Ticket extras */
   ticketRestore: '/ticket/restore',
-  ticketFavorite: '/ticket/favorite',
+  ticketFavorite: '/ticket/favorites',
+  ticketFavorites: '/ticket/favorites',
   ticketImport: '/ticket/import',
   ticketExport: '/ticket/export',
   ticketFields: '/ticket-field',

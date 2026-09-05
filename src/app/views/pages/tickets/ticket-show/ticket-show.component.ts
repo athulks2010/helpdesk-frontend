@@ -157,6 +157,7 @@ export class TicketShowComponent implements OnInit, OnDestroy {
           ticket.favorited
         );
         this.loading = false;
+        this.loadFavoriteStatus();
         this.loadComments();
         this.loadConversations();
         // Laravel polls conversations every 30s
@@ -168,6 +169,16 @@ export class TicketShowComponent implements OnInit, OnDestroy {
           err?.error?.response?.message ||
           'Failed to load ticket details';
         this.loading = false;
+      },
+    });
+  }
+
+  loadFavoriteStatus(): void {
+    const ticketId = this.ticket?.id || this.id;
+    if (!ticketId) return;
+    this.ticketService.getFavoriteStatus(ticketId).subscribe({
+      next: (favorited) => {
+        this.isFavorited = favorited;
       },
     });
   }
@@ -285,17 +296,21 @@ export class TicketShowComponent implements OnInit, OnDestroy {
 
   toggleFavorite(): void {
     if (this.favoriteLoading) return;
+    const ticketId = this.ticket?.id || this.ticket?.uid || this.id;
+    if (!ticketId) return;
+
     this.favoriteLoading = true;
-    this.ticketService.toggleFavorite(this.ticket?.id || this.ticket?.uid || this.id).subscribe({
-      next: (res) => {
-        if (typeof res?.is_favorited === 'boolean') {
-          this.isFavorited = res.is_favorited;
-        } else {
-          this.isFavorited = !this.isFavorited;
-        }
+    const previous = this.isFavorited;
+    // Optimistic UI
+    this.isFavorited = !previous;
+
+    this.ticketService.toggleFavorite(ticketId, previous).subscribe({
+      next: (favorited) => {
+        this.isFavorited = favorited;
         this.favoriteLoading = false;
       },
       error: () => {
+        this.isFavorited = previous;
         this.favoriteLoading = false;
       },
     });
@@ -384,7 +399,325 @@ export class TicketShowComponent implements OnInit, OnDestroy {
   }
 
   printTicket(): void {
-    window.print();
+    if (!this.ticket) return;
+
+    const uid = this.ticket.uid || this.ticket.uuid || this.ticket.id || this.id;
+    const subject = this.ticket.subject || '';
+    const printedOn = this.formatPrintDateTime(new Date().toISOString());
+    const description = this.ticketBody() || 'N/A';
+    const resolution = this.ticket.resolution || '';
+
+    const fields: Array<{ label: string; value: string }> = [
+      { label: 'Status', value: this.statusLabel() || 'N/A' },
+      { label: 'Priority', value: this.priorityLabel() || 'N/A' },
+      { label: 'Customer', value: this.displayName(this.customer()) || 'N/A' },
+      {
+        label: 'Assigned to',
+        value: this.assignee() ? this.displayName(this.assignee()) : 'Unassigned',
+      },
+      { label: 'Department', value: this.departmentLabel() || 'N/A' },
+      { label: 'Category', value: this.categoryLabel() || 'N/A' },
+    ];
+
+    const subCat =
+      this.ticket.subCategory?.name ||
+      this.ticket.sub_category?.name ||
+      this.ticket.subcategory?.name;
+    if (subCat) {
+      fields.push({ label: 'Sub Category', value: subCat });
+    }
+
+    fields.push(
+      { label: 'Type', value: this.typeLabel() || 'N/A' },
+      {
+        label: 'Source',
+        value: this.capitalize(this.ticket.source || 'Web'),
+      },
+      {
+        label: 'Created',
+        value: this.formatPrintDateTime(this.ticket.created_at),
+      }
+    );
+
+    if (this.ticket.due_date || this.ticket.due) {
+      fields.push({
+        label: 'Due Date',
+        value: this.formatPrintDateTime(this.ticket.due_date || this.ticket.due),
+      });
+    }
+
+    fields.push({
+      label: 'Last Updated',
+      value: this.formatPrintDateTime(this.ticket.updated_at),
+    });
+
+    if (this.ticket.impact_level) {
+      fields.push({
+        label: 'Impact Level',
+        value: this.capitalize(this.ticket.impact_level),
+      });
+    }
+    if (this.ticket.urgency_level) {
+      fields.push({
+        label: 'Urgency Level',
+        value: this.capitalize(this.ticket.urgency_level),
+      });
+    }
+
+    const infoRows = fields
+      .map(
+        (f) => `
+      <div class="info-row">
+        <span class="info-label">${this.escapeHtml(f.label)}:</span>
+        <span class="info-value">${this.escapeHtml(f.value)}</span>
+      </div>`
+      )
+      .join('');
+
+    const commentsHtml =
+      this.comments?.length > 0
+        ? `
+    <div class="ticket-section">
+      <h2 class="section-title">Comments (${this.comments.length})</h2>
+      <div class="timeline">
+        ${this.comments
+          .map((c) => {
+            const author = this.displayName(c.user || c.author) || 'System';
+            const date = this.formatPrintDateTime(c.created_at);
+            const body = this.commentText(c) || '';
+            return `
+          <div class="timeline-item">
+            <div class="timeline-header">
+              <strong>${this.escapeHtml(author)}</strong>
+              <span class="timeline-date">${this.escapeHtml(date)}</span>
+            </div>
+            <div class="timeline-content">${body}</div>
+          </div>`;
+          })
+          .join('')}
+      </div>
+    </div>`
+        : '';
+
+    const resolutionHtml = resolution
+      ? `
+    <div class="ticket-section">
+      <h2 class="section-title">Resolution</h2>
+      <div class="ticket-content resolution-content">${resolution}</div>
+    </div>`
+      : '';
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Print Ticket #${this.escapeHtml(String(uid))}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      color: #000;
+      background: #fff;
+      padding: 10mm;
+      max-width: 210mm;
+      margin: 0 auto;
+    }
+    .print-header {
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .ticket-id {
+      font-size: 20pt;
+      font-weight: bold;
+      margin: 0 0 5px 0;
+      color: #000;
+    }
+    .ticket-subject {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 0 0 5px 0;
+      color: #000;
+    }
+    .print-date {
+      font-size: 9pt;
+      color: #666;
+    }
+    .ticket-section { margin-bottom: 15px; }
+    .section-title {
+      font-size: 13pt;
+      font-weight: bold;
+      margin: 0 0 10px 0;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #ccc;
+      color: #000;
+    }
+    .info-list { display: flex; flex-direction: column; }
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px dashed #d3d3d3;
+    }
+    .info-label {
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 2px;
+    }
+    .info-value {
+      color: #000;
+      text-align: left;
+    }
+    .ticket-content {
+      padding: 15px;
+      background: #fff;
+      border: 1px solid #000;
+      color: #000;
+      line-height: 1.8;
+      min-height: 40px;
+    }
+    .ticket-content p { margin: 0 0 10px 0; }
+    .resolution-content { border-color: #000; }
+    .timeline { display: flex; flex-direction: column; gap: 12px; }
+    .timeline-item {
+      padding: 12px;
+      border: 1px solid #000;
+      background: #fff;
+    }
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    .timeline-date {
+      font-size: 10pt;
+      color: #666;
+      font-weight: normal;
+    }
+    .timeline-content { color: #000; line-height: 1.6; }
+    .print-footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 2px solid #000;
+      text-align: center;
+    }
+    .footer-line {
+      border-top: 1px solid #ccc;
+      margin: 10px 0;
+    }
+    .footer-text {
+      font-size: 10pt;
+      color: #666;
+      margin: 5px 0;
+    }
+    .description-section {
+      page-break-before: always;
+    }
+    @media print {
+      body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 8mm !important;
+        max-width: 100% !important;
+      }
+      .ticket-section { page-break-inside: avoid; }
+      .info-row { page-break-inside: avoid; }
+      .ticket-content, .timeline-item {
+        background: white !important;
+        border: 1px solid #000 !important;
+      }
+      * { color: #000 !important; }
+      .print-date, .footer-text, .timeline-date { color: #666 !important; }
+      @page { margin: 8mm; size: A4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-header">
+    <h1 class="ticket-id">Ticket #${this.escapeHtml(String(uid))}</h1>
+    <p class="ticket-subject">${this.escapeHtml(subject)}</p>
+    <div class="print-date">Printed on: ${this.escapeHtml(printedOn)}</div>
+  </div>
+
+  <div class="ticket-section">
+    <h2 class="section-title">Ticket Information</h2>
+    <div class="info-list">${infoRows}</div>
+  </div>
+
+  <div class="ticket-section description-section">
+    <h2 class="section-title">Description</h2>
+    <div class="ticket-content">${description}</div>
+  </div>
+
+  ${resolutionHtml}
+  ${commentsHtml}
+
+  <div class="print-footer">
+    <div class="footer-line"></div>
+    <p class="footer-text">Ticket #${this.escapeHtml(String(uid))} - ${this.escapeHtml(subject)}</p>
+    <p class="footer-text">Printed on ${this.escapeHtml(printedOn)}</p>
+  </div>
+
+  <script>
+    window.onload = function () {
+      setTimeout(function () { window.print(); }, 250);
+    };
+  </script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (!win) {
+      window.print();
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+
+  private formatPrintDateTime(value: any): string {
+    if (!value) return 'N/A';
+    try {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+      ];
+      const month = months[d.getMonth()];
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
+      return `${month} ${day}, ${year} at ${hours}:${minutes} ${ampm}`;
+    } catch {
+      return String(value);
+    }
+  }
+
+  private capitalize(value: any): string {
+    const s = String(value || '');
+    if (!s) return '';
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  private escapeHtml(value: any): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   startConversation(): void {

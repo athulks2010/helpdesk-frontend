@@ -273,8 +273,46 @@ export class TicketService extends ApiBaseService {
       );
   }
 
-  toggleFavorite(id: string | number): Observable<any> {
-    return this.post(apiUrl.ticketFavorite, { id, _id: id, ticket_id: id });
+  /**
+   * GET /ticket/favorites?ticket_id=
+   * 200 + item => favorited; 404 => not favorited
+   */
+  getFavoriteStatus(ticketId: string | number): Observable<boolean> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketFavorites}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map(() => true),
+        catchError((err) => of(err?.status === 404 ? false : false))
+      );
+  }
+
+  /** POST /ticket/favorites { ticket_id } */
+  addFavorite(ticketId: string | number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}${apiUrl.ticketFavorites}`, { ticket_id: ticketId })
+      .pipe(this.unwrap());
+  }
+
+  /** DELETE /ticket/favorites { ticket_id } */
+  removeFavorite(ticketId: string | number): Observable<any> {
+    return this.http
+      .request('delete', `${this.baseUrl}${apiUrl.ticketFavorites}`, {
+        body: { ticket_id: ticketId },
+      })
+      .pipe(this.unwrap());
+  }
+
+  /** Toggle favorite: add if off, remove if on. Returns new favorited state. */
+  toggleFavorite(ticketId: string | number, currentlyFavorited: boolean): Observable<boolean> {
+    const req$ = currentlyFavorited
+      ? this.removeFavorite(ticketId)
+      : this.addFavorite(ticketId);
+    return req$.pipe(
+      map(() => !currentlyFavorited),
+      catchError(() => of(currentlyFavorited))
+    );
   }
 
   restoreTicket(id: string | number): Observable<any> {
