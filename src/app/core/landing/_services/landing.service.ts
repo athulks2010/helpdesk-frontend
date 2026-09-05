@@ -175,6 +175,7 @@ export class LandingService extends ApiBaseService {
             submit_header: 'Create New Support Ticket',
             submit_subtitle:
               'Include clear context, expected outcome, and attachments to speed up investigation',
+            cta_submit_label: 'Send Ticket Request',
             form_badges: ['Secure Submission', 'Ticket Tracking', 'Email Updates'],
           },
           // Section 3: Performance metrics

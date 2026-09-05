@@ -224,8 +224,10 @@ export const apiUrl = {
 
   /* Front pages CMS */
   frontPages: '/front-page',
+  frontPagesAll: '/front-page/all',
   frontPageSingle: '/front-page/single',
   frontPageUpdate: '/front-page/update',
+  frontPageCreate: '/front-page/create',
 
   /* Public */
   publicFaqs: '/public/faqs',

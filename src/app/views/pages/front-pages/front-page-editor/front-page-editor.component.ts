@@ -15,7 +15,8 @@ export class FrontPageEditorComponent implements OnInit, OnDestroy {
   saving = false;
   error = '';
   success = '';
-  pageKey = 'home';
+  pageKey = 'services';
+  pageId: string | number | null = null;
   private sub?: Subscription;
 
   readonly pageLabels: Record<string, string> = {
@@ -37,14 +38,14 @@ export class FrontPageEditorComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      page: ['home', Validators.required],
+      page: ['services', Validators.required],
       title: [''],
       content: [''],
     });
 
     this.sub = this.route.paramMap.subscribe((params) => {
-      const page = params.get('page') || 'home';
-      this.pageKey = this.pages.includes(page) ? page : 'home';
+      const page = params.get('page') || 'services';
+      this.pageKey = this.pages.includes(page) ? page : 'services';
       this.form.patchValue({ page: this.pageKey });
       this.load();
     });
@@ -63,20 +64,22 @@ export class FrontPageEditorComponent implements OnInit, OnDestroy {
     this.error = '';
     this.success = '';
     this.settingService.getFrontPage(this.pageKey).subscribe({
-      next: (raw) => {
-        const item = raw?.data ?? raw?.item ?? raw ?? {};
-        let content = item.content ?? item.body ?? item.html ?? '';
+      next: (item) => {
+        const row = item || {};
+        this.pageId = row.id ?? row._id ?? null;
+        let content = row.content ?? row.body ?? row.html ?? '';
         if (content && typeof content === 'object') {
           content = JSON.stringify(content, null, 2);
         }
         this.form.patchValue({
           page: this.pageKey,
-          title: item.title || item.name || this.pageTitle,
+          title: row.title || row.name || this.pageTitle,
           content: content || '',
         });
         this.loading = false;
       },
       error: () => {
+        this.pageId = null;
         this.form.patchValue({
           page: this.pageKey,
           title: this.pageTitle,
@@ -91,15 +94,48 @@ export class FrontPageEditorComponent implements OnInit, OnDestroy {
     this.saving = true;
     this.error = '';
     this.success = '';
-    const body = this.form.getRawValue();
-    this.settingService.updateFrontPage(body).subscribe({
-      next: () => {
+    const raw = this.form.getRawValue();
+    let content: any = raw.content;
+    if (typeof content === 'string') {
+      const trimmed = content.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          content = JSON.parse(trimmed);
+        } catch {
+          // keep as string HTML
+        }
+      }
+    }
+
+    const body: any = {
+      title: raw.title,
+      slug: this.pageKey,
+      content,
+    };
+    if (this.pageId != null) {
+      body.id = this.pageId;
+    }
+
+    const save$ = this.pageId
+      ? this.settingService.updateFrontPage(body)
+      : this.settingService.createFrontPage(body);
+
+    save$.subscribe({
+      next: (res) => {
+        const saved = res?.data ?? res?.item ?? res;
+        if (saved?.id != null) {
+          this.pageId = saved.id;
+        }
         this.saving = false;
         this.success = 'Front page saved';
       },
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        this.error =
+          err?.error?.response?.message ||
+          err?.error?.message ||
+          err?.message ||
+          'Save failed';
       },
     });
   }
