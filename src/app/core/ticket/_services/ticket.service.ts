@@ -62,13 +62,17 @@ export class TicketService extends ApiBaseService {
   }
 
   /**
-   * GET /user/all?role_id=6&search=
-   * Returns assignees/agents: [{ id, name }]
+   * GET /user/all?role_id_ne=2&search=
+   * Assignees = all users except customers (role_id != 2)
    */
   filterAssignees(search?: string): Observable<Array<{ id: number | string; name: string }>> {
     return this.http
       .get(`${this.baseUrl}${apiUrl.filterAssignees}`, {
-        params: this.toParams({ search: search || undefined, role_id: 6 }),
+        params: this.toParams({
+          search: search || undefined,
+          role_id_ne: 2,
+          pageSize: 500,
+        }),
       })
       .pipe(
         map((res: any) => {
@@ -81,14 +85,16 @@ export class TicketService extends ApiBaseService {
                 : Array.isArray(res?.data)
                   ? res.data
                   : [];
-          return list.map((c: any) => ({
-            id: c.id ?? c.user_id ?? c._id,
-            name:
-              c.name ||
-              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
-              c.email ||
-              String(c.id),
-          }));
+          return list
+            .filter((c: any) => Number(c.role_id ?? c.role?.id) !== 2)
+            .map((c: any) => ({
+              id: c.id ?? c.user_id ?? c._id,
+              name:
+                c.name ||
+                [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+                c.email ||
+                String(c.id),
+            }));
         }),
         catchError(() => of([]))
       );
@@ -311,8 +317,14 @@ export class TicketService extends ApiBaseService {
       types:      safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.typesAll}`)),
       departments:safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.departmentsAll}`)),
       categories: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.categoriesAll}`)),
-      customers:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2`)),
-      assignees:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=6`)),
+      customers:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&pageSize=500`)),
+      assignees:  safe(
+        this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id_ne=2&pageSize=500`).pipe(
+          map((res) =>
+            this.extractArray(res).filter((u: any) => Number(u.role_id ?? u.role?.id) !== 2)
+          )
+        )
+      ),
       contacts:   safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.contactsAll}`)),
     });
   }
@@ -320,19 +332,23 @@ export class TicketService extends ApiBaseService {
   /** Search customers by name/email */
   searchCustomers(query: string): Observable<any[]> {
     return this.http
-      .get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&search=${encodeURIComponent(query)}`)
+      .get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&search=${encodeURIComponent(query)}&pageSize=50`)
       .pipe(
         map((res) => this.extractArray(res)),
         catchError(() => of([]))
       );
   }
 
-  /** Search staff/agents for assignment */
+  /** Search staff for assignment — all users except customers (role_id != 2) */
   searchAssignees(query: string): Observable<any[]> {
     return this.http
-      .get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=6&search=${encodeURIComponent(query)}`)
+      .get<any>(
+        `${environment.apiUrl}${apiUrl.usersAll}?role_id_ne=2&search=${encodeURIComponent(query)}&pageSize=50`
+      )
       .pipe(
-        map((res) => this.extractArray(res)),
+        map((res) =>
+          this.extractArray(res).filter((u: any) => Number(u.role_id ?? u.role?.id) !== 2)
+        ),
         catchError(() => of([]))
       );
   }
