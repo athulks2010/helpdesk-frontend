@@ -11,6 +11,7 @@ interface NavItem {
   exact?: boolean;
   target?: string;
   external?: boolean;
+  isTicketCta?: boolean;
 }
 
 @Component({
@@ -36,6 +37,9 @@ export class LandingTopNavComponent implements OnInit, OnDestroy {
   ];
 
   navItems: NavItem[] = [];
+  /** Header links excluding /ticket/open (those render as the CTA button). */
+  linkNavItems: NavItem[] = [];
+  ticketCtaItem: NavItem | null = null;
 
   currentUser$!: Observable<any>;
   isLoggedIn$!: Observable<boolean>;
@@ -84,11 +88,29 @@ export class LandingTopNavComponent implements OnInit, OnDestroy {
           .filter((row: any) => this.isActiveMenu(row))
           .sort((a: any, b: any) => (Number(a.order ?? a.sort_order ?? 0) - Number(b.order ?? b.sort_order ?? 0)))
           .map((row: any) => this.toNavItem(row));
+        this.splitNavItems();
       },
       error: () => {
         this.navItems = [];
+        this.splitNavItems();
       },
     });
+  }
+
+  private splitNavItems(): void {
+    const ticketItems = this.navItems.filter((item) => this.isTicketOpenRoute(item.route));
+    this.ticketCtaItem = ticketItems.length
+      ? { ...ticketItems[ticketItems.length - 1], isTicketCta: true }
+      : null;
+    this.linkNavItems = this.navItems.filter((item) => !this.isTicketOpenRoute(item.route));
+  }
+
+  isTicketOpenRoute(route: string): boolean {
+    const path = String(route || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .toLowerCase();
+    return path === '/ticket/open' || path.endsWith('/ticket/open');
   }
 
   private isActiveMenu(row: any): boolean {
@@ -105,6 +127,7 @@ export class LandingTopNavComponent implements OnInit, OnDestroy {
       exact: route === '/' || row.active_key === 'home',
       target: row.target || '_self',
       external,
+      isTicketCta: this.isTicketOpenRoute(route),
     };
   }
 
