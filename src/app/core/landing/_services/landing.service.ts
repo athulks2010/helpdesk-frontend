@@ -372,43 +372,84 @@ export class LandingService extends ApiBaseService {
     );
   }
 
+  getDefaultServicesPageHtml(): any {
+    return {
+      hero: {
+        badge: 'HelpDesk Professional Services',
+        title: 'Services Built For High-Performing Support Teams',
+        subtitle:
+          'From implementation to optimization, we help you launch, scale, and continuously improve your support operations with measurable outcomes.',
+        primary_button_text: 'Explore Service Plans',
+        primary_button_link: '#services',
+        secondary_button_text: 'Book Consultation',
+        secondary_button_link: '/contact',
+        trust_one: 'Certified specialists',
+        trust_two: 'SLA-first delivery',
+        trust_three: 'Outcome-driven execution',
+      },
+      services_section: {
+        badge: 'Service Portfolio',
+        title: 'What We Deliver',
+        subtitle:
+          'Practical services designed to reduce response time, improve customer satisfaction, and increase team productivity.',
+        learn_more_text: 'View Service Scope',
+      },
+      cta: {
+        title: 'Ready To Improve Support Quality And Speed?',
+        subtitle:
+          'Let us assess your current workflow and propose a service plan tailored to your support goals.',
+        primary_button_text: 'Talk To A Specialist',
+        primary_button_link: '/contact',
+        secondary_button_text: 'Open A Ticket',
+        secondary_button_link: '/ticket/open',
+      },
+    };
+  }
+
+  parseServicesPageHtml(data: any): any {
+    const defaults = this.getDefaultServicesPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && !raw.hero ? raw.html : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      hero: { ...defaults.hero, ...(parsed.hero || {}) },
+      services_section: {
+        ...defaults.services_section,
+        ...(parsed.services_section || {}),
+      },
+      cta: { ...defaults.cta, ...(parsed.cta || {}) },
+    };
+  }
+
   getServicesPageData(): Observable<any> {
     const defaultData = {
       title: 'Services',
-      html: {
-        hero: {
-          badge: 'HelpDesk Professional Services',
-          title: 'Services Built For High-Performing Support Teams',
-          subtitle:
-            'From implementation to optimization, we help you launch, scale, and continuously improve your support operations with measurable outcomes.',
-          primary_button_text: 'Explore Service Plans',
-          primary_button_link: '#services',
-          secondary_button_text: 'Book Consultation',
-          secondary_button_link: '/contact',
-          trust_one: 'Certified specialists',
-          trust_two: 'SLA-first delivery',
-          trust_three: 'Outcome-driven execution',
-        },
-        services_section: {
-          badge: 'Service Portfolio',
-          title: 'What We Deliver',
-          subtitle:
-            'Practical services designed to reduce response time, improve customer satisfaction, and increase team productivity.',
-          learn_more_text: 'View Service Scope',
-        },
-        cta: {
-          title: 'Ready To Improve Support Quality And Speed?',
-          subtitle:
-            'Let us assess your current workflow and propose a service plan tailored to your support goals.',
-          primary_button_text: 'Talk To A Specialist',
-          primary_button_link: '/contact',
-          secondary_button_text: 'Open A Ticket',
-          secondary_button_link: '/ticket/open',
-        },
-      },
+      html: this.getDefaultServicesPageHtml(),
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'services' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseServicesPageHtml(item || defaultData),
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }
@@ -793,5 +834,9 @@ export class LandingService extends ApiBaseService {
       success: true,
       message: 'Thank you for subscribing to HelpDesk updates!',
     });
+  }
+
+  private cloneJson<T>(value: T): T {
+    return JSON.parse(JSON.stringify(value));
   }
 }

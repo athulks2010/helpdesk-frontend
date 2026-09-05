@@ -4,9 +4,14 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FrontPagesRoutingModule } from './front-pages-routing.module';
 import { FrontPageEditorComponent } from './front-page-editor/front-page-editor.component';
 import { HomePageEditorComponent } from './home-page-editor/home-page-editor.component';
+import { ServicesPageEditorComponent } from './services-page-editor/services-page-editor.component';
 
 @NgModule({
-  declarations: [FrontPageEditorComponent, HomePageEditorComponent],
+  declarations: [
+    FrontPageEditorComponent,
+    HomePageEditorComponent,
+    ServicesPageEditorComponent,
+  ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, FrontPagesRoutingModule],
 })
 export class FrontPagesModule {}
