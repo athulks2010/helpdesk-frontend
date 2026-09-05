@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
@@ -16,9 +15,7 @@ export class LanguagesListComponent implements OnInit {
   pageSize = 10;
   loading = true;
   error = '';
-  saving = false;
-  editingId: any = null;
-  form: FormGroup;
+  deletingId: any = null;
 
   Math = Math;
   currentPage = 1;
@@ -27,17 +24,10 @@ export class LanguagesListComponent implements OnInit {
   pages: number[] = [];
 
   constructor(
-    private fb: FormBuilder,
     private settingService: SettingService,
     private confirmService: ConfirmDialogService,
     private router: Router
-  ) {
-    this.form = this.fb.group({
-      name: ['', Validators.required],
-      code: ['', Validators.required],
-      status: [1],
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -93,39 +83,13 @@ export class LanguagesListComponent implements OnInit {
     this.applyFilter();
   }
 
-  startCreate(): void {
-    this.editingId = null;
-    this.form.reset({ name: '', code: '', status: 1 });
+  createNew(): void {
+    this.router.navigate(['/settings/languages/create']);
   }
 
-  startEdit(row: any): void {
-    this.editingId = row.id || row._id;
-    this.form.patchValue({
-      name: row.name || '',
-      code: row.code || '',
-      status: row.status ?? 1,
-    });
-  }
-
-  save(): void {
-    if (this.form.invalid) return;
-    this.saving = true;
-    const payload = this.form.value;
-    const req = this.editingId
-      ? this.settingService.updateLanguage({ id: this.editingId, ...payload })
-      : this.settingService.createLanguage(payload);
-    req.subscribe({
-      next: () => {
-        this.saving = false;
-        this.editingId = null;
-        this.form.reset({ name: '', code: '', status: 1 });
-        this.load();
-      },
-      error: () => {
-        this.saving = false;
-        this.error = 'Failed to save language';
-      },
-    });
+  edit(row: any): void {
+    const id = row.id || row._id;
+    this.router.navigate(['/settings/languages', id, 'edit']);
   }
 
   async remove(row: any): Promise<void> {
@@ -141,9 +105,16 @@ export class LanguagesListComponent implements OnInit {
     });
     if (!confirmed) return;
 
+    this.deletingId = id;
     this.settingService.deleteLanguage(id).subscribe({
-      next: () => this.load(),
-      error: () => (this.error = 'Failed to delete language'),
+      next: () => {
+        this.deletingId = null;
+        this.load();
+      },
+      error: () => {
+        this.deletingId = null;
+        this.error = 'Failed to delete language';
+      },
     });
   }
 }

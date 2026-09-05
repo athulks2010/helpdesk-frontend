@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-languages-form',
@@ -12,6 +13,7 @@ export class LanguagesFormComponent implements OnInit {
   form!: FormGroup;
   loading = false;
   loadingData = false;
+  deleting = false;
   error = '';
   isEditMode = false;
   entityId: string | null = null;
@@ -20,7 +22,8 @@ export class LanguagesFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private settingService: SettingService
+    private settingService: SettingService,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -49,7 +52,7 @@ export class LanguagesFormComponent implements OnInit {
             id: item.id || item._id || this.entityId,
             name: item.name || '',
             code: item.code || '',
-            status: item.status !== 0 && item.status !== false,
+            status: item.status !== 0 && item.status !== false && item.status !== '0',
           });
           this.loadingData = false;
         },
@@ -69,7 +72,11 @@ export class LanguagesFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = this.form.getRawValue();
-    const body = { ...raw, status: raw.status ? 1 : 0 };
+    const body = {
+      ...raw,
+      id: raw.id || this.entityId,
+      status: (raw.status === true || raw.status === 1 || raw.status === '1') ? 1 : 0,
+    };
     const req$ = this.isEditMode
       ? this.settingService.updateLanguage(body)
       : this.settingService.createLanguage(body);
@@ -88,6 +95,36 @@ export class LanguagesFormComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/settings/languages']);
+  }
+
+  goToGlobalSettings(): void {
+    this.router.navigate(['/settings/global']);
+  }
+
+  async remove(): Promise<void> {
+    if (!this.entityId) return;
+    const name = this.form.get('name')?.value || this.form.get('code')?.value || 'this language';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Language',
+      message: 'Are you sure you want to delete this language?',
+      itemName: `${name}`,
+      confirmText: 'Delete Language',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
+    this.deleting = true;
+    this.error = '';
+    this.settingService.deleteLanguage(this.entityId).subscribe({
+      next: () => {
+        this.deleting = false;
+        this.router.navigate(['/settings/languages']);
+      },
+      error: () => {
+        this.deleting = false;
+        this.error = 'Failed to delete language';
+      },
+    });
   }
 
   hasError(control: string): boolean {

@@ -24,58 +24,19 @@
       </div>
     </div>
 
+    <!-- Actions (referencing menus-list) -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button type="button" (click)="createNew()"
+        class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:scale-105">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        Create Language
+      </button>
+    </div>
   </div>
 
-  <!-- ─── Inline Form Card ─── -->
-  <form [formGroup]="form" (ngSubmit)="save()"
-    class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-5 space-y-4">
-    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
-      <h2 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-        {{ editingId ? 'Edit Language' : 'Add New Language' }}
-      </h2>
-      <button type="button" (click)="startCreate()" *ngIf="editingId"
-        class="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
-        Cancel Edit
-      </button>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Language Name</label>
-        <input type="text" formControlName="name" placeholder="e.g. English, Spanish"
-          class="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 placeholder-slate-400" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Language Code</label>
-        <input type="text" formControlName="code" placeholder="e.g. en, es, fr"
-          class="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 placeholder-slate-400" />
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Status</label>
-        <select formControlName="status"
-          class="w-full px-3.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200">
-          <option [ngValue]="1">Active</option>
-          <option [ngValue]="0">Inactive</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="flex justify-end gap-2 pt-2">
-      <button type="submit" [disabled]="saving"
-        class="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:scale-105 disabled:opacity-50">
-        <svg *ngIf="saving" class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-          </path>
-        </svg>
-        {{ saving ? 'Saving...' : (editingId ? 'Update Language' : 'Create Language') }}
-      </button>
-    </div>
-  </form>
-
-  <!-- ─── Table Container ─── -->
+  <!-- ─── Table Container & Filter Card ─── -->
   <div
     class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
 
@@ -100,37 +61,52 @@
           <option [value]="50">50</option>
           <option [value]="100">100</option>
         </select>
+        <span class="font-medium">per page</span>
       </div>
     </div>
 
     <!-- Loading State -->
-    <div *ngIf="loading" class="p-12 text-center">
-      <div class="inline-block w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3">
-      </div>
-      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Loading languages...</p>
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 gap-3">
+      <div class="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Loading languages…</span>
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error"
-      class="p-4 text-center bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-medium text-sm border-b border-rose-100 dark:border-rose-800">
-      {{ error }}
+    <div *ngIf="error && !loading" class="p-6 text-center">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-sm font-semibold">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ error }}
+      </div>
     </div>
 
-    <!-- Table -->
-    <div *ngIf="!loading" class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
+    <!-- Data Table -->
+    <div *ngIf="!loading && !error" class="overflow-x-auto">
+      <table class="w-full text-left border-collapse min-w-[650px]">
         <thead>
           <tr
-            class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            <th class="px-6 py-3.5">Language Name</th>
-            <th class="px-6 py-3.5">Code</th>
-            <th class="px-6 py-3.5">Status</th>
-            <th class="px-6 py-3.5 text-right">Actions</th>
+            class="border-b border-slate-100 dark:border-slate-700 bg-slate-50/75 dark:bg-slate-900/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <th class="py-3 px-4 w-12 text-center">#</th>
+            <th class="py-3 px-4">Language Name</th>
+            <th class="py-3 px-4">Code</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 text-sm">
-          <tr *ngFor="let row of filtered" class="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition-colors">
-            <td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-100 whitespace-nowrap">
+          <tr *ngFor="let row of filtered; let i = index"
+            class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+
+            <!-- Row Number -->
+            <td class="py-3.5 px-4 text-xs font-semibold text-slate-400 text-center">
+              {{ (currentPage - 1) * pageSize + i + 1 }}
+            </td>
+
+            <!-- Name -->
+            <td class="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-100">
               <div class="flex items-center gap-3">
                 <div
                   class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center text-xs shadow-inner shrink-0 uppercase">
@@ -141,18 +117,24 @@
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 font-mono text-xs text-slate-600 dark:text-slate-300">
+
+            <!-- Code -->
+            <td class="py-3.5 px-4 font-mono text-xs text-slate-600 dark:text-slate-300">
               {{ row.code || '—' }}
             </td>
-            <td class="px-6 py-4">
+
+            <!-- Status -->
+            <td class="py-3.5 px-4">
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-                [ngClass]="(row.status === 0 || row.status === false) ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50'">
-                {{ (row.status === 0 || row.status === false) ? 'Inactive' : 'Active' }}
+                [ngClass]="(row.status === 0 || row.status === false || row.status === '0') ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50'">
+                {{ (row.status === 0 || row.status === false || row.status === '0') ? 'Inactive' : 'Active' }}
               </span>
             </td>
-            <td class="px-6 py-4 text-right whitespace-nowrap">
+
+            <!-- Actions -->
+            <td class="py-3.5 px-4 text-right">
               <div class="flex items-center justify-end gap-1.5">
-                <button type="button" (click)="startEdit(row)" title="Edit language"
+                <button type="button" (click)="edit(row)" title="Edit language"
                   class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -160,13 +142,13 @@
                   </svg>
                   Edit
                 </button>
-                <button type="button" (click)="remove(row)" title="Delete language"
-                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors">
+                <button type="button" (click)="remove(row)" title="Delete language" [disabled]="deletingId === (row.id || row._id)"
+                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors disabled:opacity-50">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete
+                  {{ deletingId === (row.id || row._id) ? 'Deleting…' : 'Delete' }}
                 </button>
               </div>
             </td>
@@ -174,7 +156,7 @@
 
           <!-- Empty State -->
           <tr *ngIf="!filtered.length">
-            <td colspan="4" class="py-16 text-center">
+            <td colspan="5" class="py-16 text-center">
               <div class="flex flex-col items-center gap-3">
                 <div
                   class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-inner">
@@ -185,8 +167,7 @@
                 </div>
                 <div>
                   <p class="text-base font-bold text-slate-800 dark:text-slate-200">No languages found</p>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Add a language above to enable localized
-                    translations.</p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Click 'Create Language' above to configure localization languages.</p>
                 </div>
               </div>
             </td>
@@ -213,11 +194,9 @@
           <button type="button" (click)="goToPage(p)"
             class="flex items-center justify-center min-w-[32px] h-8 px-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             [class.bg-blue-600]="p === currentPage" [class.text-white]="p === currentPage"
-            [class.border-blue-600]="p === currentPage"
-            *ngIf="p <= 5 || p === totalPages || Math.abs(p - currentPage) <= 2">
+            [class.border-blue-600]="p === currentPage" [class.hover:bg-blue-700]="p === currentPage">
             {{ p }}
           </button>
-          <span *ngIf="p === 6 && currentPage < 4 && totalPages > 7" class="px-1 text-slate-400">…</span>
         </ng-container>
         <button type="button" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages"
           class="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
@@ -227,5 +206,6 @@
         </button>
       </div>
     </div>
+
   </div>
 </div>

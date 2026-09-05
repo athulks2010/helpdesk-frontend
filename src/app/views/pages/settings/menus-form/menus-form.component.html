@@ -1,81 +1,153 @@
 <div class="space-y-6">
-  <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
-  <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="p-6 grid grid-cols-1 gap-5 max-w-2xl">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Label</label>
-        <input type="text" class="hd-input" formControlName="label" />
-        <p *ngIf="hasError('label')" class="mt-1 text-xs text-red-600">Label is required</p>
-      </div>
+  <!-- Form Card (matching ticket-create) -->
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
-        <select class="hd-input" formControlName="location">
-          <option *ngFor="let opt of locations" [ngValue]="opt.value">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Internal route
-          (recommended)</label>
-        <select class="hd-input" formControlName="url" (change)="onRouteChange()">
-          <option *ngFor="let opt of routes" [ngValue]="opt.value">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">External URL</label>
-        <input type="url" class="hd-input" formControlName="external_url" placeholder="https://example.com"
-          (input)="onExternalChange()" />
-        <p class="mt-1 text-xs text-slate-500">Use this for links outside the app. If filled, it is used instead of the
-          internal route.</p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Icon name</label>
-        <input type="text" class="hd-input" formControlName="icon" placeholder="home" />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Active state key</label>
-        <input type="text" class="hd-input" formControlName="active_key" placeholder="home" />
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Show only when feature is
-          enabled</label>
-        <select class="hd-input" formControlName="feature">
-          <option *ngFor="let opt of features" [ngValue]="opt.value">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Link target</label>
-        <select class="hd-input" formControlName="target">
-          <option *ngFor="let opt of targets" [ngValue]="opt.value">{{ opt.label }}</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sort order</label>
-        <input type="number" class="hd-input" formControlName="order" />
-      </div>
-
-      <label class="flex items-center gap-2 cursor-pointer select-none">
-        <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600" formControlName="is_active" />
-        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Active</span>
-      </label>
+    <div *ngIf="loadingData" class="flex items-center justify-center gap-3 py-16 text-slate-400">
+      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="text-sm">Loading menu item data...</span>
     </div>
 
-    <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+    <form *ngIf="!loadingData" [formGroup]="form" (ngSubmit)="submit()" novalidate>
 
-    <div
-      class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
-      <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
-      <button type="submit" class="hd-btn-primary" [disabled]="loading">
-        {{ loading ? 'Saving…' : (isEditMode ? 'Update Menu' : 'Create') }}
-      </button>
-    </div>
-  </form>
+      <div *ngIf="error" class="flex items-center gap-3 mx-6 mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+        <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ error }}
+      </div>
+
+      <div class="p-6 space-y-6">
+
+        <!-- Row 1: Label & Location -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="form-label">Menu Label <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="label" placeholder="e.g. Home, Services, FAQs"
+              class="form-input"
+              [class.border-red-400]="f['label'].touched && f['label'].invalid" />
+            <p *ngIf="f['label'].touched && f['label'].invalid" class="form-error">Label is required</p>
+          </div>
+
+          <div>
+            <label class="form-label">Location <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <select formControlName="location" class="form-select pr-10">
+                <option *ngFor="let opt of locations" [ngValue]="opt.value">{{ opt.label }}</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Route / URL -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="form-label">Internal Route <span class="text-slate-400 font-normal">(recommended)</span></label>
+            <div class="relative">
+              <select formControlName="url" (change)="onRouteChange()" class="form-select pr-10">
+                <option *ngFor="let opt of routes" [ngValue]="opt.value">{{ opt.label }}</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">External URL</label>
+            <input type="url" formControlName="external_url" (input)="onExternalChange()"
+              placeholder="https://example.com" class="form-input" />
+            <p class="mt-1 text-xs text-slate-400">Used for links outside the app. Overrides internal route if provided.</p>
+          </div>
+        </div>
+
+        <!-- Row 3: Icon, Active key, Sort order -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="form-label">Icon Name</label>
+            <input type="text" formControlName="icon" placeholder="home" class="form-input" />
+          </div>
+
+          <div>
+            <label class="form-label">Active State Key</label>
+            <input type="text" formControlName="active_key" placeholder="home" class="form-input" />
+          </div>
+
+          <div>
+            <label class="form-label">Sort Order</label>
+            <input type="number" formControlName="order" placeholder="0" class="form-input" />
+          </div>
+        </div>
+
+        <!-- Row 4: Feature Gate & Link Target -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="form-label">Feature Dependency</label>
+            <div class="relative">
+              <select formControlName="feature" class="form-select pr-10">
+                <option *ngFor="let opt of features" [ngValue]="opt.value">{{ opt.label }}</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            <p class="mt-1 text-xs text-slate-400">Only visible when the selected feature is enabled.</p>
+          </div>
+
+          <div>
+            <label class="form-label">Link Target</label>
+            <div class="relative">
+              <select formControlName="target" class="form-select pr-10">
+                <option *ngFor="let opt of targets" [ngValue]="opt.value">{{ opt.label }}</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Status toggle -->
+        <div>
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" formControlName="is_active"
+              class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Active</span>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Action Footer (matching ticket-create) -->
+      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
+        <button type="button" (click)="cancel()" [disabled]="loading"
+          class="px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="loading"
+          class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100">
+          <svg *ngIf="loading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          {{ loading ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Update Menu Item' : 'Create Menu Item') }}
+        </button>
+      </div>
+
+    </form>
+  </div>
 </div>

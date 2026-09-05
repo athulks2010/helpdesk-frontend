@@ -185,6 +185,10 @@ export class MenusFormComponent implements OnInit {
     this.router.navigate(['/settings/menus']);
   }
 
+  get f() {
+    return this.form.controls;
+  }
+
   hasError(control: string): boolean {
     const c = this.form.get(control);
     return !!(c && c.invalid && (c.dirty || c.touched));
