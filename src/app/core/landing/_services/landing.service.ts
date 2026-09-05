@@ -684,11 +684,55 @@ export class LandingService extends ApiBaseService {
     );
   }
 
+  getDefaultFooterPageHtml(): any {
+    return {
+      text: 'Start working with HelpDesk and streamline customer support.',
+      copyright: "@ Helpdesk Developed by <a href='https://w3bd.com/'>W3bd</a>.",
+    };
+  }
+
+  parseFooterPageHtml(data: any): any {
+    const defaults = this.getDefaultFooterPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed =
+        raw.html && typeof raw.html === 'object' && (raw.html.text !== undefined || raw.html.copyright !== undefined)
+          ? raw.html
+          : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      text: parsed.text ?? defaults.text,
+      copyright: parsed.copyright ?? defaults.copyright,
+    };
+  }
+
   getFooterData(): Observable<any> {
-    return of({
-      text: 'Start working with HelpDesk and streamline customer support operations across every channel.',
-      copyright: '© 2026 HelpDesk. All rights reserved.',
-    });
+    const defaults = this.getDefaultFooterPageHtml();
+    return this.getSingle(apiUrl.publicFrontPage, { slug: 'footer' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return this.parseFooterPageHtml(item || defaults);
+      }),
+      catchError(() => of(defaults))
+    );
   }
 
   getFaqs(): Observable<FaqItem[]> {

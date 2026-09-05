@@ -8,6 +8,7 @@ import { ServicesPageEditorComponent } from './services-page-editor/services-pag
 import { ContactPageEditorComponent } from './contact-page-editor/contact-page-editor.component';
 import { PrivacyPageEditorComponent } from './privacy-page-editor/privacy-page-editor.component';
 import { TermsPageEditorComponent } from './terms-page-editor/terms-page-editor.component';
+import { FooterPageEditorComponent } from './footer-page-editor/footer-page-editor.component';
 
 @NgModule({
   declarations: [
@@ -17,6 +18,7 @@ import { TermsPageEditorComponent } from './terms-page-editor/terms-page-editor.
     ContactPageEditorComponent,
     PrivacyPageEditorComponent,
     TermsPageEditorComponent,
+    FooterPageEditorComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, FrontPagesRoutingModule],
 })
