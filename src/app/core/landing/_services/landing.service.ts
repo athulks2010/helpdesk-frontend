@@ -540,13 +540,10 @@ export class LandingService extends ApiBaseService {
     );
   }
 
-  getPrivacyData(): Observable<any> {
-    const defaultData = {
+  getDefaultPrivacyPageHtml(): any {
+    return {
       title: 'Privacy Policy',
-      updated_at: 'March 1, 2026',
-      html: {
-        title: 'Privacy Policy',
-        content: `
+      content: `
           <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Information We Collect</h2>
           <p class="text-slate-600 mb-4 leading-relaxed">
             We collect information you provide directly to us when submitting tickets, creating accounts, or communicating with our support team:
@@ -578,10 +575,62 @@ export class LandingService extends ApiBaseService {
             You may request access to, correction of, or deletion of your personal data stored within our helpdesk platform by submitting a ticket or contacting our data protection representative.
           </p>
         `,
-      },
+    };
+  }
+
+  parsePrivacyPageHtml(data: any): any {
+    const defaults = this.getDefaultPrivacyPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = { content: raw };
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed =
+        raw.html &&
+        typeof raw.html === 'object' &&
+        (raw.html.content !== undefined || raw.html.title !== undefined)
+          ? raw.html
+          : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      title: parsed.title || defaults.title,
+      content: parsed.content || defaults.content,
+    };
+  }
+
+  getPrivacyData(): Observable<any> {
+    const defaultHtml = this.getDefaultPrivacyPageHtml();
+    const defaultData = {
+      title: defaultHtml.title,
+      updated_at: 'March 1, 2026',
+      html: defaultHtml,
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'privacy' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        const html = this.parsePrivacyPageHtml(item || defaultData);
+        return {
+          title: html.title || item?.title || defaultData.title,
+          updated_at: item?.updated_at || defaultData.updated_at,
+          html,
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }
