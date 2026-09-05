@@ -23,7 +23,7 @@
       <div class="p-6 space-y-6">
 
         <!-- Create-only: Customer / Contact / Priority / Type -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5" *ngIf="!isEditMode">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode">
           <div>
             <label class="form-label">Customer <span class="text-red-500">*</span></label>
             <select formControlName="user_id" class="form-select"
@@ -36,6 +36,8 @@
             <p *ngIf="f['user_id'].touched && f['user_id'].invalid" class="form-error">Customer is required</p>
           </div>
 
+          <!-- Contact field (commented out for now) -->
+          <!--
           <div>
             <label class="form-label">Contact</label>
             <select formControlName="contact_id" class="form-select">
@@ -43,6 +45,7 @@
               <option *ngFor="let c of contacts" [ngValue]="+c.id">{{ contactLabel(c) }}</option>
             </select>
           </div>
+          -->
 
           <div>
             <label class="form-label">Priority <span class="text-red-500">*</span></label>
@@ -83,7 +86,7 @@
         </div>
 
         <!-- Create-only taxonomy row -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5" *ngIf="!isEditMode">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode">
           <div>
             <label class="form-label">Type</label>
             <select formControlName="type_id" class="form-select">
@@ -98,6 +101,8 @@
               <option *ngFor="let d of departments" [ngValue]="+d.id">{{ d.name }}</option>
             </select>
           </div>
+          <!-- Category field (commented out for now) -->
+          <!--
           <div>
             <label class="form-label">Category</label>
             <select formControlName="category_id" class="form-select">
@@ -105,6 +110,7 @@
               <option *ngFor="let c of categories" [ngValue]="+c.id">{{ c.name }}</option>
             </select>
           </div>
+          -->
         </div>
 
         <!-- Create-only: Status + Assignee -->
