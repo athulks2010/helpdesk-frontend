@@ -14,7 +14,11 @@ export class LandingHomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Page renders immediately from local data without any API calls on load
+    this.landingService.getHomePageData().subscribe({
+      next: (html) => {
+        this.pageData = html;
+      },
+    });
   }
 
   get heroSection(): any {

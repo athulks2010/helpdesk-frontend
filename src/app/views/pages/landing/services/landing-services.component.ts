@@ -59,9 +59,22 @@ export class LandingServicesComponent implements OnInit {
   }
 
   scrollToServices(): void {
+    const link = this.hero?.primary_button_link || '#services';
+    if (link.startsWith('#')) {
+      const el = document.getElementById(link.slice(1) || 'services');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+    // Non-hash primary links are handled via navigation if needed later
     const el = document.getElementById('services');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
+  }
+
+  isHashLink(link: string | null | undefined): boolean {
+    return !!link && String(link).startsWith('#');
   }
 }

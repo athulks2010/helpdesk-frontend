@@ -14,7 +14,9 @@ export class LandingFooterComponent implements OnInit, OnDestroy {
   subscribeSuccess = false;
   logoFailed = false;
   currentYear = new Date().getFullYear();
+  footerCms: { text?: string; copyright?: string } = {};
   private settingsSub?: Subscription;
+  private footerSub?: Subscription;
 
   constructor(
     private landingService: LandingService,
@@ -26,10 +28,29 @@ export class LandingFooterComponent implements OnInit, OnDestroy {
     this.settingsSub = this.settingService.settings$.subscribe(() => {
       this.logoFailed = false;
     });
+    this.footerSub = this.landingService.getFooterData().subscribe((data) => {
+      this.footerCms = data || {};
+    });
   }
 
   ngOnDestroy(): void {
     this.settingsSub?.unsubscribe();
+    this.footerSub?.unsubscribe();
+  }
+
+  get footerText(): string {
+    return (
+      this.footerCms?.text ||
+      this.settingService.footerText ||
+      `Start working with ${this.settingService.appName} and streamline customer support operations from first response to final resolution.`
+    );
+  }
+
+  get copyrightHtml(): string {
+    return (
+      this.footerCms?.copyright ||
+      `© ${this.currentYear} ${this.settingService.appName}. All rights reserved.`
+    );
   }
 
   onLogoError(event: Event): void {

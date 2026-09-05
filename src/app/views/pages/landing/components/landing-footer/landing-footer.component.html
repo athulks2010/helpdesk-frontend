@@ -48,7 +48,7 @@
           </a>
 
           <p class="text-slate-300 leading-relaxed text-base max-w-sm">
-            {{ settingService.footerText || ('Start working with ' + settingService.appName + ' and streamline customer support operations from first response to final resolution.') }}
+            {{ footerText }}
           </p>
 
           <!-- Social Links -->
@@ -215,7 +215,7 @@
 
       <!-- Bottom Bar -->
       <div class="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-        <p>© {{ currentYear }} {{ settingService.appName }}. All rights reserved.</p>
+        <p [innerHTML]="copyrightHtml"></p>
         <p>Built for modern support operations.</p>
       </div>
     </div>
