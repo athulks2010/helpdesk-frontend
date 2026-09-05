@@ -1,0 +1,33 @@
+<div class="space-y-6">
+  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+
+  <div *ngIf="!loading"
+    class="bg-white dark:bg-slate-800 rounded-md shadow overflow-hidden border border-slate-200 dark:border-slate-700">
+
+    <form (ngSubmit)="save()">
+      <div class="p-8 -mr-6 -mb-8 flex flex-wrap">
+        <div class="pr-6 pb-8 w-full">
+          <label class="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Footer text</label>
+          <textarea class="hd-input" rows="3" [(ngModel)]="html.text" name="footer_text"></textarea>
+        </div>
+      </div>
+
+      <div class="p-8 -mr-6 -mb-8 flex flex-wrap">
+        <div class="pr-6 pb-8 w-full lg:w-1/2">
+          <label class="block text-sm font-medium text-slate-500 mb-1">Copyright info</label>
+          <input type="text" class="hd-input" [(ngModel)]="html.copyright" name="footer_copyright"
+            placeholder="@ Helpdesk Developed by &lt;a href='https://w3bd.com/'&gt;W3bd&lt;/a&gt;." />
+        </div>
+      </div>
+
+      <div *ngIf="error" class="px-8 pb-2 text-sm text-red-600">{{ error }}</div>
+      <div *ngIf="success" class="px-8 pb-2 text-sm text-green-600">{{ success }}</div>
+
+      <div class="px-8 py-4 bg-gray-50 dark:bg-slate-900/40 border-t border-gray-100 dark:border-slate-700 flex items-center">
+        <button type="submit" class="hd-btn-primary ml-auto" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

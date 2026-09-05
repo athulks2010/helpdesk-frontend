@@ -239,11 +239,26 @@ export class SettingService extends ApiBaseService {
   }
 
   getFrontPage(page: string): Observable<any> {
-    return this.getSingle(apiUrl.frontPageSingle, { page });
+    return this.getCollection(apiUrl.frontPagesAll, {
+      slug: page,
+      pageNumber: 1,
+      pageSize: 1,
+    }).pipe(
+      map((data: any) => {
+        const items = Array.isArray(data)
+          ? data
+          : data?.items || data?.list || data?.data || [];
+        return items[0] || null;
+      })
+    );
   }
 
   updateFrontPage(body: any): Observable<any> {
     return this.put(apiUrl.frontPageUpdate, body);
+  }
+
+  createFrontPage(body: any): Observable<any> {
+    return this.post(apiUrl.frontPageCreate, body);
   }
 
   getEmailTemplates(params?: Record<string, any>): Observable<any> {

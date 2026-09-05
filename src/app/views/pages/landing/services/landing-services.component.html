@@ -45,13 +45,21 @@
           </svg>
         </button>
         <a
-          routerLink="/contact"
+          *ngIf="!isHashLink(hero.secondary_button_link)"
+          [routerLink]="hero.secondary_button_link || '/contact'"
           class="group inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold text-white bg-white/15 border border-white/20 hover:bg-white hover:text-slate-900 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-105"
         >
           <span>{{ hero.secondary_button_text }}</span>
           <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
+        </a>
+        <a
+          *ngIf="isHashLink(hero.secondary_button_link)"
+          [href]="hero.secondary_button_link"
+          class="group inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold text-white bg-white/15 border border-white/20 hover:bg-white hover:text-slate-900 rounded-2xl backdrop-blur-md transition-all duration-300 hover:scale-105"
+        >
+          <span>{{ hero.secondary_button_text }}</span>
         </a>
       </div>
 
@@ -119,10 +127,10 @@
           </div>
 
           <a
-            routerLink="/contact"
+            [routerLink]="servicesSection.learn_more_link || '/contact'"
             class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-700 transition-colors"
           >
-            <span>Inquire About This Service</span>
+            <span>{{ servicesSection.learn_more_text || 'Inquire About This Service' }}</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
@@ -140,13 +148,13 @@
       <p class="text-slate-300 text-lg mb-8 leading-relaxed">{{ cta.subtitle }}</p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
         <a
-          routerLink="/contact"
+          [routerLink]="cta.primary_button_link || '/contact'"
           class="px-8 py-4 rounded-2xl font-bold text-slate-900 bg-white hover:bg-slate-100 transition-all shadow-xl"
         >
           {{ cta.primary_button_text }}
         </a>
         <a
-          routerLink="/ticket/open"
+          [routerLink]="cta.secondary_button_link || '/ticket/open'"
           class="px-8 py-4 rounded-2xl font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all"
         >
           {{ cta.secondary_button_text }}

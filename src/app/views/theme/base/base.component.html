@@ -44,7 +44,7 @@
       <!-- Navigation Menu -->
       <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
         <!-- Menu Groups -->
-        <div *ngFor="let group of menuGroups" class="mb-5 last:mb-0">
+        <div *ngFor="let group of menuGroups; trackBy: trackByGroupTitle" class="mb-5 last:mb-0">
           <!-- Group Header (matches Laravel screenshot) -->
           <div class="px-3 mb-2.5 flex items-center gap-2">
             <span class="w-0.5 h-3.5 bg-blue-500 dark:bg-blue-400 rounded-full opacity-90"></span>
@@ -55,17 +55,18 @@
 
           <!-- Group Items -->
           <div class="space-y-1">
-            <div *ngFor="let item of group.items" class="relative">
+            <div *ngFor="let item of group.items; trackBy: trackByMenuName" class="relative">
               <!-- Regular Menu Item (No Submenu) -->
               <a
                 *ngIf="!item.submenu"
                 [routerLink]="item.path"
-                [class]="
+                (click)="navigateTo(item.path, $event)"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 relative overflow-hidden"
+                [ngClass]="
                   isItemActive(item)
-                    ? 'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 text-white shadow-lg shadow-primary-500/25 dark:shadow-primary-500/15'
-                    : 'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 relative overflow-hidden text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white group'
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 text-white shadow-lg shadow-primary-500/25 dark:shadow-primary-500/15'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white group'
                 "
-                (click)="mobileMenuOpen = false"
               >
                 <!-- Active Background Glow -->
                 <div
@@ -107,19 +108,25 @@
                   type="button"
                   (click)="toggleSubmenu(item.name)"
                   class="flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative overflow-hidden focus:outline-none"
-                  [class]="
-                    isParentActive(item) && !isSubmenuExpanded(item.name)
-                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                  [ngClass]="
+                    isParentActive(item)
+                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 text-white shadow-lg shadow-primary-500/25 dark:shadow-primary-500/15'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                   "
                 >
+                  <!-- Active Background Glow -->
+                  <div
+                    *ngIf="isParentActive(item)"
+                    class="absolute inset-0 bg-gradient-to-r from-primary-400 to-primary-500 dark:from-primary-500/30 dark:to-primary-600/30 opacity-20 animate-pulse pointer-events-none"
+                  ></div>
+
                   <div class="flex items-center gap-3 relative z-10 min-w-0">
                     <!-- Icon Container -->
                     <div
                       class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200"
                       [class]="
                         isParentActive(item)
-                          ? 'bg-primary-100 dark:bg-primary-800/60 text-primary-600 dark:text-primary-300'
+                          ? 'bg-white/20 dark:bg-white/15 backdrop-blur-sm text-white'
                           : 'bg-slate-100 dark:bg-slate-700/80 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'
                       "
                     >
@@ -130,40 +137,55 @@
                     <span class="flex-1 text-left truncate font-medium">{{ item.name }}</span>
                   </div>
 
-                  <!-- Chevron Down -->
+                  <!-- Chevron -->
                   <hd-icon
                     name="chevron-down"
-                    class="w-4 h-4 flex-shrink-0 transition-transform duration-200 relative z-10 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                    class="w-4 h-4 flex-shrink-0 transition-transform duration-200 relative z-10"
                     [class.rotate-180]="isSubmenuExpanded(item.name)"
+                    [class.text-white]="isParentActive(item)"
+                    [class.text-slate-400]="!isParentActive(item)"
+                    [class.dark:text-slate-500]="!isParentActive(item)"
                   ></hd-icon>
+
+                  <!-- Hover Effect (inactive only) -->
+                  <div
+                    *ngIf="!isParentActive(item)"
+                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+                  ></div>
                 </button>
 
                 <!-- Submenu Container -->
                 <div
                   *ngIf="isSubmenuExpanded(item.name)"
-                  class="mt-1 ml-4 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3 animate-slide-up"
+                  class="mt-2 ml-3 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-600 pl-3 animate-slide-up"
                 >
                   <a
-                    *ngFor="let sub of item.submenu"
+                    *ngFor="let sub of item.submenu; trackBy: trackBySubPath"
                     [routerLink]="sub.path"
+                    (click)="navigateTo(sub.path, $event)"
                     class="flex items-center gap-2.5 px-2.5 py-2 text-sm rounded-lg transition-all duration-200 group relative overflow-hidden"
-                    [class]="
+                    [ngClass]="
                       isSubItemActive(sub)
                         ? 'bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-semibold border border-primary-200/80 dark:border-primary-700/60 shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/60'
                     "
-                    (click)="mobileMenuOpen = false"
                   >
+                    <!-- Active Background -->
+                    <div
+                      *ngIf="isSubItemActive(sub)"
+                      class="absolute inset-0 bg-gradient-to-r from-primary-50/80 to-primary-100/80 dark:from-primary-900/25 dark:to-primary-800/25 rounded-lg pointer-events-none"
+                    ></div>
+
                     <!-- Submenu Icon -->
                     <div
                       class="relative flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-200"
                       [class]="
                         isSubItemActive(sub)
-                          ? 'bg-primary-200/80 dark:bg-primary-700/80 text-primary-700 dark:text-primary-300'
+                          ? 'bg-primary-200/80 dark:bg-primary-700/80 text-primary-600 dark:text-primary-400'
                           : 'bg-slate-100 dark:bg-slate-700/80 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 text-slate-500 dark:text-slate-400'
                       "
                     >
-                      <hd-icon [name]="sub.icon || 'dash'" class="w-3.5 h-3.5"></hd-icon>
+                      <hd-icon [name]="sub.icon || 'page'" class="w-3.5 h-3.5"></hd-icon>
                     </div>
 
                     <!-- Submenu Label -->

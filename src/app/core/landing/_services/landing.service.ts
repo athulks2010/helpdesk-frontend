@@ -175,6 +175,7 @@ export class LandingService extends ApiBaseService {
             submit_header: 'Create New Support Ticket',
             submit_subtitle:
               'Include clear context, expected outcome, and attachments to speed up investigation',
+            cta_submit_label: 'Send Ticket Request',
             form_badges: ['Secure Submission', 'Ticket Tracking', 'Email Updates'],
           },
           // Section 3: Performance metrics
@@ -347,78 +348,156 @@ export class LandingService extends ApiBaseService {
     );
   }
 
+  getDefaultContactPageHtml(): any {
+    return {
+      content_text: 'Connect With Our Support Team',
+      content_details:
+        'Need help with onboarding, ticket workflows, or account issues? Reach out and our team will connect you with the right specialist.',
+      email: 'support@yourhelpdesk.com',
+      phone: '+1 (415) 555-0198',
+      location: '8013 Alderwood St, South San Francisco, CA 94080',
+      location_map: '',
+      email_details:
+        'Use email for product questions, integration requests, and account-related support.',
+      phone_details:
+        'Call for urgent operational issues that require immediate triage.',
+      contact_recipient: 'support@yourhelpdesk.com',
+    };
+  }
+
+  parseContactPageHtml(data: any): any {
+    const defaults = this.getDefaultContactPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && raw.html.content_text !== undefined
+        ? raw.html
+        : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return { ...defaults, ...parsed };
+  }
+
   getContactPageData(): Observable<any> {
     const defaultData = {
       title: 'Contact',
-      html: {
-        content_text: 'Connect With Our Support Team',
-        content_details:
-          'Need help with onboarding, ticket workflows, or account issues? Reach out and our team will connect you with the right specialist.',
-        email: 'support@yourhelpdesk.com',
-        phone: '+1 (415) 555-0198',
-        location: '8013 Alderwood St, South San Francisco, CA 94080',
-        location_map: '',
-        email_details:
-          'Use email for product questions, integration requests, and account-related support.',
-        phone_details:
-          'Call for urgent operational issues that require immediate triage.',
-        contact_recipient: 'support@yourhelpdesk.com',
-      },
+      html: this.getDefaultContactPageHtml(),
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'contact' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseContactPageHtml(item || defaultData),
+        };
+      }),
       catchError(() => of(defaultData))
     );
+  }
+
+  getDefaultServicesPageHtml(): any {
+    return {
+      hero: {
+        badge: 'HelpDesk Professional Services',
+        title: 'Services Built For High-Performing Support Teams',
+        subtitle:
+          'From implementation to optimization, we help you launch, scale, and continuously improve your support operations with measurable outcomes.',
+        primary_button_text: 'Explore Service Plans',
+        primary_button_link: '#services',
+        secondary_button_text: 'Book Consultation',
+        secondary_button_link: '/contact',
+        trust_one: 'Certified specialists',
+        trust_two: 'SLA-first delivery',
+        trust_three: 'Outcome-driven execution',
+      },
+      services_section: {
+        badge: 'Service Portfolio',
+        title: 'What We Deliver',
+        subtitle:
+          'Practical services designed to reduce response time, improve customer satisfaction, and increase team productivity.',
+        learn_more_text: 'View Service Scope',
+      },
+      cta: {
+        title: 'Ready To Improve Support Quality And Speed?',
+        subtitle:
+          'Let us assess your current workflow and propose a service plan tailored to your support goals.',
+        primary_button_text: 'Talk To A Specialist',
+        primary_button_link: '/contact',
+        secondary_button_text: 'Open A Ticket',
+        secondary_button_link: '/ticket/open',
+      },
+    };
+  }
+
+  parseServicesPageHtml(data: any): any {
+    const defaults = this.getDefaultServicesPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && !raw.hero ? raw.html : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      hero: { ...defaults.hero, ...(parsed.hero || {}) },
+      services_section: {
+        ...defaults.services_section,
+        ...(parsed.services_section || {}),
+      },
+      cta: { ...defaults.cta, ...(parsed.cta || {}) },
+    };
   }
 
   getServicesPageData(): Observable<any> {
     const defaultData = {
       title: 'Services',
-      html: {
-        hero: {
-          badge: 'HelpDesk Professional Services',
-          title: 'Services Built For High-Performing Support Teams',
-          subtitle:
-            'From implementation to optimization, we help you launch, scale, and continuously improve your support operations with measurable outcomes.',
-          primary_button_text: 'Explore Service Plans',
-          primary_button_link: '#services',
-          secondary_button_text: 'Book Consultation',
-          secondary_button_link: '/contact',
-          trust_one: 'Certified specialists',
-          trust_two: 'SLA-first delivery',
-          trust_three: 'Outcome-driven execution',
-        },
-        services_section: {
-          badge: 'Service Portfolio',
-          title: 'What We Deliver',
-          subtitle:
-            'Practical services designed to reduce response time, improve customer satisfaction, and increase team productivity.',
-          learn_more_text: 'View Service Scope',
-        },
-        cta: {
-          title: 'Ready To Improve Support Quality And Speed?',
-          subtitle:
-            'Let us assess your current workflow and propose a service plan tailored to your support goals.',
-          primary_button_text: 'Talk To A Specialist',
-          primary_button_link: '/contact',
-          secondary_button_text: 'Open A Ticket',
-          secondary_button_link: '/ticket/open',
-        },
-      },
+      html: this.getDefaultServicesPageHtml(),
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'services' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseServicesPageHtml(item || defaultData),
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }
 
-  getTermsData(): Observable<any> {
-    const defaultData = {
+  getDefaultTermsPageHtml(): any {
+    return {
       title: 'Terms of Services',
-      updated_at: 'March 1, 2026',
-      html: {
-        title: 'Terms of Services',
-        content: `
+      content: `
           <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Agreement to Terms</h2>
           <p class="text-slate-600 mb-6 leading-relaxed">
             By accessing or using the HelpDesk platform, services, and associated websites, you agree to be bound by these Terms of Services and our Privacy Policy. If you do not agree with any part of these terms, you may not access or use our services.
@@ -450,21 +529,70 @@ export class LandingService extends ApiBaseService {
             We may suspend or terminate your access immediately, without prior notice or liability, for any reason, including breach of these Terms.
           </p>
         `,
-      },
+    };
+  }
+
+  parseTermsPageHtml(data: any): any {
+    const defaults = this.getDefaultTermsPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = { content: raw };
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed =
+        raw.html &&
+        typeof raw.html === 'object' &&
+        (raw.html.content !== undefined || raw.html.title !== undefined)
+          ? raw.html
+          : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      title: parsed.title || defaults.title,
+      content: parsed.content || defaults.content,
+    };
+  }
+
+  getTermsData(): Observable<any> {
+    const defaultHtml = this.getDefaultTermsPageHtml();
+    const defaultData = {
+      title: defaultHtml.title,
+      updated_at: 'March 1, 2026',
+      html: defaultHtml,
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'terms' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        const html = this.parseTermsPageHtml(item || defaultData);
+        return {
+          title: html.title || item?.title || defaultData.title,
+          updated_at: item?.updated_at || defaultData.updated_at,
+          html,
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }
 
-  getPrivacyData(): Observable<any> {
-    const defaultData = {
+  getDefaultPrivacyPageHtml(): any {
+    return {
       title: 'Privacy Policy',
-      updated_at: 'March 1, 2026',
-      html: {
-        title: 'Privacy Policy',
-        content: `
+      content: `
           <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Information We Collect</h2>
           <p class="text-slate-600 mb-4 leading-relaxed">
             We collect information you provide directly to us when submitting tickets, creating accounts, or communicating with our support team:
@@ -496,19 +624,115 @@ export class LandingService extends ApiBaseService {
             You may request access to, correction of, or deletion of your personal data stored within our helpdesk platform by submitting a ticket or contacting our data protection representative.
           </p>
         `,
-      },
+    };
+  }
+
+  parsePrivacyPageHtml(data: any): any {
+    const defaults = this.getDefaultPrivacyPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = { content: raw };
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed =
+        raw.html &&
+        typeof raw.html === 'object' &&
+        (raw.html.content !== undefined || raw.html.title !== undefined)
+          ? raw.html
+          : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      title: parsed.title || defaults.title,
+      content: parsed.content || defaults.content,
+    };
+  }
+
+  getPrivacyData(): Observable<any> {
+    const defaultHtml = this.getDefaultPrivacyPageHtml();
+    const defaultData = {
+      title: defaultHtml.title,
+      updated_at: 'March 1, 2026',
+      html: defaultHtml,
     };
 
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'privacy' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        const html = this.parsePrivacyPageHtml(item || defaultData);
+        return {
+          title: html.title || item?.title || defaultData.title,
+          updated_at: item?.updated_at || defaultData.updated_at,
+          html,
+        };
+      }),
       catchError(() => of(defaultData))
     );
   }
 
+  getDefaultFooterPageHtml(): any {
+    return {
+      text: 'Start working with HelpDesk and streamline customer support.',
+      copyright: "@ Helpdesk Developed by <a href='https://w3bd.com/'>W3bd</a>.",
+    };
+  }
+
+  parseFooterPageHtml(data: any): any {
+    const defaults = this.getDefaultFooterPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed =
+        raw.html && typeof raw.html === 'object' && (raw.html.text !== undefined || raw.html.copyright !== undefined)
+          ? raw.html
+          : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      text: parsed.text ?? defaults.text,
+      copyright: parsed.copyright ?? defaults.copyright,
+    };
+  }
+
   getFooterData(): Observable<any> {
-    return of({
-      text: 'Start working with HelpDesk and streamline customer support operations across every channel.',
-      copyright: '© 2026 HelpDesk. All rights reserved.',
-    });
+    const defaults = this.getDefaultFooterPageHtml();
+    return this.getSingle(apiUrl.publicFrontPage, { slug: 'footer' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return this.parseFooterPageHtml(item || defaults);
+      }),
+      catchError(() => of(defaults))
+    );
   }
 
   getFaqs(): Observable<FaqItem[]> {
@@ -792,5 +1016,9 @@ export class LandingService extends ApiBaseService {
       success: true,
       message: 'Thank you for subscribing to HelpDesk updates!',
     });
+  }
+
+  private cloneJson<T>(value: T): T {
+    return JSON.parse(JSON.stringify(value));
   }
 }

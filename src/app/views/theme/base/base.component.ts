@@ -57,6 +57,9 @@ export class BaseComponent implements OnInit, OnDestroy {
   // Submenu toggle state
   expandedMenus = new Set<string>();
 
+  /** Cached so *ngFor does not recreate links on every change-detection cycle. */
+  menuGroups: MenuGroup[] = [];
+
   // Topbar dropdown states
   userDropdownOpen = false;
   notificationDropdownOpen = false;
@@ -94,6 +97,7 @@ export class BaseComponent implements OnInit, OnDestroy {
     this.currentUser$ = this.auth.currentUser$;
     this.authSub = this.currentUser$.subscribe((user) => {
       this.currentUser = user;
+      this.refreshMenuGroups();
     });
 
     if (this.auth.getToken() && !this.auth.currentUserValue) {
@@ -104,9 +108,11 @@ export class BaseComponent implements OnInit, OnDestroy {
     this.settingService.getAll({}).subscribe({ error: () => { } });
     this.settingsSub = this.settingService.settings$.subscribe(() => {
       this.logoFailed = false;
+      this.refreshMenuGroups();
     });
 
     this.loadNotifications();
+    this.refreshMenuGroups();
 
     this.currentUrl = this.router.url;
     this.updateCurrentTitle(this.currentUrl);
@@ -219,9 +225,10 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Computes menu groups filtered by authenticated user permissions and global setting enable_options
+   * Rebuild menu only when user/permissions/settings change — not on every CD cycle.
+   * Recreating menu DOM each cycle was breaking routerLink clicks (esp. Front Pages + TinyMCE).
    */
-  get menuGroups(): MenuGroup[] {
+  refreshMenuGroups(): void {
     const groups: MenuGroup[] = [
       {
         title: 'MAIN',
@@ -240,15 +247,15 @@ export class BaseComponent implements OnInit, OnDestroy {
           { name: 'Services', path: '/admin-services', icon: 'service', permission: 'front_page', optionSlug: 'service' },
           {
             name: 'Front Pages',
-            icon: 'settings',
+            icon: 'gear',
             permission: 'front_page',
             submenu: [
-              { name: 'Home', path: '/front-pages/home' },
-              { name: 'Services', path: '/front-pages/services' },
-              { name: 'Contact', path: '/front-pages/contact' },
-              { name: 'Privacy Policy', path: '/front-pages/privacy' },
-              { name: 'Terms of services', path: '/front-pages/terms' },
-              { name: 'Footer', path: '/front-pages/footer' },
+              { name: 'Home', path: '/front-pages/home', icon: 'page' },
+              { name: 'Services', path: '/front-pages/services', icon: 'page' },
+              { name: 'Contact', path: '/front-pages/contact', icon: 'page' },
+              { name: 'Privacy Policy', path: '/front-pages/privacy', icon: 'page' },
+              { name: 'Terms of services', path: '/front-pages/terms', icon: 'page' },
+              { name: 'Footer', path: '/front-pages/footer', icon: 'page' },
             ],
           },
         ].filter((item) => this.isItemVisible(item)),
@@ -261,8 +268,6 @@ export class BaseComponent implements OnInit, OnDestroy {
           { name: 'Organizations', path: '/organizations', icon: 'office', permission: 'organization', optionSlug: 'organization' },
           { name: 'Notes', path: '/notes', icon: 'notes', optionSlug: 'note' },
           { name: 'Manage Users', path: '/users', icon: 'users', permission: 'user' },
-          // { name: 'Pending Users', path: '/pending-users', icon: 'users', permission: 'user', adminOnly: true },
-          // { name: 'Reports', path: '/reports', icon: 'dashboard', permission: 'global' },
         ].filter((item) => this.isItemVisible(item)),
       },
       {
@@ -271,8 +276,26 @@ export class BaseComponent implements OnInit, OnDestroy {
       },
     ];
 
-    // Only return groups that have items
-    return groups.filter((g) => g.items.length > 0);
+    this.menuGroups = groups.filter((g) => g.items.length > 0);
+  }
+
+  trackByGroupTitle(_index: number, group: MenuGroup): string {
+    return group.title;
+  }
+
+  trackByMenuName(_index: number, item: MenuItem): string {
+    return item.name;
+  }
+
+  trackBySubPath(_index: number, sub: SubMenuItem): string {
+    return sub.path;
+  }
+
+  navigateTo(path: string | undefined, event?: Event): void {
+    if (!path) return;
+    event?.preventDefault();
+    this.mobileMenuOpen = false;
+    void this.router.navigateByUrl(path);
   }
 
   private buildConfigurationItems(): MenuItem[] {
@@ -314,6 +337,8 @@ export class BaseComponent implements OnInit, OnDestroy {
     } else {
       this.expandedMenus.add(name);
     }
+    // New Set reference so the template reliably re-evaluates expanded state
+    this.expandedMenus = new Set(this.expandedMenus);
   }
 
   isSubmenuExpanded(name: string): boolean {
@@ -322,12 +347,15 @@ export class BaseComponent implements OnInit, OnDestroy {
 
   private autoExpandActiveSubmenus(url: string): void {
     const cleanUrl = url.split('?')[0].split('#')[0];
+    let changed = false;
     if (
       cleanUrl.startsWith('/front-pages') ||
-      cleanUrl.startsWith('/admin-services') ||
-      cleanUrl.startsWith('/landing')
+      cleanUrl.startsWith('/admin-services')
     ) {
-      this.expandedMenus.add('Front Pages');
+      if (!this.expandedMenus.has('Front Pages')) {
+        this.expandedMenus.add('Front Pages');
+        changed = true;
+      }
     }
     if (
       cleanUrl.startsWith('/settings') ||
@@ -339,7 +367,13 @@ export class BaseComponent implements OnInit, OnDestroy {
       cleanUrl.startsWith('/roles') ||
       cleanUrl.startsWith('/ai')
     ) {
-      this.expandedMenus.add('Settings');
+      if (!this.expandedMenus.has('Settings')) {
+        this.expandedMenus.add('Settings');
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.expandedMenus = new Set(this.expandedMenus);
     }
   }
 
@@ -353,8 +387,10 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   isSubItemActive(sub: SubMenuItem): boolean {
+    if (!sub.path) return false;
     const cleanCurrent = this.currentUrl.split('?')[0].split('#')[0];
-    return cleanCurrent === sub.path || (sub.path !== '/' && cleanCurrent.startsWith(sub.path + '/'));
+    // Exact match for leaf admin pages (avoids /front-pages/home matching a sibling)
+    return cleanCurrent === sub.path || cleanCurrent === sub.path + '/';
   }
 
   isParentActive(item: MenuItem): boolean {
