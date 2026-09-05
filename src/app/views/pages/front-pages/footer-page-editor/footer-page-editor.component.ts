@@ -21,16 +21,6 @@ export class FooterPageEditorComponent implements OnInit {
     copyright: '',
   };
 
-  readonly pages = ['home', 'services', 'contact', 'privacy', 'terms', 'footer'];
-  readonly pageLabels: Record<string, string> = {
-    home: 'Home',
-    services: 'Services',
-    contact: 'Contact',
-    privacy: 'Privacy Policy',
-    terms: 'Terms of Services',
-    footer: 'Footer',
-  };
-
   constructor(
     private settingService: SettingService,
     private landingService: LandingService

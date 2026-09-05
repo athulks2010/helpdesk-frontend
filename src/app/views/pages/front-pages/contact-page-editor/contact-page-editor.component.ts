@@ -19,16 +19,6 @@ export class ContactPageEditorComponent implements OnInit {
   isActive = true;
   html: any = {};
 
-  readonly pages = ['home', 'services', 'contact', 'privacy', 'terms', 'footer'];
-  readonly pageLabels: Record<string, string> = {
-    home: 'Home',
-    services: 'Services',
-    contact: 'Contact',
-    privacy: 'Privacy Policy',
-    terms: 'Terms of Services',
-    footer: 'Footer',
-  };
-
   readonly tabs = ['Content', 'Location', 'Phone', 'Email', 'Contact Form'];
 
   constructor(

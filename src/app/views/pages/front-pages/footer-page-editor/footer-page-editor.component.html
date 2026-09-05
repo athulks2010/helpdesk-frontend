@@ -1,16 +1,4 @@
 <div class="space-y-6">
-  <div class="flex flex-wrap gap-2">
-    <a *ngFor="let p of pages" [routerLink]="['/front-pages', p]"
-      class="px-3 py-1.5 text-sm rounded-lg border"
-      [class.bg-blue-600]="p === 'footer'"
-      [class.text-white]="p === 'footer'"
-      [class.border-blue-600]="p === 'footer'"
-      [class.border-slate-200]="p !== 'footer'"
-      [class.text-slate-600]="p !== 'footer'">
-      {{ pageLabels[p] }}
-    </a>
-  </div>
-
   <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
   <div *ngIf="!loading"

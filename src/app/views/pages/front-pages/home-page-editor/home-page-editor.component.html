@@ -1,17 +1,4 @@
 <div class="space-y-6">
-  <!-- Front page switcher -->
-  <div class="flex flex-wrap gap-2">
-    <a *ngFor="let p of pages" [routerLink]="['/front-pages', p]"
-      class="px-3 py-1.5 text-sm rounded-lg border"
-      [class.bg-blue-600]="p === 'home'"
-      [class.text-white]="p === 'home'"
-      [class.border-blue-600]="p === 'home'"
-      [class.border-slate-200]="p !== 'home'"
-      [class.text-slate-600]="p !== 'home'">
-      {{ pageLabels[p] }}
-    </a>
-  </div>
-
   <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
   <ng-container *ngIf="!loading && sections.length">
