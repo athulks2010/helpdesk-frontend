@@ -293,6 +293,22 @@ export class SettingService extends ApiBaseService {
     return this.delete(apiUrl.languageDelete, { id, _id: id });
   }
 
+  getLanguageTranslations(params?: Record<string, any>): Observable<any> {
+    return this.getSingle(apiUrl.languageTranslations, params);
+  }
+
+  addLanguagePhrase(body: any): Observable<any> {
+    return this.post(apiUrl.languagePhrase, body);
+  }
+
+  updateLanguagePhrase(body: any): Observable<any> {
+    return this.put(apiUrl.languagePhrase, body);
+  }
+
+  deleteLanguagePhrase(params: any): Observable<any> {
+    return this.delete(apiUrl.languagePhrase, params);
+  }
+
   getMenus(params?: Record<string, any>): Observable<any> {
     return this.getCollection(apiUrl.menusAll, {
       pageNumber: 1,

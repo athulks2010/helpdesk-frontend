@@ -181,6 +181,8 @@ export const apiUrl = {
   languageCreate: '/language/create',
   languageUpdate: '/language/update',
   languageDelete: '/language/delete',
+  languageTranslations: '/language/translations',
+  languagePhrase: '/language/phrase',
 
   /* Navigation Menus */
   menus: '/navigation-menu',
