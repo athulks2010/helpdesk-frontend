@@ -3,17 +3,6 @@
 
   <div *ngIf="!loading"
     class="bg-white dark:bg-slate-800 rounded-md shadow overflow-hidden border border-slate-200 dark:border-slate-700">
-    <div class="px-8 pt-6 pb-2 flex items-center justify-between gap-4 flex-wrap">
-      <div>
-        <h1 class="text-xl font-bold text-slate-900 dark:text-white">Privacy Policy Management</h1>
-        <p class="mt-1 text-sm text-slate-500">Customize the public Privacy Policy page content</p>
-      </div>
-      <button type="button" (click)="previewPage()"
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
-        Preview
-      </button>
-    </div>
-
     <form (ngSubmit)="save()">
       <div class="p-8 -mr-6 -mb-8 flex flex-wrap">
         <div class="pr-6 pb-8 w-full lg:w-1/2">

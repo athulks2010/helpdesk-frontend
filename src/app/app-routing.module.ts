@@ -140,13 +140,6 @@ const routes: Routes = [
           ),
       },
       {
-        path: 'services',
-        loadChildren: () =>
-          import('./views/pages/services/services.module').then(
-            (m) => m.ServicesModule
-          ),
-      },
-      {
         path: 'settings',
         loadChildren: () =>
           import('./views/pages/settings/settings.module').then(
