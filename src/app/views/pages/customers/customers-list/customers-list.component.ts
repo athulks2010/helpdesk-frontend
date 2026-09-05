@@ -29,7 +29,7 @@ export class CustomersListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    this.service.getAll({ role: 'customer' }).subscribe({
+    this.service.getAll({ role_id: 2 }).subscribe({
       next: (data: any) => {
         this.rows = Array.isArray(data) ? data : (data?.items || data?.list || data?.data || []);
         this.applyFilter();

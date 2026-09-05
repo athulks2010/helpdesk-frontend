@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { getApiErrorMessage } from '../../../../core/shared/api-error.util';
 
 @Component({
   selector: 'app-pusher-settings',
@@ -74,7 +75,7 @@ export class PusherSettingsComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        this.error = getApiErrorMessage(err, 'Save failed');
       },
     });
   }
@@ -94,7 +95,7 @@ export class PusherSettingsComponent implements OnInit {
         this.testing = false;
         this.testResult = {
           success: false,
-          message: err?.error?.message || err?.message || 'Connection failed',
+          message: getApiErrorMessage(err, 'Connection failed'),
         };
       },
     });
