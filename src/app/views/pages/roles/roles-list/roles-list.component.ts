@@ -92,7 +92,14 @@ export class RolesListComponent implements OnInit {
     this.router.navigate(['/roles', id, 'edit']);
   }
 
+  /** System roles 1–6 are protected; only custom roles can be deleted. */
+  canDeleteRole(row: any): boolean {
+    const id = Number(row?.id ?? row?._id);
+    return Number.isFinite(id) && id > 6;
+  }
+
   async remove(row: any): Promise<void> {
+    if (!this.canDeleteRole(row)) return;
     const id = row.id || row._id;
     if (!id) return;
     const name = row.name || id;
