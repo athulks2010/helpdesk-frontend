@@ -1,61 +1,164 @@
 <div class="space-y-6">
 
-  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-16 text-center text-slate-400 flex items-center justify-center gap-3">
+    <svg class="animate-spin w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    <span class="text-sm">Loading AI settings…</span>
+  </div>
 
   <ng-container *ngIf="!loading">
-    <div class="hd-card p-6 flex items-center justify-between gap-4">
-      <div>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Status</h2>
-        <p class="text-sm text-slate-500 mt-1">Current AI availability</p>
+    <!-- Header & Status Card -->
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <span class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </span>
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white">AI Engine &amp; Assistant</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Automated ticket drafting, smart summaries, and semantic analysis</p>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
+
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-semibold"
+        [class.bg-emerald-50]="status?.available || status?.feature_enabled"
+        [class.dark:bg-emerald-950_30]="status?.available || status?.feature_enabled"
+        [class.border-emerald-200]="status?.available || status?.feature_enabled"
+        [class.dark:border-emerald-800]="status?.available || status?.feature_enabled"
+        [class.text-emerald-700]="status?.available || status?.feature_enabled"
+        [class.dark:text-emerald-300]="status?.available || status?.feature_enabled"
+        [class.bg-amber-50]="!(status?.available || status?.feature_enabled)"
+        [class.dark:bg-amber-950_30]="!(status?.available || status?.feature_enabled)"
+        [class.border-amber-200]="!(status?.available || status?.feature_enabled)"
+        [class.dark:border-amber-800]="!(status?.available || status?.feature_enabled)"
+        [class.text-amber-700]="!(status?.available || status?.feature_enabled)"
+        [class.dark:text-amber-300]="!(status?.available || status?.feature_enabled)"
+      >
         <span
-          class="inline-block w-2.5 h-2.5 rounded-full"
-          [class.bg-green-500]="status?.available || status?.feature_enabled"
+          class="w-2 h-2 rounded-full"
+          [class.bg-emerald-500]="status?.available || status?.feature_enabled"
           [class.bg-amber-500]="!(status?.available || status?.feature_enabled)"
         ></span>
-        <span class="text-sm font-medium">
-          {{ status?.available || status?.feature_enabled ? 'AI Active / Enabled' : 'AI Offline' }}
+        <span>
+          {{ status?.available || status?.feature_enabled ? 'AI Engine Active' : 'AI Engine Offline' }}
         </span>
       </div>
     </div>
 
+    <!-- Analytics Cards -->
     <div *ngIf="analyticsCards.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div *ngFor="let card of analyticsCards" class="hd-card p-5">
-        <div class="text-xs uppercase tracking-wide text-slate-500">{{ card.label }}</div>
-        <div class="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{{ card.value }}</div>
+      <div *ngFor="let card of analyticsCards" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-5">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ card.label }}</div>
+        <div class="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ card.value }}</div>
       </div>
     </div>
 
-    <form class="hd-card" [formGroup]="form" (ngSubmit)="save()">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">General AI Settings</h2>
-        <p class="text-sm text-slate-500">Enable AI and configure model parameters</p>
+    <!-- Main Settings Form -->
+    <form class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden" [formGroup]="form" (ngSubmit)="save()">
+      <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">AI Configuration</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Configure provider keys, selected model, and response temperature</p>
       </div>
-      <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <label class="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-xl cursor-pointer sm:col-span-2">
-          <span class="text-sm font-semibold text-slate-900 dark:text-white">Enable AI Features</span>
-          <input type="checkbox" class="w-4 h-4" formControlName="enabled" />
-        </label>
-        <div class="sm:col-span-2">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">API Key</label>
-          <input type="password" class="hd-input" formControlName="api_key" />
+
+      <div class="p-6 space-y-6">
+        <!-- Enable toggle switch -->
+        <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30">
+          <div>
+            <span class="text-sm font-bold text-slate-900 dark:text-white block">Enable AI Features</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">Toggle automated response generation and smart ticket summaries</span>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors disabled:opacity-50"
+            [class.bg-blue-600]="form.get('enabled')?.value"
+            [class.bg-slate-300]="!form.get('enabled')?.value"
+            [class.dark:bg-slate-600]="!form.get('enabled')?.value"
+            [attr.aria-checked]="form.get('enabled')?.value"
+            (click)="form.patchValue({ enabled: !form.get('enabled')?.value })"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition translate-y-0.5"
+              [class.translate-x-5]="form.get('enabled')?.value"
+              [class.translate-x-0.5]="!form.get('enabled')?.value"
+            ></span>
+          </button>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Model</label>
-          <input type="text" class="hd-input" formControlName="model" placeholder="gpt-3.5-turbo" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Temperature</label>
-          <input type="number" class="hd-input" formControlName="temperature" min="0" max="2" step="0.1" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="sm:col-span-2">
+            <label class="form-label">OpenAI API Key</label>
+            <div class="relative">
+              <input
+                [type]="showApiKey ? 'text' : 'password'"
+                class="form-input pr-10 font-mono text-xs"
+                formControlName="api_key"
+                placeholder="sk-..."
+              />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                (click)="showApiKey = !showApiKey"
+              >
+                <svg *ngIf="!showApiKey" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <svg *ngIf="showApiKey" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                </svg>
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-400">Keep this secret. Never expose your OpenAI API key in client-side code.</p>
+          </div>
+
+          <div>
+            <label class="form-label">Model Identifier</label>
+            <input type="text" class="form-input font-mono text-xs" formControlName="model" placeholder="gpt-3.5-turbo, gpt-4o, etc." />
+            <p class="mt-1 text-xs text-slate-400">e.g. gpt-4o, gpt-4o-mini, gpt-3.5-turbo</p>
+          </div>
+
+          <div>
+            <label class="form-label">Sampling Temperature</label>
+            <input type="number" class="form-input" formControlName="temperature" min="0" max="2" step="0.1" />
+            <p class="mt-1 text-xs text-slate-400">Range: 0.0 (precise &amp; deterministic) to 1.0+ (more creative)</p>
+          </div>
         </div>
       </div>
 
-      <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
-      <div *ngIf="success" class="px-6 pb-2 text-sm text-green-600">{{ success }}</div>
+      <!-- Alert Banners -->
+      <div *ngIf="error" class="px-6 pb-4">
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+          <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {{ error }}
+        </div>
+      </div>
 
-      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-        <button type="submit" class="hd-btn-primary" [disabled]="saving">
+      <div *ngIf="success" class="px-6 pb-4">
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+          <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {{ success }}
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="px-6 py-4 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+        <button type="submit" class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100" [disabled]="saving">
+          <svg *ngIf="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <svg *ngIf="!saving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
           {{ saving ? 'Saving…' : 'Save AI Settings' }}
         </button>
       </div>

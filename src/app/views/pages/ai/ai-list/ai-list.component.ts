@@ -16,6 +16,7 @@ export class AiListComponent implements OnInit {
   status: any = null;
   analytics: any = null;
   analyticsCards: Array<{ label: string; value: any }> = [];
+  showApiKey = false;
 
   constructor(private fb: FormBuilder, private aiService: AiService) {}
 
