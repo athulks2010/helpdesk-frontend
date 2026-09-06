@@ -16,71 +16,81 @@
     <div *ngIf="!isEditMode" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       <!-- Main form -->
-      <form class="hd-card lg:col-span-2" [formGroup]="form" (ngSubmit)="submit()">
+      <form class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden lg:col-span-2" [formGroup]="form" (ngSubmit)="submit()">
         <div class="p-6 space-y-5">
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label class="form-label">
               Language Name <span class="text-red-500">*</span>
             </label>
-            <input type="text" class="hd-input" formControlName="name" placeholder="e.g. English, Spanish" />
-            <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
+            <input type="text" class="form-input" formControlName="name" placeholder="e.g. English, Spanish" />
+            <p *ngIf="hasError('name')" class="form-error">Name is required</p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label class="form-label">
               Language Code <span class="text-red-500">*</span>
             </label>
-            <input type="text" class="hd-input font-mono" formControlName="code" placeholder="e.g. en, es, fr" />
-            <p *ngIf="hasError('code')" class="mt-1 text-xs text-red-600">Code is required</p>
+            <input type="text" class="form-input font-mono" formControlName="code" placeholder="e.g. en, es, fr" />
+            <p *ngIf="hasError('code')" class="form-error">Code is required</p>
           </div>
 
           <div class="pt-1">
             <label class="flex items-center gap-2 cursor-pointer select-none">
               <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 formControlName="status" />
-              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Active</span>
+              <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Active</span>
             </label>
           </div>
 
-          <div class="rounded-xl border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4 flex gap-3">
+          <div class="rounded-2xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/30 dark:border-blue-800 p-4 flex gap-3">
             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                 clip-rule="evenodd" />
             </svg>
             <div class="text-sm text-blue-800 dark:text-blue-200">
-              <p class="font-semibold mb-0.5">Language Information</p>
-              <p class="text-blue-700/90 dark:text-blue-300/90">
+              <p class="font-bold mb-0.5">Language Information</p>
+              <p class="text-xs text-blue-700/90 dark:text-blue-300/90 leading-relaxed">
                 Languages configured here are available across customer portals and the admin panel for localization and translation options.
               </p>
             </div>
           </div>
         </div>
 
-        <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
+        <div *ngIf="error" class="px-6 pb-4">
+          <div class="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            {{ error }}
+          </div>
+        </div>
 
         <div
-          class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2">
-          <button type="button" class="hd-btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
-          <button type="submit" class="hd-btn-primary flex items-center gap-2" [disabled]="loading">
-            <div *ngIf="loading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span>{{ loading ? 'Saving…' : 'Create' }}</span>
+          class="px-6 py-4 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
+          <button type="button" class="px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors shadow-sm" (click)="cancel()" [disabled]="loading">Cancel</button>
+          <button type="submit" class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100" [disabled]="loading">
+            <svg *ngIf="loading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span>{{ loading ? 'Saving…' : 'Create Language' }}</span>
           </button>
         </div>
       </form>
 
       <!-- Sidebar notes -->
       <div class="space-y-6">
-        <div class="hd-card">
-          <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Localization Help</h3>
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Localization Help</h3>
           </div>
-          <div class="p-5 text-sm text-slate-600 dark:text-slate-400 space-y-3">
+          <div class="p-5 text-xs text-slate-600 dark:text-slate-400 space-y-3 leading-relaxed">
             <p>
-              Use standard ISO 639-1 language codes (e.g., <strong>en</strong> for English, <strong>es</strong> for Spanish, <strong>fr</strong> for French, <strong>de</strong> for German).
+              Use standard ISO 639-1 language codes (e.g., <strong class="text-slate-800 dark:text-slate-200">en</strong> for English, <strong class="text-slate-800 dark:text-slate-200">es</strong> for Spanish, <strong class="text-slate-800 dark:text-slate-200">fr</strong> for French, <strong class="text-slate-800 dark:text-slate-200">de</strong> for German).
             </p>
             <p>
-              Once created, you will be able to edit and customize all translation phrases for this language.
+              Once created, you will be able to edit and customize all translation phrases for this language in the interactive key-value editor.
             </p>
           </div>
         </div>

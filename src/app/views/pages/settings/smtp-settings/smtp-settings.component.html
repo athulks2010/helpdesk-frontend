@@ -2,80 +2,90 @@
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
     <div>
       <p class="text-sm text-slate-500 dark:text-slate-400">
-        Configure your email server settings for sending notifications and emails.
+        Configure your email server settings for sending notifications, tickets, and automated emails.
       </p>
     </div>
     <button
       type="button"
-      class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 shrink-0"
+      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shrink-0"
       (click)="test()"
       [disabled]="testing || loading"
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg *ngIf="testing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <svg *ngIf="!testing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01M5.636 13.95a9 9 0 0112.728 0M2.343 10.5a14 14 0 0119.314 0"/>
       </svg>
       {{ testing ? 'Testing…' : 'Test Connection' }}
     </button>
   </div>
 
-  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
+  <div *ngIf="loading" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm p-16 text-center text-slate-400 flex items-center justify-center gap-3">
+    <svg class="animate-spin w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    <span class="text-sm">Loading SMTP settings…</span>
+  </div>
 
   <div *ngIf="!loading" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-    <form class="hd-card xl:col-span-2" [formGroup]="form" (ngSubmit)="save()">
+    <form class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden xl:col-span-2" [formGroup]="form" (ngSubmit)="save()">
       <div class="p-6 space-y-8">
         <!-- Server Configuration -->
         <section>
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div class="flex items-center gap-2.5 mb-4">
+            <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
               </svg>
             </span>
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Server Configuration</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Server Configuration</h3>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label class="form-label">
                 SMTP Host <span class="text-red-500">*</span>
               </label>
-              <input type="text" class="hd-input" formControlName="host" placeholder="smtp.gmail.com" />
+              <input type="text" class="form-input" formControlName="host" placeholder="smtp.gmail.com" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label class="form-label">
                 SMTP Port <span class="text-red-500">*</span>
               </label>
-              <input type="number" class="hd-input" formControlName="port" placeholder="587" />
+              <input type="number" class="form-input" formControlName="port" placeholder="587" />
             </div>
           </div>
         </section>
 
         <!-- Authentication -->
         <section>
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <div class="flex items-center gap-2.5 mb-4">
+            <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
               </svg>
             </span>
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Authentication</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Authentication</h3>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SMTP Username</label>
-              <input type="text" class="hd-input" formControlName="username" placeholder="your-email@gmail.com" />
+              <label class="form-label">SMTP Username</label>
+              <input type="text" class="form-input" formControlName="username" placeholder="your-email@gmail.com" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SMTP Password</label>
+              <label class="form-label">SMTP Password</label>
               <div class="relative">
                 <input
                   [type]="showPassword ? 'text' : 'password'"
-                  class="hd-input pr-10"
+                  class="form-input pr-10"
                   formControlName="password"
                   placeholder="App password or account password"
                 />
                 <button
                   type="button"
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   (click)="showPassword = !showPassword"
                 >
                   <svg *ngIf="!showPassword" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,110 +103,150 @@
 
         <!-- Security -->
         <section>
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+          <div class="flex items-center gap-2.5 mb-4">
+            <span class="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 flex items-center justify-center shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
               </svg>
             </span>
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Security &amp; Encryption</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Security &amp; Encryption</h3>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mail Encryption</label>
-            <select class="hd-input" formControlName="encryption">
-              <option value="none">None</option>
-              <option value="tls">TLS</option>
-              <option value="ssl">SSL</option>
-            </select>
+          <div class="max-w-xs">
+            <label class="form-label">Mail Encryption</label>
+            <div class="relative">
+              <select class="form-select pr-10" formControlName="encryption">
+                <option value="none">None</option>
+                <option value="tls">TLS</option>
+                <option value="ssl">SSL</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
         </section>
 
         <!-- Email Settings -->
         <section>
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+          <div class="flex items-center gap-2.5 mb-4">
+            <span class="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
               </svg>
             </span>
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Email Settings</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Email Sender Defaults</h3>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label class="form-label">
                 From Address <span class="text-red-500">*</span>
               </label>
-              <input type="email" class="hd-input" formControlName="from_address" placeholder="noreply@yourdomain.com" />
+              <input type="email" class="form-input" formControlName="from_address" placeholder="noreply@yourdomain.com" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label class="form-label">
                 From Name <span class="text-red-500">*</span>
               </label>
-              <input type="text" class="hd-input" formControlName="from_name" placeholder="Help Desk" />
+              <input type="text" class="form-input" formControlName="from_name" placeholder="Help Desk" />
             </div>
           </div>
         </section>
       </div>
 
-      <div *ngIf="testResult" class="px-6 pb-2">
+      <!-- Test Result Alert -->
+      <div *ngIf="testResult" class="px-6 pb-4">
         <div
-          class="p-3 rounded-lg text-sm border"
-          [class.bg-green-50]="testResult.success"
-          [class.border-green-200]="testResult.success"
-          [class.text-green-800]="testResult.success"
+          class="flex items-center gap-3 p-4 rounded-xl text-sm border"
+          [class.bg-emerald-50]="testResult.success"
+          [class.dark:bg-emerald-950_20]="testResult.success"
+          [class.border-emerald-200]="testResult.success"
+          [class.dark:border-emerald-800]="testResult.success"
+          [class.text-emerald-800]="testResult.success"
+          [class.dark:text-emerald-300]="testResult.success"
           [class.bg-red-50]="!testResult.success"
+          [class.dark:bg-red-950_20]="!testResult.success"
           [class.border-red-200]="!testResult.success"
+          [class.dark:border-red-800]="!testResult.success"
           [class.text-red-800]="!testResult.success"
+          [class.dark:text-red-300]="!testResult.success"
         >
-          {{ testResult.message }}
+          <svg *ngIf="testResult.success" class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <svg *ngIf="!testResult.success" class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>{{ testResult.message }}</span>
         </div>
       </div>
-      <div *ngIf="error" class="px-6 pb-2 text-sm text-red-600">{{ error }}</div>
-      <div *ngIf="success" class="px-6 pb-2 text-sm text-green-600">{{ success }}</div>
 
-      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-        <p class="text-sm text-slate-500">Changes will be applied immediately after saving.</p>
-        <button type="submit" class="hd-btn-primary" [disabled]="saving">
+      <div *ngIf="error" class="px-6 pb-4">
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+          <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {{ error }}
+        </div>
+      </div>
+
+      <div *ngIf="success" class="px-6 pb-4">
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+          <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {{ success }}
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="px-6 py-4 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
+        <p class="text-xs text-slate-500 dark:text-slate-400">Settings will apply immediately once saved.</p>
+        <button type="submit" class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100" [disabled]="saving">
+          <svg *ngIf="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <svg *ngIf="!saving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+          </svg>
           {{ saving ? 'Saving…' : 'Save Settings' }}
         </button>
       </div>
     </form>
 
     <!-- Help sidebar -->
-    <aside class="rounded-2xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/20 dark:border-blue-800 p-5 h-fit">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">?</span>
-        <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-100">SMTP Configuration Help</h3>
+    <aside class="rounded-2xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/20 dark:border-blue-800 p-6 h-fit shadow-sm">
+      <div class="flex items-center gap-2.5 mb-4">
+        <span class="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 flex items-center justify-center text-sm font-bold shadow-sm">?</span>
+        <h3 class="text-sm font-bold text-blue-900 dark:text-blue-100">SMTP Configuration Help</h3>
       </div>
 
       <div class="space-y-5 text-sm text-blue-800 dark:text-blue-200">
         <div>
-          <p class="font-semibold mb-1">Gmail</p>
-          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300">
+          <p class="font-bold mb-1">Gmail</p>
+          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300 text-xs">
             <li>Host: smtp.gmail.com</li>
             <li>Port: 587 (TLS) or 465 (SSL)</li>
             <li>Username: your full Gmail address</li>
           </ul>
-          <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 p-2.5 text-xs">
+          <div class="mt-2 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 text-amber-800 dark:text-amber-300 p-3 text-xs leading-relaxed">
             <strong>Important:</strong> Use an App Password (Google Account → Security → 2-Step Verification → App passwords).
           </div>
         </div>
 
         <div>
-          <p class="font-semibold mb-1">Outlook / Hotmail</p>
-          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300">
+          <p class="font-bold mb-1">Outlook / Hotmail</p>
+          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300 text-xs">
             <li>Host: smtp.office365.com</li>
             <li>Port: 587</li>
             <li>Encryption: TLS</li>
           </ul>
-          <div class="mt-2 rounded-lg border border-blue-200 bg-white/70 text-blue-800 p-2.5 text-xs dark:bg-blue-900/30 dark:border-blue-700">
+          <div class="mt-2 rounded-xl border border-blue-200 bg-white/80 text-blue-800 p-3 text-xs dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300 leading-relaxed">
             <strong>Note:</strong> Use your Microsoft account email and password (or app password if enabled).
           </div>
         </div>
 
         <div>
-          <p class="font-semibold mb-1">Yahoo</p>
-          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300">
+          <p class="font-bold mb-1">Yahoo</p>
+          <ul class="list-disc pl-5 space-y-0.5 text-blue-700 dark:text-blue-300 text-xs">
             <li>Host: smtp.mail.yahoo.com</li>
             <li>Port: 465 or 587</li>
             <li>Encryption: SSL / TLS</li>

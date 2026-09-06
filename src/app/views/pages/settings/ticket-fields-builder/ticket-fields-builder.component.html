@@ -1,59 +1,83 @@
 <div class="space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-    <p class="text-sm text-slate-500 dark:text-slate-400">
-      Create custom fields for your ticket forms
-    </p>
-    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-      Fields: {{ rows.length }}
+    <div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        Create custom fields and configure form attributes for your ticket submission forms.
+      </p>
+    </div>
+    <span class="inline-flex items-center px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800">
+      Active Fields: {{ rows.length }}
     </span>
   </div>
 
-  <div *ngIf="error" class="text-sm text-red-600">{{ error }}</div>
-  <div *ngIf="success" class="text-sm text-green-600">{{ success }}</div>
+  <div *ngIf="error" class="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+    <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    {{ error }}
+  </div>
+
+  <div *ngIf="success" class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+    <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    {{ success }}
+  </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
     <!-- Form Preview -->
-    <section class="hd-card">
-      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-          </svg>
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Form Preview</h3>
+    <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Form Preview</h3>
         </div>
-        <span class="text-xs font-medium text-blue-600">Live Preview</span>
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-lg">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+          Live Preview
+        </span>
       </div>
 
       <div class="p-6 min-h-[420px]">
-        <div *ngIf="loading" class="text-center text-slate-500 py-16">Loading…</div>
+        <div *ngIf="loading" class="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+          <svg class="animate-spin w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span class="text-xs font-semibold uppercase tracking-wider">Loading fields…</span>
+        </div>
 
-        <div *ngIf="!loading && !rows.length" class="flex flex-col items-center justify-center text-center py-16 text-slate-500">
+        <div *ngIf="!loading && !rows.length" class="flex flex-col items-center justify-center text-center py-20 text-slate-500">
           <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
             <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
-          <p class="text-sm font-medium text-slate-700 dark:text-slate-200">No fields yet</p>
-          <p class="text-sm mt-1">Start by adding your first custom field.</p>
+          <p class="text-sm font-bold text-slate-700 dark:text-slate-200">No custom fields yet</p>
+          <p class="text-xs text-slate-400 mt-1">Start by configuring and adding your first custom field using the panel on the right.</p>
         </div>
 
         <div *ngIf="!loading && rows.length" class="space-y-4">
           <div
             *ngFor="let row of rows"
-            class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-900/40"
+            class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/50 dark:bg-slate-900/30"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
               <div>
-                <label class="block text-sm font-medium text-slate-800 dark:text-slate-100">
+                <label class="form-label mb-0.5">
                   {{ row.label || row.name }}
                   <span *ngIf="row.required" class="text-red-500">*</span>
                 </label>
-                <p class="text-xs text-slate-400 mt-0.5">{{ row.name }} · {{ row.type }}</p>
+                <p class="text-xs text-slate-400 font-mono">{{ row.name }} · {{ row.type }}</p>
               </div>
               <button
                 type="button"
-                class="text-xs font-medium text-red-600 hover:text-red-800"
+                class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors p-1"
                 (click)="remove(row)"
               >
                 Delete
@@ -63,38 +87,38 @@
             <ng-container [ngSwitch]="row.type">
               <textarea
                 *ngSwitchCase="'textarea'"
-                class="hd-input"
+                class="form-input"
                 rows="3"
                 disabled
                 [placeholder]="row.placeholder || ''"
               ></textarea>
-              <select *ngSwitchCase="'select'" class="hd-input" disabled>
+              <select *ngSwitchCase="'select'" class="form-select" disabled>
                 <option value="">{{ row.placeholder || 'Select…' }}</option>
                 <option *ngFor="let opt of asOptions(row)" [value]="opt">{{ opt }}</option>
               </select>
-              <label *ngSwitchCase="'checkbox'" class="inline-flex items-center gap-2 text-sm text-slate-600">
-                <input type="checkbox" class="w-4 h-4" disabled />
-                {{ row.placeholder || row.label || 'Checkbox' }}
+              <label *ngSwitchCase="'checkbox'" class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" disabled />
+                <span>{{ row.placeholder || row.label || 'Checkbox' }}</span>
               </label>
-              <input *ngSwitchCase="'file'" type="file" class="hd-input" disabled />
+              <input *ngSwitchCase="'file'" type="file" class="form-input" disabled />
               <input
                 *ngSwitchCase="'email'"
                 type="email"
-                class="hd-input"
+                class="form-input"
                 disabled
                 [placeholder]="row.placeholder || ''"
               />
               <input
                 *ngSwitchCase="'number'"
                 type="number"
-                class="hd-input"
+                class="form-input"
                 disabled
                 [placeholder]="row.placeholder || ''"
               />
               <input
                 *ngSwitchDefault
                 type="text"
-                class="hd-input"
+                class="form-input"
                 disabled
                 [placeholder]="row.placeholder || ''"
               />
@@ -105,24 +129,29 @@
     </section>
 
     <!-- Add New Field -->
-    <section class="hd-card">
-      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
-        <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Add New Field</h3>
+    <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add New Custom Field</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Configure parameters for a new ticket form attribute</p>
       </div>
 
-      <form class="p-5 space-y-5" [formGroup]="form" (ngSubmit)="save()">
+      <form class="p-6 space-y-5" [formGroup]="form" (ngSubmit)="save()">
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Field Type</label>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <label class="form-label">Field Type</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <button
               *ngFor="let t of fieldTypes"
               type="button"
-              class="flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors text-left"
+              class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all text-left"
               [class.border-blue-500]="form.get('type')?.value === t.id"
               [class.bg-blue-50]="form.get('type')?.value === t.id"
+              [class.dark:bg-blue-950_30]="form.get('type')?.value === t.id"
               [class.text-blue-700]="form.get('type')?.value === t.id"
+              [class.dark:text-blue-400]="form.get('type')?.value === t.id"
               [class.border-slate-200]="form.get('type')?.value !== t.id"
+              [class.dark:border-slate-700]="form.get('type')?.value !== t.id"
               [class.text-slate-700]="form.get('type')?.value !== t.id"
+              [class.dark:text-slate-300]="form.get('type')?.value !== t.id"
               [class.hover:border-blue-300]="form.get('type')?.value !== t.id"
               (click)="form.patchValue({ type: t.id })"
             >
@@ -133,62 +162,71 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Required Field</label>
-          <div class="flex items-center gap-5">
-            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+          <label class="form-label">Required Field</label>
+          <div class="flex items-center gap-6">
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
               <input
                 type="radio"
                 name="requiredField"
-                class="w-4 h-4"
+                class="w-4 h-4 text-blue-600 focus:ring-blue-500"
                 [checked]="form.get('required')?.value === true"
                 (change)="form.patchValue({ required: true })"
               />
-              Yes
+              Yes, required
             </label>
-            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
               <input
                 type="radio"
                 name="requiredField"
-                class="w-4 h-4"
+                class="w-4 h-4 text-blue-600 focus:ring-blue-500"
                 [checked]="form.get('required')?.value === false"
                 (change)="form.patchValue({ required: false })"
               />
-              No
+              No, optional
             </label>
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Field Label</label>
-          <input type="text" class="hd-input" formControlName="label" placeholder="e.g. Full Name" />
-          <p *ngIf="hasError('label')" class="mt-1 text-xs text-red-600">Label is required</p>
+          <label class="form-label">Field Label <span class="text-red-500">*</span></label>
+          <input type="text" class="form-input" formControlName="label" placeholder="e.g. Account Number, License Plate" />
+          <p *ngIf="hasError('label')" class="form-error">Label is required</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Field Name</label>
+          <label class="form-label">Field Identifier Key <span class="text-red-500">*</span></label>
           <input
             type="text"
-            class="hd-input"
+            class="form-input font-mono text-xs"
             formControlName="name"
-            placeholder="e.g. full_name"
+            placeholder="e.g. account_number"
             (focus)="markNameTouched()"
           />
-          <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
+          <p *ngIf="hasError('name')" class="form-error">Identifier key is required</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Placeholder Text</label>
-          <input type="text" class="hd-input" formControlName="placeholder" placeholder="e.g. Enter your full name" />
+          <label class="form-label">Placeholder Text</label>
+          <input type="text" class="form-input" formControlName="placeholder" placeholder="e.g. Enter your account number" />
         </div>
 
         <div *ngIf="form.get('type')?.value === 'select'">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Options (comma-separated)</label>
-          <input type="text" class="hd-input" formControlName="options" placeholder="Option A, Option B" />
+          <label class="form-label">Dropdown Options (comma-separated)</label>
+          <input type="text" class="form-input" formControlName="options" placeholder="Option A, Option B, Option C" />
         </div>
 
-        <button type="submit" class="hd-btn-primary w-full" [disabled]="saving">
-          {{ saving ? 'Saving…' : 'Add Field' }}
-        </button>
+        <div class="pt-2">
+          <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100" [disabled]="saving">
+            <svg *ngIf="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <svg *ngIf="!saving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            {{ saving ? 'Adding Field…' : 'Add Custom Field' }}
+          </button>
+        </div>
       </form>
     </section>
   </div>
