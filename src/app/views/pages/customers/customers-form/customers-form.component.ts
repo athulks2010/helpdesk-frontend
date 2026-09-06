@@ -5,6 +5,8 @@ import { UserService } from '../../../../core/user/_services/user.service';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
 
 
+import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
+
 @Component({
   selector: 'app-customers-form',
   templateUrl: './customers-form.component.html',
@@ -18,14 +20,15 @@ export class CustomersFormComponent implements OnInit {
   isEditMode = false;
   entityId: string | null = null;
   showPassword = false;
-
+  countries: CountryItem[] = [];
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private service: UserService,
-    private fileUpload: FileUploadService
+    private fileUpload: FileUploadService,
+    private countryService: CountryService
   ) {}
 
   ngOnInit(): void {
@@ -40,7 +43,7 @@ export class CustomersFormComponent implements OnInit {
       phone: [''],
       city: [''],
       address: [''],
-      country: [''],
+      country: [null],
       password: [''],
       photo_path: [''],
     });
@@ -57,15 +60,15 @@ export class CustomersFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          first_name: item.first_name ?? null,
-          last_name: item.last_name ?? null,
-          email: item.email ?? null,
-          phone: item.phone ?? null,
-          city: item.city ?? null,
-          address: item.address ?? null,
-          country: item.country ?? null,
-          password: item.password ?? null,
-          photo_path: item.photo_path ?? item.photo ?? null,
+            first_name: item.first_name ?? null,
+            last_name: item.last_name ?? null,
+            email: item.email ?? null,
+            phone: item.phone ?? null,
+            city: item.city ?? null,
+            address: item.address ?? null,
+            country: item.country_id ? +item.country_id : (item.country ? +item.country : null),
+            password: item.password ?? null,
+            photo_path: item.photo_path ?? item.photo ?? null,
           });
           // Password not required when editing
           this.form.get('password')?.clearValidators();
@@ -85,7 +88,14 @@ export class CustomersFormComponent implements OnInit {
   }
 
   loadExtras(): void {
-    // no extras
+    this.countryService.getAll().subscribe({
+      next: (items) => {
+        this.countries = items;
+      },
+      error: (err) => {
+        console.error('Failed to load countries', err);
+      },
+    });
   }
 
   onFileSelected(event: any): void {
@@ -126,6 +136,11 @@ export class CustomersFormComponent implements OnInit {
       raw.is_active = true;
     }
     delete raw.role;
+
+    if (raw.country) {
+      raw.country = +raw.country;
+      raw.country_id = +raw.country;
+    }
 
     if (!raw.password) {
       delete raw.password;

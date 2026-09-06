@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription, catchError, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
 import { environment } from '../../../../../environments/environment';
 import { apiUrl } from '../../../../core/_config/api.config';
 
@@ -42,12 +43,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
     { id: 6, name: 'Agent', slug: 'agent' },
   ];
 
+  countries: CountryItem[] = [];
+
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     private http: HttpClient,
     private router: Router,
-    public settingService: SettingService
+    public settingService: SettingService,
+    private countryService: CountryService
   ) {}
 
   ngOnInit(): void {
@@ -57,7 +61,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         last_name: ['', [Validators.required, Validators.minLength(1)]],
         email: ['', [Validators.required, Validators.email]],
         phone: [''],
-        country: [''],
+        country: [null],
         city: [''],
         address: [''],
         role_id: [2, [Validators.required]],
@@ -72,6 +76,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.logoFailed = false;
     });
     this.loadRoles();
+    this.loadCountries();
   }
 
   ngOnDestroy(): void {
@@ -96,6 +101,17 @@ export class RegisterComponent implements OnInit, OnDestroy {
           this.roles = data.map((r: any) => ({ id: r.id, name: r.name || r.slug, slug: r.slug }));
         }
       });
+  }
+
+  loadCountries(): void {
+    this.countryService.getAll().subscribe({
+      next: (items) => {
+        this.countries = items;
+      },
+      error: (err) => {
+        console.error('Failed to load countries', err);
+      },
+    });
   }
 
   // Custom password strength validator
@@ -157,12 +173,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.error = '';
     this.success = '';
 
+    const countryVal = this.f['country'].value;
     const payload = {
       first_name: this.f['first_name'].value,
       last_name: this.f['last_name'].value,
       email: this.f['email'].value,
       phone: this.f['phone'].value || '',
-      country: this.f['country'].value || '',
+      country: countryVal ? +countryVal : null,
+      country_id: countryVal ? +countryVal : null,
       city: this.f['city'].value || '',
       address: this.f['address'].value || '',
       password: this.f['password'].value,

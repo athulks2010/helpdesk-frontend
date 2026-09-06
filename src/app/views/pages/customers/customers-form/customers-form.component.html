@@ -72,8 +72,17 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label class="form-label">Country</label>
-            <input type="text" formControlName="country" placeholder="Enter country"
-              class="form-input" />
+            <div class="relative">
+              <select formControlName="country" class="form-select pr-8">
+                <option [ngValue]="null">— Select Country —</option>
+                <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.name }}</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
           <div>

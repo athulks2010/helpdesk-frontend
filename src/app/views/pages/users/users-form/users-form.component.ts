@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../../../core/user/_services/user.service';
 import { RoleService } from '../../../../core/role/_services/role.service';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
+import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
 
 @Component({
   selector: 'app-users-form',
@@ -18,6 +19,7 @@ export class UsersFormComponent implements OnInit {
   isEditMode = false;
   entityId: string | null = null;
   roles: any[] = [];
+  countries: CountryItem[] = [];
   showPassword = false;
 
   constructor(
@@ -26,7 +28,8 @@ export class UsersFormComponent implements OnInit {
     private router: Router,
     private service: UserService,
     private roleService: RoleService,
-    private fileUpload: FileUploadService
+    private fileUpload: FileUploadService,
+    private countryService: CountryService
   ) {}
 
   ngOnInit(): void {
@@ -40,7 +43,7 @@ export class UsersFormComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       phone: [''],
       address: [''],
-      country: [''],
+      country: [null],
       city: [''],
       role_id: ['', Validators.required],
       password: [''],
@@ -61,7 +64,7 @@ export class UsersFormComponent implements OnInit {
             email: item.email ?? null,
             phone: item.phone ?? null,
             address: item.address ?? null,
-            country: item.country ?? null,
+            country: item.country_id ? +item.country_id : (item.country ? +item.country : null),
             city: item.city ?? null,
             role_id: item.role_id ?? null,
             password: item.password ?? null,
@@ -88,6 +91,14 @@ export class UsersFormComponent implements OnInit {
     this.roleService.getAll().subscribe({
       next: (d) => {
         this.roles = Array.isArray(d) ? d : d?.items || d?.list || [];
+      },
+    });
+    this.countryService.getAll().subscribe({
+      next: (items) => {
+        this.countries = items;
+      },
+      error: (err) => {
+        console.error('Failed to load countries', err);
       },
     });
   }
@@ -124,6 +135,11 @@ export class UsersFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
+
+    if (raw.country) {
+      raw.country = +raw.country;
+      raw.country_id = +raw.country;
+    }
 
     if (!raw.password) {
       delete raw.password;

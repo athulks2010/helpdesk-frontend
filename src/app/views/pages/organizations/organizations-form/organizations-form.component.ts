@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrganizationService } from '../../../../core/organization/_services/organization.service';
-
+import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
 
 @Component({
   selector: 'app-organizations-form',
@@ -16,13 +16,14 @@ export class OrganizationsFormComponent implements OnInit {
   error = '';
   isEditMode = false;
   entityId: string | null = null;
-
+  countries: CountryItem[] = [];
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: OrganizationService
+    private service: OrganizationService,
+    private countryService: CountryService
   ) {}
 
   ngOnInit(): void {
@@ -37,7 +38,7 @@ export class OrganizationsFormComponent implements OnInit {
       address: [''],
       city: [''],
       region: [''],
-      country: [''],
+      country: [null],
       postal_code: [''],
     });
 
@@ -51,14 +52,14 @@ export class OrganizationsFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          email: item.email ?? null,
-          phone: item.phone ?? null,
-          address: item.address ?? null,
-          city: item.city ?? null,
-          region: item.region ?? null,
-          country: item.country ?? null,
-          postal_code: item.postal_code ?? null,
+            name: item.name ?? null,
+            email: item.email ?? null,
+            phone: item.phone ?? null,
+            address: item.address ?? null,
+            city: item.city ?? null,
+            region: item.region ?? null,
+            country: item.country ? +item.country : (item.country_id ? +item.country_id : null),
+            postal_code: item.postal_code ?? null,
           });
 
           this.loadingData = false;
@@ -74,7 +75,14 @@ export class OrganizationsFormComponent implements OnInit {
   }
 
   loadExtras(): void {
-    // no extras
+    this.countryService.getAll().subscribe({
+      next: (items) => {
+        this.countries = items;
+      },
+      error: (err) => {
+        console.error('Failed to load countries', err);
+      },
+    });
   }
 
   submit(): void {
@@ -85,6 +93,10 @@ export class OrganizationsFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
+
+    if (raw.country) {
+      raw.country = +raw.country;
+    }
 
     if (!raw.password) {
       delete raw.password;

@@ -65,8 +65,10 @@
 
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Country</label>
-        <input type="text" class="hd-input" formControlName="country" />
-
+        <select class="hd-input" formControlName="country">
+          <option [ngValue]="null">— Select Country —</option>
+          <option *ngFor="let c of countries" [ngValue]="c.id">{{ c.name }}</option>
+        </select>
       </div>
 
       <div>

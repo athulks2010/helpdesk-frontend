@@ -184,6 +184,10 @@ export const apiUrl = {
   languageTranslations: '/language/translations',
   languagePhrase: '/language/phrase',
 
+  /* Countries */
+  countries: '/country',
+  countriesAll: '/country/all',
+
   /* Navigation Menus */
   menus: '/navigation-menu',
   menusAll: '/navigation-menu/all',
