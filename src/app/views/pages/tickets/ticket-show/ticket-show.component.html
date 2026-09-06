@@ -98,9 +98,10 @@
             <button type="button" (click)="toggleFavorite()" [disabled]="favoriteLoading"
               class="p-2.5 rounded-xl border transition-colors shadow-sm"
               [ngClass]="isFavorited
-                ? 'bg-amber-50 border-amber-200 text-amber-500'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'"
-              title="Favorite">
+                ? 'bg-[#FFFBE6] border-[#FFE58F] text-[#D48806]'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-slate-50'"
+              [attr.title]="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+              [attr.aria-pressed]="isFavorited">
               <svg class="w-4 h-4" [attr.fill]="isFavorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
@@ -338,22 +339,40 @@
                 <span class="text-slate-500">Source</span>
                 <span class="font-bold text-slate-800 dark:text-slate-200 capitalize">{{ ticket.source || 'Web' }}</span>
               </div>
+              <ng-container *ngFor="let entry of customFieldEntries()">
+                <div class="flex items-start justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                  <span class="text-slate-500 shrink-0">{{ entry.label }}</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200 text-right break-all">{{ entry.value }}</span>
+                </div>
+              </ng-container>
             </div>
           </div>
 
           <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50">
-              <h2 class="text-base font-bold text-slate-800 dark:text-white">Timeline</h2>
+              <h2 class="text-base font-bold text-slate-800 dark:text-white">Activity</h2>
             </div>
             <div class="p-6 space-y-3">
-              <div class="flex items-start gap-3">
+              <div *ngFor="let a of activities" class="flex items-start gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 mt-1.5 shrink-0"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ activityLabel(a) }}</p>
+                  <p *ngIf="a.old_value || a.new_value" class="text-[11px] text-slate-500 mt-0.5">
+                    <span *ngIf="a.old_value">{{ a.old_value }}</span>
+                    <span *ngIf="a.old_value && a.new_value"> → </span>
+                    <span *ngIf="a.new_value">{{ a.new_value }}</span>
+                  </p>
+                  <p class="text-xs text-slate-400 mt-0.5">{{ formatDateTime(a.created_at) }}</p>
+                </div>
+              </div>
+              <div *ngIf="!activities.length" class="flex items-start gap-3">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
                 <div>
                   <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Created</p>
                   <p class="text-xs text-slate-400 mt-0.5">{{ formatDateTime(ticket.created_at) }}</p>
                 </div>
               </div>
-              <div *ngIf="ticket.updated_at" class="flex items-start gap-3">
+              <div *ngIf="ticket.updated_at && !activities.length" class="flex items-start gap-3">
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5 shrink-0"></span>
                 <div>
                   <p class="text-xs font-bold text-slate-800 dark:text-slate-200">Updated</p>
