@@ -213,12 +213,15 @@ export const apiUrl = {
   ticketRestore: '/ticket/restore',
   ticketFavorite: '/ticket/favorites',
   ticketFavorites: '/ticket/favorites',
+  ticketActivities: '/ticket/activities',
   ticketImport: '/ticket/import',
   ticketExport: '/ticket/export',
   ticketFields: '/ticket-field',
   ticketFieldsAll: '/ticket-field/all',
   ticketFieldCreate: '/ticket-field/create',
   ticketFieldDelete: '/ticket-field/delete',
+  ticketFieldUpdate: '/ticket-field/update',
+  ticketFieldSingle: '/ticket-field/single',
 
   /* Pending users */
   pendingUsersAll: '/user/pending',

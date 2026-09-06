@@ -28,6 +28,10 @@ export class TicketShowComponent implements OnInit, OnDestroy {
   commenting = false;
   commentError = '';
 
+  /** ticket_fields definitions + entry values */
+  customFieldDefs: any[] = [];
+  activities: any[] = [];
+
   conversations: any[] = [];
   loadingConversations = false;
   showNewConversationModal = false;
@@ -160,6 +164,7 @@ export class TicketShowComponent implements OnInit, OnDestroy {
         this.loadFavoriteStatus();
         this.loadComments();
         this.loadConversations();
+        this.loadCustomFieldsAndActivities();
         // Laravel polls conversations every 30s
         this.pollSub = interval(30000).subscribe(() => this.loadConversations(true));
       },
@@ -171,6 +176,48 @@ export class TicketShowComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
     });
+  }
+
+  loadCustomFieldsAndActivities(): void {
+    const ticketId = this.ticket?.id || this.id;
+    this.ticketService.getCustomFieldDefinitions({ pageSize: 200 }).subscribe({
+      next: (defs) => {
+        this.customFieldDefs = defs || [];
+      },
+    });
+    if (ticketId) {
+      this.ticketService.getActivities(ticketId).subscribe({
+        next: (items) => {
+          this.activities = items || [];
+        },
+      });
+    }
+  }
+
+  customFieldEntries(): Array<{ label: string; value: string }> {
+    const values = this.ticket?.custom_field || this.ticket?.custom_fields || {};
+    if (this.customFieldDefs.length) {
+      return this.customFieldDefs
+        .map((f) => ({
+          label: f.label || f.name,
+          value: values[f.name] != null && values[f.name] !== '' ? String(values[f.name]) : '',
+        }))
+        .filter((row) => row.value);
+    }
+    return Object.keys(values).map((key) => ({
+      label: key,
+      value: String(values[key]),
+    }));
+  }
+
+  activityLabel(a: any): string {
+    if (a?.description) return a.description;
+    const type = a?.activity_type || 'updated';
+    const field = a?.field_name || '';
+    if (type === 'created') return 'Ticket created';
+    if (type === 'status_changed') return `Status changed${field ? ` (${field})` : ''}`;
+    if (type === 'assigned') return `Assignment changed${field ? ` (${field})` : ''}`;
+    return field ? `${field} updated` : type;
   }
 
   loadFavoriteStatus(): void {

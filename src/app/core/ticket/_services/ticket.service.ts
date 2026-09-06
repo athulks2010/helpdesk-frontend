@@ -181,6 +181,7 @@ export class TicketService extends ApiBaseService {
       type_id: this.toId(raw['type_id']),
       category_id: this.toId(raw['category_id']),
       assigned_to: this.toId(raw['assigned_to']),
+      custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
     };
   }
 
@@ -193,7 +194,44 @@ export class TicketService extends ApiBaseService {
       status_id: this.toId(raw['status_id']),
       priority_id: this.toId(raw['priority_id']),
       assigned_to: this.toId(raw['assigned_to']),
+      department_id: this.toId(raw['department_id']),
+      type_id: this.toId(raw['type_id']),
+      category_id: this.toId(raw['category_id']),
+      custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
     };
+  }
+
+  private normalizeCustomField(value: any): Record<string, any> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const out: Record<string, any> = {};
+    Object.keys(value).forEach((key) => {
+      const v = value[key];
+      if (v === undefined || v === null || v === '') return;
+      out[key] = v;
+    });
+    return out;
+  }
+
+  /** GET /ticket-field/all — custom field definitions */
+  getCustomFieldDefinitions(params?: Record<string, any>): Observable<any[]> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketFieldsAll}`, { params: this.toParams(params) })
+      .pipe(
+        map((res) => this.extractArray(res)),
+        catchError(() => of([]))
+      );
+  }
+
+  /** GET /ticket/activities?ticket_id= */
+  getActivities(ticketId: string | number): Observable<any[]> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketActivities}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map((res) => this.extractArray(res)),
+        catchError(() => of([]))
+      );
   }
 
   private toId(value: any): number {

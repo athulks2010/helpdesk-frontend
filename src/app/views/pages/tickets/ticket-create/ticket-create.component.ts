@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
 
 @Component({
@@ -25,6 +26,8 @@ export class TicketCreateComponent implements OnInit {
   customers: any[] = [];
   assignees: any[] = [];
   contacts: any[] = [];
+  /** ticket_fields definitions */
+  customFieldDefs: any[] = [];
 
   attachedFiles: File[] = [];
 
@@ -51,9 +54,9 @@ export class TicketCreateComponent implements OnInit {
       assigned_to: [0],
       subject: ['', Validators.required],
       body: ['', Validators.required],
+      custom_field: this.fb.group({}),
     });
 
-    // Create requires a customer; update API does not accept user_id
     if (!this.isEditMode) {
       this.form.get('user_id')?.setValidators([Validators.required, Validators.min(1)]);
       this.form.get('user_id')?.updateValueAndValidity();
@@ -64,10 +67,49 @@ export class TicketCreateComponent implements OnInit {
     this.loadData();
   }
 
+  get customFieldGroup(): FormGroup {
+    return this.form.get('custom_field') as FormGroup;
+  }
+
+  fieldOptions(field: any): string[] {
+    const raw = field?.options;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map(String);
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {
+      // comma-separated
+    }
+    return String(raw)
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  private buildCustomFieldControls(defs: any[], values: Record<string, any> = {}): void {
+    const group = this.fb.group({});
+    for (const field of defs) {
+      const name = field.name;
+      if (!name) continue;
+      const required = field.required === 1 || field.required === true || field.required === '1';
+      const validators = required ? [Validators.required] : [];
+      let initial: any = values[name] ?? '';
+      if (field.type === 'checkbox') {
+        initial = initial === true || initial === '1' || initial === 1 || initial === 'true';
+      }
+      group.addControl(name, new FormControl(initial, validators));
+    }
+    this.form.setControl('custom_field', group);
+  }
+
   loadData(): void {
     this.loadingData = true;
-    this.ticketService.getFormDropdowns().subscribe({
-      next: (dropdowns) => {
+    forkJoin({
+      dropdowns: this.ticketService.getFormDropdowns(),
+      fields: this.ticketService.getCustomFieldDefinitions({ pageSize: 200 }),
+    }).subscribe({
+      next: ({ dropdowns, fields }) => {
         this.priorities = dropdowns.priorities;
         this.statuses = dropdowns.statuses;
         this.types = dropdowns.types;
@@ -76,6 +118,7 @@ export class TicketCreateComponent implements OnInit {
         this.customers = dropdowns.customers;
         this.assignees = dropdowns.assignees;
         this.contacts = dropdowns.contacts;
+        this.customFieldDefs = fields || [];
 
         if (this.isEditMode && this.ticketId) {
           this.ticketService.getById(this.ticketId).subscribe({
@@ -95,11 +138,16 @@ export class TicketCreateComponent implements OnInit {
                   subject: t.subject || t.title || '',
                   body: t.body || t.details || t.description || '',
                 });
+                const values = t.custom_field || t.custom_fields || {};
+                this.buildCustomFieldControls(this.customFieldDefs, values);
+              } else {
+                this.buildCustomFieldControls(this.customFieldDefs);
               }
               this.loadingData = false;
             },
             error: () => {
               this.error = 'Failed to load ticket details';
+              this.buildCustomFieldControls(this.customFieldDefs);
               this.loadingData = false;
             },
           });
@@ -107,13 +155,12 @@ export class TicketCreateComponent implements OnInit {
           const defPriority = this.priorities.find((p) =>
             /generally|medium|normal/i.test(p.name || '')
           );
-          const defStatus = this.statuses.find((s) =>
-            /open|new/i.test(s.name || '')
-          );
+          const defStatus = this.statuses.find((s) => /open|new/i.test(s.name || ''));
           this.form.patchValue({
             priority_id: defPriority?.id ? Number(defPriority.id) : 0,
             status_id: defStatus?.id ? Number(defStatus.id) : 0,
           });
+          this.buildCustomFieldControls(this.customFieldDefs);
           this.loadingData = false;
         }
       },
