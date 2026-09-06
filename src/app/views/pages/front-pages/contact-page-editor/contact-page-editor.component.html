@@ -1,98 +1,158 @@
 <div class="space-y-6">
-  <div *ngIf="loading" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
-  <div *ngIf="!loading"
-    class="bg-white dark:bg-slate-800 rounded-md shadow overflow-hidden border border-slate-200 dark:border-slate-700">
-    <form (ngSubmit)="save()">
-      <div class="p-8 -mr-6 -mb-8 flex flex-wrap">
-        <div class="w-full mx-auto">
-          <!-- Tabs -->
-          <div class="border-b border-gray-200 dark:border-gray-700">
-            <ul class="flex flex-wrap -mb-px">
-              <li *ngFor="let tab of tabs; let i = index" class="mr-2">
-                <button type="button" (click)="setTab(i)"
-                  class="inline-block rounded-t-lg py-4 px-4 text-sm text-center border-b-2 transition-colors"
-                  [class.border-blue-500]="activeTab === i"
-                  [class.text-blue-600]="activeTab === i"
-                  [class.border-transparent]="activeTab !== i"
-                  [class.text-gray-500]="activeTab !== i"
-                  [class.hover:text-gray-600]="activeTab !== i"
-                  [class.hover:border-gray-300]="activeTab !== i">
-                  {{ tab }}
-                </button>
-              </li>
-            </ul>
-          </div>
+  <!-- Loading State -->
+  <div *ngIf="loading"
+    class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center shadow-sm">
+    <div class="flex items-center justify-center gap-3 text-slate-400">
+      <svg class="animate-spin w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <span class="text-sm font-medium">Loading contact page configuration…</span>
+    </div>
+  </div>
 
-          <!-- Content -->
-          <div *ngIf="activeTab === 0" class="p-4">
-            <div class="pr-6 pb-8 pt-5 w-full lg:w-1/3">
-              <label class="block text-sm font-medium text-slate-500 mb-1">Text</label>
-              <input type="text" class="hd-input" [(ngModel)]="html.content_text" name="content_text" />
-            </div>
-            <div class="pr-6 pb-8 w-full">
-              <label class="block text-sm font-medium text-slate-900 dark:text-white mb-1">Details</label>
-              <textarea class="hd-input" rows="4" [(ngModel)]="html.content_details" name="content_details"></textarea>
-            </div>
-          </div>
-
-          <!-- Location -->
-          <div *ngIf="activeTab === 1" class="p-4">
-            <div class="pr-6 pb-8 pt-5 w-full">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location address</label>
-              <input type="text" class="hd-input" [(ngModel)]="html.location" name="location" />
-            </div>
-            <div class="pr-6 pb-8 pt-5 w-full">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location map</label>
-              <input type="text" class="hd-input" [(ngModel)]="html.location_map" name="location_map"
-                placeholder="Embed URL or map iframe src" />
-            </div>
-          </div>
-
-          <!-- Phone -->
-          <div *ngIf="activeTab === 2" class="p-4">
-            <div class="pr-6 pb-8 pt-5 w-full lg:w-1/3">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone number</label>
-              <input type="text" class="hd-input" [(ngModel)]="html.phone" name="phone" />
-            </div>
-            <div class="pr-6 pb-8 w-full">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Details</label>
-              <textarea class="hd-input" rows="4" [(ngModel)]="html.phone_details" name="phone_details"></textarea>
-            </div>
-          </div>
-
-          <!-- Email -->
-          <div *ngIf="activeTab === 3" class="p-4">
-            <div class="pr-6 pb-8 pt-5 w-full lg:w-1/3">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email address</label>
-              <input type="text" class="hd-input" [(ngModel)]="html.email" name="email" />
-            </div>
-            <div class="pr-6 pb-8 w-full">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email details</label>
-              <textarea class="hd-input" rows="4" [(ngModel)]="html.email_details" name="email_details"></textarea>
-            </div>
-          </div>
-
-          <!-- Contact Form -->
-          <div *ngIf="activeTab === 4" class="p-4">
-            <div class="pr-6 pb-8 pt-5 w-full lg:w-1/3">
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Recipient Email (for the contact form)
-              </label>
-              <input type="email" class="hd-input" [(ngModel)]="html.contact_recipient" name="contact_recipient" />
-            </div>
-          </div>
+  <ng-container *ngIf="!loading">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Contact Page Management</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Customize public contact info, location address, map embed, and recipient email</p>
         </div>
       </div>
+    </div>
 
-      <div *ngIf="error" class="px-8 pb-2 text-sm text-red-600">{{ error }}</div>
-      <div *ngIf="success" class="px-8 pb-2 text-sm text-green-600">{{ success }}</div>
+    <!-- Main Card Container -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <form (ngSubmit)="save()" novalidate>
 
-      <div class="px-8 py-4 bg-gray-50 dark:bg-slate-900/40 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between gap-3">
-        <button type="submit" class="hd-btn-primary ml-auto" [disabled]="saving">
-          {{ saving ? 'Saving…' : 'Save' }}
-        </button>
-      </div>
-    </form>
-  </div>
+        <!-- Tabs Header -->
+        <div class="border-b border-slate-100 dark:border-slate-700 px-6 sm:px-8">
+          <nav class="-mb-px flex gap-6 overflow-x-auto" aria-label="Tabs">
+            <button *ngFor="let tab of tabs; let i = index" type="button" (click)="setTab(i)"
+              class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 cursor-pointer"
+              [class.border-blue-500]="activeTab === i"
+              [class.text-blue-600]="activeTab === i"
+              [class.dark:text-blue-400]="activeTab === i"
+              [class.border-transparent]="activeTab !== i"
+              [class.text-slate-500]="activeTab !== i"
+              [class.dark:text-slate-400]="activeTab !== i"
+              [class.hover:text-slate-700]="activeTab !== i">
+              {{ tab }}
+            </button>
+          </nav>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-6">
+
+          <!-- Tab 0: General Content -->
+          <div *ngIf="activeTab === 0" class="space-y-5">
+            <div>
+              <label class="form-label">Introductory Text / Subheading</label>
+              <input type="text" class="form-input" [(ngModel)]="html.content_text" name="content_text"
+                placeholder="e.g. We'd love to hear from you" />
+            </div>
+            <div>
+              <label class="form-label">Page Details / Overview</label>
+              <textarea class="form-input resize-y" rows="4" [(ngModel)]="html.content_details" name="content_details"
+                placeholder="Provide details or instructions for visitors reaching out..."></textarea>
+            </div>
+          </div>
+
+          <!-- Tab 1: Location -->
+          <div *ngIf="activeTab === 1" class="space-y-5">
+            <div>
+              <label class="form-label">Location Address</label>
+              <input type="text" class="form-input" [(ngModel)]="html.location" name="location"
+                placeholder="e.g. 123 Support Avenue, Suite 400, Tech City, CA 94016" />
+            </div>
+            <div>
+              <label class="form-label">Map Embed URL (iframe src)</label>
+              <input type="text" class="form-input font-mono text-xs" [(ngModel)]="html.location_map" name="location_map"
+                placeholder="https://www.google.com/maps/embed?pb=..." />
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Paste a valid Google Maps embed URL</p>
+            </div>
+          </div>
+
+          <!-- Tab 2: Phone -->
+          <div *ngIf="activeTab === 2" class="space-y-5">
+            <div class="max-w-md">
+              <label class="form-label">Telephone Number</label>
+              <input type="text" class="form-input" [(ngModel)]="html.phone" name="phone"
+                placeholder="e.g. +1 (800) 123-4567" />
+            </div>
+            <div>
+              <label class="form-label">Phone Support Details & Hours</label>
+              <textarea class="form-input resize-y" rows="4" [(ngModel)]="html.phone_details" name="phone_details"
+                placeholder="e.g. Monday - Friday, 9:00 AM - 6:00 PM EST"></textarea>
+            </div>
+          </div>
+
+          <!-- Tab 3: Email -->
+          <div *ngIf="activeTab === 3" class="space-y-5">
+            <div class="max-w-md">
+              <label class="form-label">Public Email Address</label>
+              <input type="email" class="form-input" [(ngModel)]="html.email" name="email"
+                placeholder="e.g. support@yourcompany.com" />
+            </div>
+            <div>
+              <label class="form-label">Email Support Details & SLA</label>
+              <textarea class="form-input resize-y" rows="4" [(ngModel)]="html.email_details" name="email_details"
+                placeholder="e.g. Average response time within 2-4 hours on business days"></textarea>
+            </div>
+          </div>
+
+          <!-- Tab 4: Contact Form -->
+          <div *ngIf="activeTab === 4" class="space-y-5">
+            <div class="max-w-md">
+              <label class="form-label">Recipient Email Address</label>
+              <input type="email" class="form-input" [(ngModel)]="html.contact_recipient" name="contact_recipient"
+                placeholder="e.g. inbound@yourcompany.com" />
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Submissions from the public contact form will be routed to this address.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Alerts -->
+        <div *ngIf="error" class="flex items-center gap-3 mx-8 mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-sm">
+          <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          {{ error }}
+        </div>
+        <div *ngIf="success" class="flex items-center gap-3 mx-8 mb-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-sm">
+          <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {{ success }}
+        </div>
+
+        <!-- Actions Footer -->
+        <div class="px-8 py-5 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3 flex-wrap">
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            Changes will be updated on the public contact page
+          </div>
+          <button type="submit" [disabled]="saving"
+            class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100">
+            <svg *ngIf="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            {{ saving ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </ng-container>
 </div>
