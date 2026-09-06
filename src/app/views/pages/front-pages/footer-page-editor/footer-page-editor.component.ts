@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-footer-page-editor',
@@ -23,7 +24,8 @@ export class FooterPageEditorComponent implements OnInit {
 
   constructor(
     private settingService: SettingService,
-    private landingService: LandingService
+    private landingService: LandingService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +92,7 @@ export class FooterPageEditorComponent implements OnInit {
         }
         this.saving = false;
         this.success = 'Footer page saved';
+        this.toast.success(res?.response?.message || res?.message || 'Footer page saved successfully');
       },
       error: (err) => {
         this.saving = false;

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DepartmentService } from '../../../../core/department/_services/department.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-departments-form',
@@ -21,7 +22,8 @@ export class DepartmentsFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: DepartmentService
+    private service: DepartmentService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -66,8 +68,10 @@ export class DepartmentsFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Department updated successfully' : 'Department created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/departments']);
       },
       error: (err) => {
@@ -85,8 +89,10 @@ export class DepartmentsFormComponent implements OnInit {
     this.deleting = true;
     this.error = '';
     this.service.deleteById(this.entityId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'Department deleted successfully';
+        this.toast.success(msg);
         this.router.navigate(['/departments']);
       },
       error: () => {

@@ -10,10 +10,15 @@ import { Router } from '@angular/router';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../auth/_services/auth.service';
+import { ToastService } from '../../../toast/toast.service';
 
 @Injectable()
 export class InterceptService implements HttpInterceptor {
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private toastService: ToastService
+  ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.auth.getToken();
@@ -31,6 +36,9 @@ export class InterceptService implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
+        // Trigger characteristic-based toast notification for all API errors
+        this.toastService.handleHttpError(error);
+
         if (error.status === 401) {
           this.auth.clearSession();
           const publicPrefixes = [

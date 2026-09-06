@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-ticket-edit',
@@ -37,7 +38,8 @@ export class TicketEditComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private ticketService: TicketService
+    private ticketService: TicketService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -172,8 +174,10 @@ export class TicketEditComponent implements OnInit {
     this.error = '';
 
     this.ticketService.updateTicket(this.form.value).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
+        const msg = res?.response?.message || res?.message || 'Ticket updated successfully';
+        this.toast.success(msg);
         this.router.navigate(['/tickets', this.id]);
       },
       error: (err) => {

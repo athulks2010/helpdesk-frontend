@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { getApiErrorMessage } from '../../../../core/shared/api-error.util';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-pusher-settings',
@@ -18,7 +19,11 @@ export class PusherSettingsComponent implements OnInit {
   success = '';
   testResult: { success: boolean; message: string } | null = null;
 
-  constructor(private fb: FormBuilder, private settingService: SettingService) {}
+  constructor(
+    private fb: FormBuilder,
+    private settingService: SettingService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -69,9 +74,10 @@ export class PusherSettingsComponent implements OnInit {
     this.error = '';
     this.success = '';
     this.settingService.updatePusher(this.toApiBody(this.form.getRawValue())).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.success = 'Pusher settings saved';
+        this.toast.success(res?.response?.message || res?.message || 'Pusher settings saved successfully');
       },
       error: (err) => {
         this.saving = false;
@@ -86,16 +92,24 @@ export class PusherSettingsComponent implements OnInit {
     this.settingService.testPusher(this.toApiBody(this.form.getRawValue())).subscribe({
       next: (res) => {
         this.testing = false;
+        const ok = res?.success !== false && res?.response?.status !== 'ERROR';
+        const msg = res?.message || res?.response?.message || 'Connection successful';
         this.testResult = {
-          success: res?.success !== false && res?.response?.status !== 'ERROR',
-          message: res?.message || res?.response?.message || 'Connection successful',
+          success: ok,
+          message: msg,
         };
+        if (ok) {
+          this.toast.success(msg);
+        } else {
+          this.toast.warning(msg);
+        }
       },
       error: (err) => {
         this.testing = false;
+        const msg = getApiErrorMessage(err, 'Connection failed');
         this.testResult = {
           success: false,
-          message: getApiErrorMessage(err, 'Connection failed'),
+          message: msg,
         };
       },
     });

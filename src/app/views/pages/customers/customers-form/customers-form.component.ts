@@ -6,6 +6,7 @@ import { FileUploadService } from '../../../../core/shared/file-upload.service';
 
 
 import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-customers-form',
@@ -28,7 +29,8 @@ export class CustomersFormComponent implements OnInit {
     private router: Router,
     private service: UserService,
     private fileUpload: FileUploadService,
-    private countryService: CountryService
+    private countryService: CountryService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -151,8 +153,10 @@ export class CustomersFormComponent implements OnInit {
       : this.service.createUser(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Customer updated successfully' : 'Customer created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/customers']);
       },
       error: (err) => {

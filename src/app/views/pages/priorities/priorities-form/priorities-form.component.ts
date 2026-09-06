@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PriorityService } from '../../../../core/priority/_services/priority.service';
-
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-priorities-form',
@@ -17,12 +17,12 @@ export class PrioritiesFormComponent implements OnInit {
   isEditMode = false;
   entityId: string | null = null;
 
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: PriorityService
+    private service: PriorityService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -68,8 +68,10 @@ export class PrioritiesFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Priority updated successfully' : 'Priority created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/priorities']);
       },
       error: (err) => {

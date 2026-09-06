@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-terms-page-editor',
@@ -23,7 +24,8 @@ export class TermsPageEditorComponent implements OnInit, AfterViewInit, OnDestro
 
   constructor(
     private settingService: SettingService,
-    private landingService: LandingService
+    private landingService: LandingService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -113,6 +115,7 @@ export class TermsPageEditorComponent implements OnInit, AfterViewInit, OnDestro
         this.pageTitle = body.title;
         this.saving = false;
         this.success = 'Terms of Services page saved';
+        this.toast.success(res?.response?.message || res?.message || 'Terms of Services page saved successfully');
       },
       error: (err) => {
         this.saving = false;

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-home-page-editor',
@@ -47,7 +48,8 @@ export class HomePageEditorComponent implements OnInit {
   constructor(
     private settingService: SettingService,
     private landingService: LandingService,
-    private fileUpload: FileUploadService
+    private fileUpload: FileUploadService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -122,6 +124,7 @@ export class HomePageEditorComponent implements OnInit {
         }
         this.saving = false;
         this.success = 'Home page saved';
+        this.toast.success(res?.response?.message || res?.message || 'Home page saved successfully');
       },
       error: (err) => {
         this.saving = false;

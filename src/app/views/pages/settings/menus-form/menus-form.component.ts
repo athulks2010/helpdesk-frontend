@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-menus-form',
@@ -61,7 +62,8 @@ export class MenusFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private settingService: SettingService
+    private settingService: SettingService,
+    private toast: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -170,8 +172,10 @@ export class MenusFormComponent implements OnInit {
       : this.settingService.createMenu(body);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Menu updated successfully' : 'Menu created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/settings/menus']);
       },
       error: (err) => {

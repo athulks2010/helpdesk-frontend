@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/knowledge-base.service';
 import { TypeService } from '../../../../core/type/_services/type.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 import tinymce from 'tinymce/tinymce';
 import 'tinymce/themes/silver/theme';
@@ -61,7 +62,8 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
     private service: KnowledgeBaseService,
     private typeService: TypeService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -250,8 +252,10 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
     const req$ = this.isEditMode ? this.service.update(raw) : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Article updated successfully' : 'Article created successfully');
+        this.toast.success(msg);
         this.destroyEditor();
         this.router.navigate(['/knowledge-base']);
       },
@@ -275,8 +279,10 @@ export class KnowledgeBaseFormComponent implements OnInit, AfterViewInit, OnDest
     this.deleting = true;
     this.error = '';
     this.service.deleteById(this.entityId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'Article deleted successfully';
+        this.toast.success(msg);
         this.destroyEditor();
         this.router.navigate(['/knowledge-base']);
       },

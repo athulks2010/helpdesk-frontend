@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-ticket-fields-builder',
@@ -33,7 +34,8 @@ export class TicketFieldsBuilderComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private settingService: SettingService,
-    private confirmService: ConfirmDialogService
+    private confirmService: ConfirmDialogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -122,9 +124,10 @@ export class TicketFieldsBuilderComponent implements OnInit, OnDestroy {
     }
 
     this.settingService.createTicketField(body).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.success = 'Field added';
+        this.toast.success(res?.response?.message || res?.message || 'Field added successfully');
         this.nameTouched = false;
         this.form.reset({
           type: 'text',
@@ -157,7 +160,10 @@ export class TicketFieldsBuilderComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.settingService.deleteTicketField(id).subscribe({
-      next: () => this.load(),
+      next: (res: any) => {
+        this.toast.success(res?.response?.message || res?.message || 'Field deleted successfully');
+        this.load();
+      },
       error: () => (this.error = 'Failed to delete field'),
     });
   }

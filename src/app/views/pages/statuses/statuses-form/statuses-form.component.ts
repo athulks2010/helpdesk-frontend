@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StatusService } from '../../../../core/status/_services/status.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-statuses-form',
@@ -20,7 +21,8 @@ export class StatusesFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: StatusService
+    private service: StatusService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -86,8 +88,10 @@ export class StatusesFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Status updated successfully' : 'Status created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/statuses']);
       },
       error: (err) => {

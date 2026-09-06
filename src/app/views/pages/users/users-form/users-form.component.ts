@@ -5,6 +5,7 @@ import { UserService } from '../../../../core/user/_services/user.service';
 import { RoleService } from '../../../../core/role/_services/role.service';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
 import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-users-form',
@@ -29,7 +30,8 @@ export class UsersFormComponent implements OnInit {
     private service: UserService,
     private roleService: RoleService,
     private fileUpload: FileUploadService,
-    private countryService: CountryService
+    private countryService: CountryService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -150,8 +152,10 @@ export class UsersFormComponent implements OnInit {
       : this.service.createUser(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'User updated successfully' : 'User created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/users']);
       },
       error: (err) => {

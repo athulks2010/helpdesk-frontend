@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 export interface LanguagePhraseItem {
   name: string;
@@ -63,7 +64,8 @@ export class LanguagesFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private settingService: SettingService,
-    private confirmService: ConfirmDialogService
+    private confirmService: ConfirmDialogService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -257,7 +259,7 @@ export class LanguagesFormComponent implements OnInit {
         value: targetText,
       })
       .subscribe({
-        next: () => {
+        next: (res: any) => {
           this.saving = false;
           const existingIndex = this.languageValues.findIndex(
             (item) => item.name.toLowerCase() === enText.toLowerCase()
@@ -276,6 +278,7 @@ export class LanguagesFormComponent implements OnInit {
           this.newLangFormOpen = false;
           this.applyFilter();
           this.showSaveBanner();
+          this.toast.success(res?.response?.message || res?.message || 'Phrase added successfully');
         },
         error: (err: any) => {
           this.saving = false;
@@ -303,10 +306,11 @@ export class LanguagesFormComponent implements OnInit {
         key: item.name,
       })
       .subscribe({
-        next: () => {
+        next: (res: any) => {
           this.languageValues = this.languageValues.filter((x) => x !== item && x.name !== item.name);
           this.applyFilter();
           this.showSaveBanner();
+          this.toast.success(res?.response?.message || res?.message || 'Phrase deleted successfully');
         },
         error: (err: any) => {
           this.error = err?.error?.response?.message || err?.error?.message || err?.message || 'Failed to delete phrase';
@@ -330,7 +334,7 @@ export class LanguagesFormComponent implements OnInit {
     };
 
     this.settingService.updateLanguage(body).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.languageData.name = formVal.name;
         this.languageData.code = formVal.code;
@@ -338,6 +342,7 @@ export class LanguagesFormComponent implements OnInit {
           item.original_name = item.name;
         }
         this.showSaveBanner();
+        this.toast.success(res?.response?.message || res?.message || 'Language updated successfully');
       },
       error: (err: any) => {
         this.saving = false;
@@ -367,8 +372,9 @@ export class LanguagesFormComponent implements OnInit {
     };
 
     this.settingService.createLanguage(body).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        this.toast.success(res?.response?.message || res?.message || 'Language created successfully');
         this.router.navigate(['/settings/languages']);
       },
       error: (err: any) => {
@@ -422,8 +428,9 @@ export class LanguagesFormComponent implements OnInit {
     this.deleting = true;
     this.error = '';
     this.settingService.deleteLanguage(this.entityId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deleting = false;
+        this.toast.success(res?.response?.message || res?.message || 'Language deleted successfully');
         this.router.navigate(['/settings/languages']);
       },
       error: () => {

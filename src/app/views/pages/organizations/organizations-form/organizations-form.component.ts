@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrganizationService } from '../../../../core/organization/_services/organization.service';
 import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-organizations-form',
@@ -23,7 +24,8 @@ export class OrganizationsFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: OrganizationService,
-    private countryService: CountryService
+    private countryService: CountryService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -107,8 +109,10 @@ export class OrganizationsFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Organization updated successfully' : 'Organization created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/organizations']);
       },
       error: (err) => {

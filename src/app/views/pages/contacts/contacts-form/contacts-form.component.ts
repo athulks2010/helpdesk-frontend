@@ -5,6 +5,7 @@ import { ContactService } from '../../../../core/contact/_services/contact.servi
 import { DepartmentService } from '../../../../core/department/_services/department.service';
 import { OrganizationService } from '../../../../core/organization/_services/organization.service';
 import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-contacts-form',
@@ -29,7 +30,8 @@ export class ContactsFormComponent implements OnInit {
     private service: ContactService,
     private departmentService: DepartmentService,
     private organizationService: OrganizationService,
-    private countryService: CountryService
+    private countryService: CountryService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -121,8 +123,10 @@ export class ContactsFormComponent implements OnInit {
       : this.service.createContact(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Contact updated successfully' : 'Contact created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/contacts']);
       },
       error: (err) => {

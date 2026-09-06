@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CmsServiceService } from '../../../../core/service/_services/service.service';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 import tinymce from 'tinymce/tinymce';
 import 'tinymce/themes/silver/theme';
@@ -60,7 +61,8 @@ export class ServicesFormComponent implements OnInit, AfterViewInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private service: CmsServiceService,
-    private fileUpload: FileUploadService
+    private fileUpload: FileUploadService,
+    private toast: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -204,9 +206,10 @@ export class ServicesFormComponent implements OnInit, AfterViewInit, OnDestroy {
       : this.service.create(payload);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
-        this.router.navigate(['/admin-services']);
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Service updated successfully' : 'Service created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/admin-services']);
       },
       error: (err) => {
@@ -284,8 +287,10 @@ export class ServicesFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.deleting = true;
     this.error = '';
     this.service.deleteById(this.entityId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'Service deleted successfully';
+        this.toast.success(msg);
         this.router.navigate(['/admin-services']);
       },
       error: (err) => {

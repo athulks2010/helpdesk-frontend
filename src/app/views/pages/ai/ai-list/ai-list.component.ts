@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { AiService } from '../../../../core/ai/_services/ai.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-ai-list',
@@ -18,7 +19,11 @@ export class AiListComponent implements OnInit {
   analyticsCards: Array<{ label: string; value: any }> = [];
   showApiKey = false;
 
-  constructor(private fb: FormBuilder, private aiService: AiService) {}
+  constructor(
+    private fb: FormBuilder,
+    private aiService: AiService,
+    private toast: ToastService
+  ) { }
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -85,9 +90,10 @@ export class AiListComponent implements OnInit {
     this.error = '';
     this.success = '';
     this.aiService.updateSettings(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.success = 'AI settings saved';
+        this.toast.success(res?.response?.message || res?.message || 'AI settings saved successfully');
         this.loadAll();
       },
       error: (err) => {

@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CategoryService } from '../../../../core/category/_services/category.service';
 import { DepartmentService } from '../../../../core/department/_services/department.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-categories-form',
@@ -24,7 +25,8 @@ export class CategoriesFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private service: CategoryService,
-    private departmentService: DepartmentService
+    private departmentService: DepartmentService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -87,8 +89,10 @@ export class CategoriesFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Category updated successfully' : 'Category created successfully');
+        this.toast.success(msg);
         const departmentId = raw.department_id;
         this.router.navigate(['/categories'], {
           queryParams: departmentId ? { department_id: departmentId } : {},

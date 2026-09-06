@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BlogService } from '../../../../core/blog/_services/blog.service';
 import { TypeService } from '../../../../core/type/_services/type.service';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 import tinymce from 'tinymce/tinymce';
 import 'tinymce/themes/silver/theme';
@@ -63,7 +64,8 @@ export class BlogsFormComponent implements OnInit, AfterViewInit, OnDestroy {
     private service: BlogService,
     private typeService: TypeService,
     private fileUpload: FileUploadService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -243,8 +245,10 @@ export class BlogsFormComponent implements OnInit, AfterViewInit, OnDestroy {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Blog post updated successfully' : 'Blog post created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/blogs']);
       },
       error: (err) => {
@@ -266,8 +270,10 @@ export class BlogsFormComponent implements OnInit, AfterViewInit, OnDestroy {
     this.deleting = true;
     this.error = '';
     this.service.deleteById(this.entityId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'Blog post deleted successfully';
+        this.toast.success(msg);
         this.router.navigate(['/blogs']);
       },
       error: (err) => {

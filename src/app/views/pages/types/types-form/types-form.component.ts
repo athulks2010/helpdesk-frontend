@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TypeService } from '../../../../core/type/_services/type.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-types-form',
@@ -20,7 +21,8 @@ export class TypesFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: TypeService
+    private service: TypeService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -83,8 +85,10 @@ export class TypesFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Type updated successfully' : 'Type created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/types']);
       },
       error: (err) => {

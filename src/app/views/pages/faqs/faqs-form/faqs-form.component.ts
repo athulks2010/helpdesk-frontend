@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaqService } from '../../../../core/faq/_services/faq.service';
-
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-faqs-form',
@@ -18,12 +18,12 @@ export class FaqsFormComponent implements OnInit {
   entityId: string | null = null;
   deleting = false;
 
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: FaqService
+    private service: FaqService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -82,8 +82,10 @@ export class FaqsFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'FAQ updated successfully' : 'FAQ created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/faqs']);
       },
       error: (err) => {
@@ -105,8 +107,10 @@ export class FaqsFormComponent implements OnInit {
     this.deleting = true;
     this.error = '';
     this.service.deleteById(this.entityId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'FAQ deleted successfully';
+        this.toast.success(msg);
         this.router.navigate(['/faqs']);
       },
       error: (err) => {

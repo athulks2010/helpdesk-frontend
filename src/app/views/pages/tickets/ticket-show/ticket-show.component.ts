@@ -6,6 +6,7 @@ import { TicketService } from '../../../../core/ticket/_services/ticket.service'
 import { ConversationService } from '../../../../core/conversation/_services/conversation.service';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { UserService } from '../../../../core/user/_services/user.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-ticket-show',
@@ -81,7 +82,8 @@ export class TicketShowComponent implements OnInit, OnDestroy {
     private conversationService: ConversationService,
     private userService: UserService,
     private auth: AuthService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -277,6 +279,7 @@ export class TicketShowComponent implements OnInit, OnDestroy {
         next: (newComment) => {
           this.commenting = false;
           this.commentForm.reset();
+          this.toast.success('Comment posted successfully');
           const normalized = this.normalizeComment(
             newComment && (newComment.body || newComment.details || newComment.comment || newComment.message)
               ? newComment

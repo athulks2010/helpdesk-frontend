@@ -5,6 +5,7 @@ import { environment } from '../../../../../environments/environment';
 import { FileUploadService } from '../../../../core/shared/file-upload.service';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { UserService } from '../../../../core/user/_services/user.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 type SettingsTab =
   | 'general'
@@ -136,9 +137,10 @@ export class GlobalSettingsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private settingService: SettingService,
-    private fileUpload: FileUploadService,
     private userService: UserService,
-    private sanitizer: DomSanitizer
+    private fileUpload: FileUploadService,
+    private sanitizer: DomSanitizer,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -303,9 +305,10 @@ export class GlobalSettingsComponent implements OnInit {
 
     // POST /setting/update — one bulk call for the active section only
     this.settingService.updateSetting(body).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
         this.success = 'Settings saved successfully';
+        this.toast.success(res?.response?.message || res?.message || 'Settings saved successfully');
       },
       error: (err) => {
         this.saving = false;

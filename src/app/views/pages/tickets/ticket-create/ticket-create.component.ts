@@ -3,6 +3,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-ticket-create',
@@ -35,7 +36,8 @@ export class TicketCreateComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private ticketService: TicketService
+    private ticketService: TicketService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -200,7 +202,7 @@ export class TicketCreateComponent implements OnInit {
 
     if (this.isEditMode) {
       this.ticketService.updateTicket(raw).subscribe({
-        next: () => this.onSuccess(),
+        next: (res) => this.onSuccess(res),
         error: (err) => this.onError(err, 'Failed to update ticket'),
       });
       return;
@@ -208,13 +210,15 @@ export class TicketCreateComponent implements OnInit {
 
     // Create uses JSON body matching /ticket/create contract
     this.ticketService.createTicket(raw).subscribe({
-      next: () => this.onSuccess(),
+      next: (res) => this.onSuccess(res),
       error: (err) => this.onError(err, 'Failed to create ticket'),
     });
   }
 
-  private onSuccess(): void {
+  private onSuccess(res?: any): void {
     this.loading = false;
+    const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Ticket updated successfully' : 'Ticket created successfully');
+    this.toast.success(msg);
     this.router.navigate(['/tickets']);
   }
 

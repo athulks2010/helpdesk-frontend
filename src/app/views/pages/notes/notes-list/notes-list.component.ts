@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NoteService } from '../../../../core/note/_services/note.service';
 import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-notes-list',
@@ -26,7 +27,8 @@ export class NotesListComponent implements OnInit {
     private service: NoteService,
     private fb: FormBuilder,
     private confirmService: ConfirmDialogService,
-    private auth: AuthService
+    private auth: AuthService,
+    private toast: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -121,8 +123,10 @@ export class NotesListComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
+        const msg = res?.response?.message || res?.message || (this.editingId ? 'Note updated successfully' : 'Note created successfully');
+        this.toast.success(msg);
         this.closePanel();
         this.load();
       },
@@ -153,8 +157,10 @@ export class NotesListComponent implements OnInit {
 
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deletingId = null;
+        const msg = res?.response?.message || res?.message || 'Note deleted successfully';
+        this.toast.success(msg);
         if (this.editingId === id) {
           this.closePanel();
         }

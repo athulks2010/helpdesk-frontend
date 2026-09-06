@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-email-template-edit',
@@ -20,7 +21,8 @@ export class EmailTemplateEditComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private settingService: SettingService
+    private settingService: SettingService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -67,8 +69,9 @@ export class EmailTemplateEditComponent implements OnInit {
     const body = { ...this.form.getRawValue() };
     body.html = body.body;
     this.settingService.updateEmailTemplate(body).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
+        this.toast.success(res?.response?.message || res?.message || 'Email template updated successfully');
         this.router.navigate(['/settings/email-templates']);
       },
       error: (err) => {
