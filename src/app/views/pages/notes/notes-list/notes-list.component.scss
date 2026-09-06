@@ -1,6 +1,19 @@
-.line-clamp-6 {
+/* Form field styles for create/edit modal */
+.form-label {
+  @apply block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5;
+}
+
+.form-input {
+  @apply w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+}
+
+.form-error {
+  @apply mt-1 text-xs text-red-500;
+}
+
+.line-clamp-5 {
   display: -webkit-box;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
