@@ -273,7 +273,7 @@ export class ServicesFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin-admin-services']);
+    this.router.navigate(['/admin-services']);
   }
 
   remove(): void {

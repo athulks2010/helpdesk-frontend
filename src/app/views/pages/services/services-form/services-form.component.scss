@@ -1,7 +1,24 @@
+/* Form field shared styles */
+.form-label {
+  @apply block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5;
+}
+
+.form-input {
+  @apply w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+}
+
+.form-select {
+  @apply w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none cursor-pointer;
+}
+
+.form-error {
+  @apply mt-1 text-xs text-red-500;
+}
+
 :host ::ng-deep {
   .tox-tinymce {
     border: none !important;
-    border-radius: 0 0 6px 6px !important;
+    border-radius: 0 0 12px 12px !important;
   }
   .tox .tox-statusbar {
     border-top: 1px solid #e2e8f0 !important;
@@ -9,8 +26,8 @@
 }
 
 .rich-editor-wrapper {
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   background: white;
@@ -19,10 +36,10 @@
 
 .rich-editor-toolbar {
   padding: 8px 12px;
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -30,11 +47,11 @@
 
 :host-context(.dark) {
   .rich-editor-wrapper {
-    background: #1e293b;
-    border-color: #475569;
+    background: #0f172a;
+    border-color: #334155;
   }
   .rich-editor-toolbar {
-    background-color: #334155;
-    border-bottom-color: #475569;
+    background-color: #1e293b;
+    border-bottom-color: #334155;
   }
 }
