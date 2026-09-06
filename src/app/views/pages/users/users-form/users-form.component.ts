@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../../../core/user/_services/user.service';
 import { RoleService } from '../../../../core/role/_services/role.service';
+import { FileUploadService } from '../../../../core/shared/file-upload.service';
 
 @Component({
   selector: 'app-users-form',
@@ -17,13 +18,15 @@ export class UsersFormComponent implements OnInit {
   isEditMode = false;
   entityId: string | null = null;
   roles: any[] = [];
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private service: UserService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private fileUpload: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -34,14 +37,15 @@ export class UsersFormComponent implements OnInit {
       id: [this.entityId],
       first_name: ['', Validators.required],
       last_name: ['', Validators.required],
-      email: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
       phone: [''],
-      city: [''],
       address: [''],
+      country: [''],
+      city: [''],
       role_id: ['', Validators.required],
       password: [''],
+      photo_path: [''],
     });
-
 
     this.loadExtras();
 
@@ -52,14 +56,16 @@ export class UsersFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          first_name: item.first_name ?? null,
-          last_name: item.last_name ?? null,
-          email: item.email ?? null,
-          phone: item.phone ?? null,
-          city: item.city ?? null,
-          address: item.address ?? null,
-          role_id: item.role_id ?? null,
-          password: item.password ?? null,
+            first_name: item.first_name ?? null,
+            last_name: item.last_name ?? null,
+            email: item.email ?? null,
+            phone: item.phone ?? null,
+            address: item.address ?? null,
+            country: item.country ?? null,
+            city: item.city ?? null,
+            role_id: item.role_id ?? null,
+            password: item.password ?? null,
+            photo_path: item.photo_path ?? item.photo ?? null,
           });
           // Password not required when editing
           this.form.get('password')?.clearValidators();
@@ -68,7 +74,7 @@ export class UsersFormComponent implements OnInit {
           this.loadingData = false;
         },
         error: () => {
-          this.error = 'Failed to load user';
+          this.error = 'Failed to load user details';
           this.loadingData = false;
         },
       });
@@ -79,7 +85,35 @@ export class UsersFormComponent implements OnInit {
   }
 
   loadExtras(): void {
-    this.roleService.getAll().subscribe({ next: (d) => { this.roles = Array.isArray(d) ? d : (d?.items || d?.list || []); } });
+    this.roleService.getAll().subscribe({
+      next: (d) => {
+        this.roles = Array.isArray(d) ? d : d?.items || d?.list || [];
+      },
+    });
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (!file) return;
+    this.fileUpload.upload(file, 'users').subscribe({
+      next: (path: string) => {
+        if (path) {
+          this.form.patchValue({ photo_path: path });
+        }
+      },
+      error: (err: any) => {
+        console.error('File upload failed', err);
+        this.error = 'Failed to upload photo';
+      },
+    });
+  }
+
+  getPhotoUrl(): string {
+    return this.fileUpload.resolveUrl(this.form.get('photo_path')?.value);
+  }
+
+  getFileName(): string {
+    return this.fileUpload.getFileName(this.form.get('photo_path')?.value);
   }
 
   submit(): void {
@@ -106,7 +140,13 @@ export class UsersFormComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        this.error =
+          err?.error?.response?.message ||
+          err?.error?.message ||
+          err?.error?.error ||
+          (Array.isArray(err?.error?.errors) ? err.error.errors[0] : null) ||
+          err?.statusText ||
+          'Save failed';
       },
     });
   }
