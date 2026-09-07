@@ -64,58 +64,25 @@ export class LandingOpenTicketComponent implements OnInit {
 
   loadFormData(): void {
     this.loadingData = true;
-    this.landingService.getTicketFormData().subscribe({
-      next: (data) => {
-        if (data && Array.isArray(data.departments) && data.departments.length > 0) {
-          this.populateData(data);
-          this.loadingData = false;
-        } else {
-          // Parallel fallback using individual public endpoints
-          forkJoin({
-            departments: this.landingService.getDepartments(),
-            categories: this.landingService.getCategories(),
-            priorities: this.landingService.getPriorities(),
-            types: this.landingService.getTypes(),
-          }).subscribe({
-            next: (res) => {
-              this.populateData({
-                departments: res.departments,
-                categories: res.categories,
-                all_categories: res.categories,
-                priorities: res.priorities,
-                types: res.types,
-                custom_fields: [],
-              });
-              this.loadingData = false;
-            },
-            error: () => {
-              this.loadingData = false;
-            },
-          });
-        }
+    forkJoin({
+      departments: this.landingService.getDepartments(),
+      categories: this.landingService.getCategories(),
+      priorities: this.landingService.getPriorities(),
+      types: this.landingService.getTypes(),
+    }).subscribe({
+      next: (res) => {
+        this.populateData({
+          departments: res.departments,
+          categories: res.categories,
+          all_categories: res.categories,
+          priorities: res.priorities,
+          types: res.types,
+          custom_fields: [],
+        });
+        this.loadingData = false;
       },
       error: () => {
-        forkJoin({
-          departments: this.landingService.getDepartments(),
-          categories: this.landingService.getCategories(),
-          priorities: this.landingService.getPriorities(),
-          types: this.landingService.getTypes(),
-        }).subscribe({
-          next: (res) => {
-            this.populateData({
-              departments: res.departments,
-              categories: res.categories,
-              all_categories: res.categories,
-              priorities: res.priorities,
-              types: res.types,
-              custom_fields: [],
-            });
-            this.loadingData = false;
-          },
-          error: () => {
-            this.loadingData = false;
-          },
-        });
+        this.loadingData = false;
       },
     });
   }

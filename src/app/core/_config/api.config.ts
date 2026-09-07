@@ -247,7 +247,6 @@ export const apiUrl = {
   publicServices: '/public/services',
   publicFrontPage: '/public/front-page',
   publicTicketOpen: '/public/ticket/open',
-  publicTicketFormData: '/public/ticket/form-data',
   publicDepartments: '/public/departments',
   publicCategories: '/public/categories',
   publicPriorities: '/public/priorities',

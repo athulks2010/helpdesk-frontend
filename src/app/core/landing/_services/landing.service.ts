@@ -581,8 +581,8 @@ export class LandingService extends ApiBaseService {
     } else if (raw && typeof raw === 'object') {
       parsed =
         raw.html &&
-        typeof raw.html === 'object' &&
-        (raw.html.content !== undefined || raw.html.title !== undefined)
+          typeof raw.html === 'object' &&
+          (raw.html.content !== undefined || raw.html.title !== undefined)
           ? raw.html
           : raw;
     }
@@ -676,8 +676,8 @@ export class LandingService extends ApiBaseService {
     } else if (raw && typeof raw === 'object') {
       parsed =
         raw.html &&
-        typeof raw.html === 'object' &&
-        (raw.html.content !== undefined || raw.html.title !== undefined)
+          typeof raw.html === 'object' &&
+          (raw.html.content !== undefined || raw.html.title !== undefined)
           ? raw.html
           : raw;
     }
@@ -857,10 +857,10 @@ export class LandingService extends ApiBaseService {
     const raw: any[] = Array.isArray(list)
       ? list
       : Array.isArray(list?.items)
-      ? list.items
-      : Array.isArray(list?.data)
-      ? list.data
-      : [];
+        ? list.items
+        : Array.isArray(list?.data)
+          ? list.data
+          : [];
 
     return raw
       .filter((item: any) => {
@@ -902,10 +902,10 @@ export class LandingService extends ApiBaseService {
     const raw: any[] = Array.isArray(list)
       ? list
       : Array.isArray(list?.items)
-      ? list.items
-      : Array.isArray(list?.data)
-      ? list.data
-      : [];
+        ? list.items
+        : Array.isArray(list?.data)
+          ? list.data
+          : [];
 
     return raw
       .filter((item: any) => {
@@ -923,11 +923,11 @@ export class LandingService extends ApiBaseService {
     const details = item?.details || item?.description || item?.content || '';
     const features = Array.isArray(item?.features)
       ? item.features
-          .map((feat: any) => (typeof feat === 'string' ? feat : feat?.title || feat?.name || ''))
-          .filter(Boolean)
+        .map((feat: any) => (typeof feat === 'string' ? feat : feat?.title || feat?.name || ''))
+        .filter(Boolean)
       : typeof item?.features === 'string'
-      ? item.features.split(',').map((feat: string) => feat.trim()).filter(Boolean)
-      : [];
+        ? item.features.split(',').map((feat: string) => feat.trim()).filter(Boolean)
+        : [];
 
     return {
       id: item?.id ?? item?._id ?? 0,
@@ -1024,10 +1024,10 @@ export class LandingService extends ApiBaseService {
     const raw: any[] = Array.isArray(list)
       ? list
       : Array.isArray(list?.items)
-      ? list.items
-      : Array.isArray(list?.data)
-      ? list.data
-      : [];
+        ? list.items
+        : Array.isArray(list?.data)
+          ? list.data
+          : [];
 
     return raw
       .filter((item: any) => {
@@ -1125,40 +1125,6 @@ export class LandingService extends ApiBaseService {
       if (vals.length && typeof vals[0] === 'object') return vals;
     }
     return [];
-  }
-
-  getTicketFormData(): Observable<{
-    departments: any[];
-    categories: any[];
-    all_categories: any[];
-    priorities: any[];
-    types: any[];
-    custom_fields: any[];
-  }> {
-    return this.http.get<any>(`${this.baseUrl}${apiUrl.publicTicketFormData}`).pipe(
-      map((raw: any) => {
-        const data = raw?.data ?? raw ?? {};
-        const cats = this.extractArray(data.all_categories || data.categories);
-        return {
-          departments: this.extractArray(data.departments),
-          categories: cats,
-          all_categories: cats,
-          priorities: this.extractArray(data.priorities),
-          types: this.extractArray(data.types),
-          custom_fields: this.extractArray(data.custom_fields),
-        };
-      }),
-      catchError(() =>
-        of({
-          departments: [],
-          categories: [],
-          all_categories: [],
-          priorities: [],
-          types: [],
-          custom_fields: [],
-        })
-      )
-    );
   }
 
   getDepartments(): Observable<any[]> {
