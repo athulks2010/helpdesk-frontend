@@ -24,7 +24,13 @@ export class InterceptService implements HttpInterceptor {
     const token = this.auth.getToken();
     let request = req;
 
-    if (token && !req.url.includes('/auth/login') && !req.url.includes('/auth/register')) {
+    const isPublicApi = req.url.includes('/public/');
+    if (
+      token &&
+      !isPublicApi &&
+      !req.url.includes('/auth/login') &&
+      !req.url.includes('/auth/register')
+    ) {
       const headers: Record<string, string> = {
         Authorization: `Bearer ${token}`,
       };

@@ -27,6 +27,7 @@ export class LandingOpenTicketComponent implements OnInit {
   selectedFilesSummary: string = '';
   isSubmitting = false;
   submitSuccess = false;
+  submitError = '';
   submitMessage = '';
   validationErrors: Record<string, string> = {};
 
@@ -100,24 +101,32 @@ export class LandingOpenTicketComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.validate()) {
+    if (this.isSubmitting || !this.validate()) {
       return;
     }
 
     this.isSubmitting = true;
+    this.submitSuccess = false;
+    this.submitError = '';
+    this.submitMessage = '';
+
     this.landingService.submitTicket(this.form).subscribe({
       next: (res: any) => {
         this.isSubmitting = false;
         this.submitSuccess = true;
         this.submitMessage =
-          res?.message || 'Ticket created successfully! A confirmation has been sent to your email.';
+          res?.response?.message ||
+          res?.message ||
+          'Ticket created successfully! A confirmation has been sent to your email.';
         this.resetForm();
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting = false;
-        this.submitSuccess = true;
-        this.submitMessage = 'Ticket submitted successfully! Our team will get back to you shortly.';
-        this.resetForm();
+        this.submitError =
+          err?.error?.response?.message ||
+          err?.error?.message ||
+          err?.message ||
+          'Failed to submit ticket. Please try again.';
       },
     });
   }

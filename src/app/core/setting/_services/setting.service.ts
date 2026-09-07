@@ -240,15 +240,21 @@ export class SettingService extends ApiBaseService {
 
   getFrontPage(page: string): Observable<any> {
     return this.getCollection(apiUrl.frontPagesAll, {
+      searchText: page,
       slug: page,
       pageNumber: 1,
-      pageSize: 1,
+      pageSize: 15,
     }).pipe(
       map((data: any) => {
         const items = Array.isArray(data)
           ? data
           : data?.items || data?.list || data?.data || [];
-        return items[0] || null;
+        const match = items.find(
+          (item: any) =>
+            item?.slug === page ||
+            String(item?.title || '').toLowerCase() === String(page).toLowerCase()
+        );
+        return match || items[0] || null;
       })
     );
   }

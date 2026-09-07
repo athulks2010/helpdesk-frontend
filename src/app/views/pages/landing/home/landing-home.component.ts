@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
+import { FileUploadService } from '../../../../core/shared/file-upload.service';
 
 @Component({
   selector: 'app-landing-home',
@@ -9,7 +10,10 @@ import { LandingService } from '../../../../core/landing/_services/landing.servi
 export class LandingHomeComponent implements OnInit {
   pageData: any = null;
 
-  constructor(private landingService: LandingService) {
+  constructor(
+    private landingService: LandingService,
+    private fileUpload: FileUploadService
+  ) {
     this.pageData = this.landingService.getDefaultHomePageData();
   }
 
@@ -56,5 +60,24 @@ export class LandingHomeComponent implements OnInit {
     if (Array.isArray(val)) return val;
     if (typeof val === 'object') return Object.values(val);
     return [val];
+  }
+
+  trustLabel(item: any): string {
+    if (item == null) return '';
+    if (typeof item === 'string') return item;
+    return item.label || item.text || item.value || '';
+  }
+
+  imageUrl(path: string | null | undefined): string {
+    return this.fileUpload.resolveUrl(path) || '/landing/images/dashboard-helpdesk.png';
+  }
+
+  isInternalLink(btn: any): boolean {
+    const link = String(btn?.link || '');
+    return !!link && !link.startsWith('http') && !link.startsWith('#') && !link.startsWith('mailto:');
+  }
+
+  openInNewTab(btn: any): boolean {
+    return btn?.new_tab === true || btn?.new_tab === '1' || btn?.new_tab === 1;
   }
 }

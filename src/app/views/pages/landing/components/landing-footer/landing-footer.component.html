@@ -131,41 +131,32 @@
           </ul>
         </div>
 
-        <!-- Support Links -->
-        <div>
+        <!-- Support Links (same navigation-menu API as header) -->
+        <div *ngIf="supportNavItems.length">
           <h4 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
             <span class="w-1.5 h-5 bg-emerald-500 rounded-full"></span>
             Support
           </h4>
           <ul class="space-y-3 text-sm">
-            <li>
-              <a routerLink="/ticket/open" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
+            <li *ngFor="let item of supportNavItems">
+              <a
+                *ngIf="!item.external"
+                [routerLink]="item.route"
+                [target]="item.target === '_blank' ? '_blank' : '_self'"
+                class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all"
+              >
                 <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Submit Ticket</span>
+                <span>{{ item.label }}</span>
               </a>
-            </li>
-            <li>
-              <a routerLink="/kb" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
+              <a
+                *ngIf="item.external"
+                [href]="item.route"
+                [target]="item.target || '_blank'"
+                rel="noopener noreferrer"
+                class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all"
+              >
                 <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Knowledge Base</span>
-              </a>
-            </li>
-            <li>
-              <a routerLink="/faq" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
-                <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>FAQs</span>
-              </a>
-            </li>
-            <li>
-              <a routerLink="/services" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
-                <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Services</span>
-              </a>
-            </li>
-            <li>
-              <a routerLink="/contact" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
-                <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Contact</span>
+                <span>{{ item.label }}</span>
               </a>
             </li>
           </ul>
@@ -201,7 +192,10 @@
               <span *ngIf="isSubmitting">Subscribing...</span>
             </button>
             <div *ngIf="subscribeSuccess" class="text-xs text-emerald-400 font-medium pt-1">
-              ✓ Thank you for subscribing!
+              ✓ {{ subscribeMessage || 'Thank you for subscribing!' }}
+            </div>
+            <div *ngIf="subscribeError" class="text-xs text-rose-400 font-medium pt-1">
+              {{ subscribeError }}
             </div>
           </form>
 

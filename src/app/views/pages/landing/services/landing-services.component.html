@@ -103,38 +103,70 @@
         </p>
       </div>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngIf="loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div
+          *ngFor="let _ of [1, 2, 3]"
+          class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 overflow-hidden animate-pulse"
+        >
+          <div class="h-48 bg-slate-100 dark:bg-slate-700"></div>
+          <div class="p-8">
+            <div class="h-5 bg-slate-100 dark:bg-slate-700 rounded w-2/3 mb-4"></div>
+            <div class="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full mb-2"></div>
+            <div class="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        *ngIf="!loading && !services.length"
+        class="text-center py-16 px-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700"
+      >
+        <p class="text-base font-semibold text-slate-800 dark:text-slate-100">No services available yet</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Published services will appear here automatically.</p>
+      </div>
+
+      <div *ngIf="!loading && services.length" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div
           *ngFor="let s of services"
-          class="p-8 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+          class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden"
         >
           <div>
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-700 text-primary flex items-center justify-center mb-6">
-              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+            <div class="h-48 relative bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-700 overflow-hidden">
+              <img
+                *ngIf="imageUrl(s.image)"
+                [src]="imageUrl(s.image)"
+                [alt]="s.title"
+                class="w-full h-full object-cover"
+              />
+              <div *ngIf="!imageUrl(s.image)" class="w-full h-full flex items-center justify-center text-primary">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
             </div>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ s.title }}</h3>
-            <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">{{ s.description }}</p>
 
-            <!-- Features bullets -->
-            <ul class="space-y-2 mb-8 border-t border-slate-100 dark:border-slate-700/60 pt-4">
-              <li *ngFor="let feat of s.features" class="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                <span>{{ feat }}</span>
-              </li>
-            </ul>
+            <div class="p-8">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">{{ s.title }}</h3>
+              <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">{{ s.description }}</p>
+
+              <ul *ngIf="s.features?.length" class="space-y-2 mb-8 border-t border-slate-100 dark:border-slate-700/60 pt-4">
+                <li *ngFor="let feat of s.features" class="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  <span>{{ feat }}</span>
+                </li>
+              </ul>
+
+              <a
+                [routerLink]="servicesSection.learn_more_link || '/contact'"
+                class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-700 transition-colors"
+              >
+                <span>{{ servicesSection.learn_more_text || 'Inquire About This Service' }}</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
           </div>
-
-          <a
-            [routerLink]="servicesSection.learn_more_link || '/contact'"
-            class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-700 transition-colors"
-          >
-            <span>{{ servicesSection.learn_more_text || 'Inquire About This Service' }}</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
         </div>
       </div>
     </div>

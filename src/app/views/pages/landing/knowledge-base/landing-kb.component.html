@@ -19,17 +19,17 @@
         <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
-        <span>Help Center</span>
+        <span>{{ hero.badge }}</span>
       </div>
 
       <!-- Main Heading -->
       <h1 class="mb-6 text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
-        Support Knowledge Base
+        {{ hero.title }}
       </h1>
 
       <!-- Subtitle -->
       <p class="mb-10 text-lg sm:text-xl text-white/80 leading-relaxed max-w-3xl mx-auto">
-        Search practical guides, troubleshooting playbooks, and setup documentation to resolve issues faster.
+        {{ hero.subtitle }}
       </p>
 
       <!-- Search Section -->
@@ -42,7 +42,7 @@
             type="search"
             [(ngModel)]="searchQuery"
             (input)="onSearchChange()"
-            placeholder="Search by issue, workflow, or keyword..."
+            [placeholder]="hero.search_placeholder || 'Search by issue, workflow, or keyword...'"
             class="w-full pl-14 pr-6 py-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-md text-base"
           />
         </div>
@@ -54,19 +54,19 @@
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          <span>Agent-tested guides</span>
+          <span>{{ hero.trust_one }}</span>
         </div>
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          <span>Step-by-step fixes</span>
+          <span>{{ hero.trust_two }}</span>
         </div>
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          <span>Instant answers</span>
+          <span>{{ hero.trust_three }}</span>
         </div>
       </div>
     </div>
@@ -76,8 +76,7 @@
   <!-- ====== Articles Listing Start ====== -->
   <section class="py-20 bg-slate-50 dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Category Tabs -->
-      <div class="flex flex-wrap items-center justify-center gap-2 mb-12">
+      <div *ngIf="categories.length > 1" class="flex flex-wrap items-center justify-center gap-2 mb-12">
         <button
           *ngFor="let cat of categories"
           type="button"
@@ -91,8 +90,19 @@
         </button>
       </div>
 
-      <!-- Articles Grid -->
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div *ngIf="loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div
+          *ngFor="let _ of [1, 2, 3]"
+          class="p-7 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 animate-pulse"
+        >
+          <div class="h-5 bg-slate-100 dark:bg-slate-700 rounded w-1/3 mb-4"></div>
+          <div class="h-5 bg-slate-100 dark:bg-slate-700 rounded w-2/3 mb-4"></div>
+          <div class="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full mb-2"></div>
+          <div class="h-4 bg-slate-100 dark:bg-slate-700 rounded w-5/6"></div>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && filteredArticles.length" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div
           *ngFor="let art of filteredArticles"
           class="p-7 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer group"
@@ -100,10 +110,13 @@
         >
           <div>
             <div class="flex items-center justify-between mb-4">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              <span
+                *ngIf="art.category"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+              >
                 {{ art.category }}
               </span>
-              <span class="text-xs text-slate-400">{{ art.updated_at }}</span>
+              <span *ngIf="art.updated_at" class="text-xs text-slate-400">{{ art.updated_at }}</span>
             </div>
 
             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3 group-hover:text-primary transition-colors">
@@ -111,24 +124,35 @@
             </h3>
 
             <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6 line-clamp-3">
-              {{ art.details }}
+              {{ art.excerpt }}
             </p>
           </div>
 
-          <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500">
-            <span class="flex items-center gap-1">
+          <div
+            *ngIf="art.views || art.helpful"
+            class="pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs text-slate-500"
+          >
+            <span *ngIf="art.views" class="flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
               {{ art.views }} views
             </span>
-            <span class="text-emerald-600 font-semibold">{{ art.helpful }}% helpful</span>
+            <span *ngIf="art.helpful" class="text-emerald-600 font-semibold">{{ art.helpful }}% helpful</span>
           </div>
         </div>
       </div>
 
-      <div *ngIf="!filteredArticles.length" class="text-center py-16 text-slate-500">
+      <div
+        *ngIf="!loading && !articles.length"
+        class="text-center py-16 px-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700"
+      >
+        <p class="text-base font-semibold text-slate-800 dark:text-slate-100">No articles available yet</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Published knowledge base articles will appear here automatically.</p>
+      </div>
+
+      <div *ngIf="!loading && articles.length && !filteredArticles.length" class="text-center py-16 text-slate-500">
         No documentation matching your search criteria. Try a different query.
       </div>
     </div>
@@ -151,7 +175,10 @@
         </svg>
       </button>
 
-      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary mb-3">
+      <span
+        *ngIf="selectedArticle.category"
+        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary mb-3"
+      >
         {{ selectedArticle.category }}
       </span>
 
@@ -159,19 +186,17 @@
         {{ selectedArticle.title }}
       </h2>
 
-      <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed space-y-4">
-        <p>{{ selectedArticle.details }}</p>
-        <p>
-          For additional questions or specific escalation requirements relating to this playbook, our support specialists are available 24/7. You can also open a support ticket directly from the portal for dedicated investigation.
-        </p>
-      </div>
+      <div
+        class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed"
+        [innerHTML]="selectedArticle.details"
+      ></div>
 
       <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-        <span class="text-xs text-slate-400">Updated: {{ selectedArticle.updated_at }}</span>
+        <span *ngIf="selectedArticle.updated_at" class="text-xs text-slate-400">Updated: {{ selectedArticle.updated_at }}</span>
         <button
           type="button"
           (click)="closeModal()"
-          class="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-600"
+          class="ml-auto px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-600"
         >
           Close
         </button>

@@ -42,6 +42,7 @@ export interface KbArticle {
   title: string;
   slug: string;
   details: string;
+  excerpt: string;
   category: string;
   views: number;
   helpful: number;
@@ -54,6 +55,9 @@ export interface ServiceItem {
   description: string;
   icon: string;
   features: string[];
+  image?: string;
+  details?: string;
+  slug?: string;
 }
 
 export interface BlogPost {
@@ -298,21 +302,21 @@ export class LandingService extends ApiBaseService {
     const defaults = this.getDefaultHomePageData();
     if (!data) return defaults.html;
 
+    const item = data?.data ?? data?.item ?? data;
     let parsed: any = null;
-    if (typeof data.content === 'string') {
+    const raw = item?.content ?? item?.html ?? item;
+    if (typeof raw === 'string') {
       try {
-        parsed = JSON.parse(data.content);
-      } catch (e) {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
         parsed = null;
       }
-    } else if (data.html) {
-      try {
-        parsed = typeof data.html === 'string' ? JSON.parse(data.html) : data.html;
-      } catch (e) {
-        parsed = null;
-      }
-    } else if (data.sections) {
-      parsed = data;
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && raw.html.sections ? raw.html : raw;
     }
 
     if (!parsed || !parsed.sections) {
@@ -334,6 +338,8 @@ export class LandingService extends ApiBaseService {
         channels: incoming.channels && Object.keys(incoming.channels).length ? incoming.channels : defSec.channels,
         hero_overlays: incoming.hero_overlays && Object.keys(incoming.hero_overlays).length ? incoming.hero_overlays : defSec.hero_overlays,
         trust_indicators: incoming.trust_indicators && Object.keys(incoming.trust_indicators).length ? incoming.trust_indicators : defSec.trust_indicators,
+        buttons: incoming.buttons && Object.keys(incoming.buttons).length ? incoming.buttons : defSec.buttons,
+        kb_button: incoming.kb_button ? { ...defSec.kb_button, ...incoming.kb_button } : defSec.kb_button,
       };
     });
 
@@ -343,7 +349,7 @@ export class LandingService extends ApiBaseService {
   getHomePageData(): Observable<any> {
     const defaultData = this.getDefaultHomePageData();
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'home' }).pipe(
-      map((res: any) => this.parseHomePageData(res)),
+      map((res: any) => this.parseHomePageData(res?.data ?? res?.item ?? res)),
       catchError(() => of(defaultData.html))
     );
   }
@@ -362,6 +368,25 @@ export class LandingService extends ApiBaseService {
       phone_details:
         'Call for urgent operational issues that require immediate triage.',
       contact_recipient: 'support@yourhelpdesk.com',
+      badge: 'Contact Support Team',
+      primary_button_text: 'Send a Message',
+      primary_button_link: '#contact-info',
+      secondary_button_text: 'Browse FAQ',
+      secondary_button_link: '/faq',
+      trust_one: 'SLA-aware response',
+      trust_two: 'Specialist routing',
+      trust_three: 'Secure communication',
+      trust_four: '24h first response',
+      section_badge: 'Get In Touch',
+      section_title: 'We Are Here To Help',
+      section_subtitle:
+        'Have a question about technical configuration, account management, or ticket escalations? Use the contact methods below or send us a message directly.',
+      location_label: 'Our Location',
+      phone_label: 'Phone Number',
+      email_label: 'Email Address',
+      form_title: 'Send Us A Message',
+      form_subtitle: 'Share your request and we will respond with the right next step',
+      form_submit_text: 'Send Message',
     };
   }
 
@@ -454,7 +479,11 @@ export class LandingService extends ApiBaseService {
     const raw = data.content ?? data.html ?? data;
     if (typeof raw === 'string') {
       try {
-        parsed = JSON.parse(raw);
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
       } catch {
         parsed = null;
       }
@@ -473,6 +502,7 @@ export class LandingService extends ApiBaseService {
         ...(parsed.services_section || {}),
       },
       cta: { ...defaults.cta, ...(parsed.cta || {}) },
+      services: this.normalizeServicesList(parsed.services || parsed.items || []),
     };
   }
 
@@ -735,181 +765,308 @@ export class LandingService extends ApiBaseService {
     );
   }
 
-  getFaqs(): Observable<FaqItem[]> {
-    const defaultFaqs: FaqItem[] = [
-      {
-        id: 1,
-        name: 'How do customers submit a support ticket?',
-        details:
-          '<p>Customers can open a support ticket either via the public ticket submission form or through the authenticated customer portal. Each submission receives a unique tracking ID and confirmation email.</p>',
-        category: 'Ticketing',
+  getDefaultFaqPageHtml(): any {
+    return {
+      hero: {
+        badge: 'Help Center FAQ',
+        title: 'Frequently Asked Questions',
+        subtitle:
+          'Find clear answers to common support, billing, security, and workflow questions.',
+        search_placeholder: 'Search by topic, issue, or keyword...',
+        trust_one: 'Operations-focused answers',
+        trust_two: 'Policy-aligned guidance',
+        trust_three: 'Support-team reviewed',
       },
-      {
-        id: 2,
-        name: 'Can tickets be automatically assigned to specific departments?',
-        details:
-          '<p>Yes. HelpDesk includes automated routing rules that direct incoming requests to the appropriate team based on department, ticket category, and priority level.</p>',
-        category: 'Routing',
+      faq_section: {
+        badge: 'FAQ Section',
+        title: 'Most Asked Questions',
+        subtitle:
+          'Review concise answers used by support teams to resolve recurring customer issues faster.',
       },
-      {
-        id: 3,
-        name: 'How are SLAs and response deadlines managed?',
-        details:
-          '<p>SLA policies can be configured per priority tier (Low, Medium, High, Urgent). Real-time countdowns alert agents and managers before response or resolution thresholds are breached.</p>',
-        category: 'Operations',
+      cta: {
+        title: 'Still have questions?',
+        subtitle: "Can't find the answer you are looking for? Reach out directly.",
+        primary_button_text: 'Contact Team',
+        primary_button_link: '/contact',
+        secondary_button_text: 'Submit Ticket',
+        secondary_button_link: '/ticket/open',
       },
-      {
-        id: 4,
-        name: 'Can agents add internal private notes to tickets?',
-        details:
-          '<p>Yes. Agents can post private internal notes that remain hidden from customers, allowing team members to discuss diagnostics, escalation steps, and technical notes collaboratively.</p>',
-        category: 'Collaboration',
-      },
-      {
-        id: 5,
-        name: 'Is file attachment upload supported on ticket submissions?',
-        details:
-          '<p>Yes. Both customers and agents can attach screenshots, log files, PDFs, and documents up to the maximum upload size defined in system settings.</p>',
-        category: 'Features',
-      },
-      {
-        id: 6,
-        name: 'Can customers check ticket status without logging in?',
-        details:
-          '<p>When a ticket is submitted publicly, the customer receives a tracking link via email allowing them to view ticket progress and post additional replies securely.</p>',
-        category: 'Ticketing',
-      },
-    ];
+    };
+  }
 
-    return this.getCollection(apiUrl.publicFaqs).pipe(
-      catchError(() => of(defaultFaqs))
+  parseFaqPageHtml(data: any): any {
+    const defaults = this.getDefaultFaqPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && !raw.hero ? raw.html : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      hero: { ...defaults.hero, ...(parsed.hero || {}) },
+      faq_section: { ...defaults.faq_section, ...(parsed.faq_section || {}) },
+      cta: { ...defaults.cta, ...(parsed.cta || {}) },
+    };
+  }
+
+  getFaqPageData(): Observable<any> {
+    const defaultData = {
+      title: 'FAQ',
+      html: this.getDefaultFaqPageHtml(),
+    };
+
+    return this.getSingle(apiUrl.publicFrontPage, { slug: 'faq' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseFaqPageHtml(item || defaultData),
+        };
+      }),
+      catchError(() => of(defaultData))
     );
   }
 
+  getFaqs(): Observable<FaqItem[]> {
+    return this.getCollection(apiUrl.publicFaqs, {
+      pageNumber: 1,
+      pageSize: 15,
+    }).pipe(
+      map((res: any) => this.normalizeFaqList(res)),
+      catchError(() => of([]))
+    );
+  }
+
+  normalizeFaqList(list: any): FaqItem[] {
+    const raw: any[] = Array.isArray(list)
+      ? list
+      : Array.isArray(list?.items)
+      ? list.items
+      : Array.isArray(list?.data)
+      ? list.data
+      : [];
+
+    return raw
+      .filter((item: any) => {
+        if (!item) return false;
+        if (item.is_active === 0 || item.is_active === false || item.is_active === '0') return false;
+        if (item.status === 0 || item.status === false || item.status === '0' || item.status === 'draft') {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => this.mapFaqItem(item));
+  }
+
+  mapFaqItem(item: any): FaqItem {
+    return {
+      id: item?.id ?? item?._id ?? 0,
+      name: item?.name || item?.question || item?.title || '',
+      details: item?.details || item?.answer || item?.content || '',
+      category:
+        item?.category ||
+        item?.type?.name ||
+        item?.type_name ||
+        (typeof item?.type === 'string' ? item.type : '') ||
+        '',
+    };
+  }
+
   getServicesList(): Observable<ServiceItem[]> {
-    const list: ServiceItem[] = [
-      {
-        id: 1,
-        title: 'Omnichannel Ticket Routing',
-        description:
-          'Ingest, triage, and route support tickets seamlessly from web portals, email, chat, and API endpoints.',
-        icon: 'ticket',
-        features: ['Intelligent triage', 'Custom rule triggers', 'Zero drop queues'],
+    return this.getCollection(apiUrl.publicServices, {
+      pageNumber: 1,
+      pageSize: 15,
+    }).pipe(
+      map((res: any) => this.normalizeServicesList(res)),
+      catchError(() => of([]))
+    );
+  }
+
+  normalizeServicesList(list: any): ServiceItem[] {
+    const raw: any[] = Array.isArray(list)
+      ? list
+      : Array.isArray(list?.items)
+      ? list.items
+      : Array.isArray(list?.data)
+      ? list.data
+      : [];
+
+    return raw
+      .filter((item: any) => {
+        if (!item) return false;
+        if (item.is_active === 0 || item.is_active === false || item.is_active === '0') return false;
+        if (item.status === 0 || item.status === false || item.status === '0' || item.status === 'draft') {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => this.mapServiceItem(item));
+  }
+
+  mapServiceItem(item: any): ServiceItem {
+    const details = item?.details || item?.description || item?.content || '';
+    const features = Array.isArray(item?.features)
+      ? item.features
+          .map((feat: any) => (typeof feat === 'string' ? feat : feat?.title || feat?.name || ''))
+          .filter(Boolean)
+      : typeof item?.features === 'string'
+      ? item.features.split(',').map((feat: string) => feat.trim()).filter(Boolean)
+      : [];
+
+    return {
+      id: item?.id ?? item?._id ?? 0,
+      title: item?.title || item?.name || '',
+      description: item?.description || this.stripHtml(details),
+      icon: item?.icon || '',
+      features,
+      image: item?.image || item?.feature_image || item?.featured_image || '',
+      details,
+      slug: item?.slug,
+    };
+  }
+
+  stripHtml(value: string): string {
+    return String(value || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  getDefaultKbPageHtml(): any {
+    return {
+      hero: {
+        badge: 'Help Center',
+        title: 'Support Knowledge Base',
+        subtitle:
+          'Search practical guides, troubleshooting playbooks, and setup documentation to resolve issues faster.',
+        search_placeholder: 'Search by issue, workflow, or keyword...',
+        trust_one: 'Agent-tested guides',
+        trust_two: 'Step-by-step fixes',
+        trust_three: 'Instant answers',
       },
-      {
-        id: 2,
-        title: 'SLA & Escalation Management',
-        description:
-          'Define tiered SLA policies with automated alerts and escalations before resolution breach.',
-        icon: 'clock',
-        features: ['Target countdowns', 'Tiered escalations', 'Compliance auditing'],
-      },
-      {
-        id: 3,
-        title: 'Collaborative Agent Workspace',
-        description:
-          'Shared timelines, private agent notes, collision detection, and instant ticket reassignment.',
-        icon: 'users',
-        features: ['Internal mentions', 'Real-time sync', 'Rich text editor'],
-      },
-      {
-        id: 4,
-        title: 'Self-Service Knowledge Base',
-        description:
-          'Empower users with searchable documentation, category taxonomies, and instant article suggestions.',
-        icon: 'book',
-        features: ['Instant search', 'Feedback voting', 'Article analytics'],
-      },
-      {
-        id: 5,
-        title: 'Real-Time Live Chat Integration',
-        description:
-          'Connect agents and customers directly with instant messaging, attachment exchange, and typing indicators.',
-        icon: 'chat',
-        features: ['WebSocket powered', 'Status indicators', 'Transcript archive'],
-      },
-      {
-        id: 6,
-        title: 'Operations & Performance Reporting',
-        description:
-          'Gain deep visibility into resolution times, first-contact resolution rates, and team workload trends.',
-        icon: 'bar-chart',
-        features: ['Exportable reports', 'Team leaderboards', 'Trend visualizations'],
-      },
-    ];
-    return of(list);
+    };
+  }
+
+  parseKbPageHtml(data: any): any {
+    const defaults = this.getDefaultKbPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && !raw.hero ? raw.html : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      hero: { ...defaults.hero, ...(parsed.hero || {}) },
+    };
+  }
+
+  getKbPageData(): Observable<any> {
+    const defaultData = {
+      title: 'Knowledge Base',
+      html: this.getDefaultKbPageHtml(),
+    };
+
+    return this.getSingle(apiUrl.publicFrontPage, { slug: 'kb' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseKbPageHtml(item || defaultData),
+        };
+      }),
+      catchError(() => of(defaultData))
+    );
   }
 
   getKnowledgeBaseList(): Observable<KbArticle[]> {
-    const list: KbArticle[] = [
-      {
-        id: 1,
-        title: 'Getting Started: Submitting and Tracking Your First Ticket',
-        slug: 'getting-started-submitting-tickets',
-        details:
-          'Learn the step-by-step process of submitting a support request, adding attachments, and monitoring progress from initial triage to complete resolution.',
-        category: 'Getting Started',
-        views: 1420,
-        helpful: 98,
-        updated_at: '2 days ago',
-      },
-      {
-        id: 2,
-        title: 'How Ticket Priorities and SLA Windows Are Calculated',
-        slug: 'ticket-priorities-and-sla',
-        details:
-          'Understand how priority levels impact response times, SLA expectations, and how urgent issues are escalated to engineering specialists.',
-        category: 'SLA & Policy',
-        views: 890,
-        helpful: 94,
-        updated_at: '1 week ago',
-      },
-      {
-        id: 3,
-        title: 'Troubleshooting Attachment Upload and Supported File Formats',
-        slug: 'troubleshooting-attachment-uploads',
-        details:
-          'Review the allowed file formats (PNG, JPG, PDF, TXT, ZIP), individual size limitations, and tips for uploading system logs.',
-        category: 'Technical Help',
-        views: 1105,
-        helpful: 96,
-        updated_at: '3 days ago',
-      },
-      {
-        id: 4,
-        title: 'Account Security: Password Resets and Email Verification',
-        slug: 'account-security-and-passwords',
-        details:
-          'How to reset your account password, manage registered contact details, and resolve email delivery verification problems.',
-        category: 'Account',
-        views: 650,
-        helpful: 91,
-        updated_at: '2 weeks ago',
-      },
-      {
-        id: 5,
-        title: 'Collaborating on Tickets: Adding CCs and Organization Members',
-        slug: 'ticket-collaboration-and-ccs',
-        details:
-          'Learn how team members within the same organization can follow ticket threads and receive email updates on shared issues.',
-        category: 'Collaboration',
-        views: 740,
-        helpful: 95,
-        updated_at: '5 days ago',
-      },
-      {
-        id: 6,
-        title: 'Understanding Ticket Statuses: Open, Pending, and Closed',
-        slug: 'understanding-ticket-statuses',
-        details:
-          'A reference guide explaining the operational meaning of every ticket status throughout the support lifecycle.',
-        category: 'Getting Started',
-        views: 920,
-        helpful: 97,
-        updated_at: '1 week ago',
-      },
-    ];
-    return of(list);
+    return this.getCollection(apiUrl.publicKnowledgeBase, {
+      pageNumber: 1,
+      pageSize: 15,
+    }).pipe(
+      map((res: any) => this.normalizeKbList(res)),
+      catchError(() => of([]))
+    );
+  }
+
+  normalizeKbList(list: any): KbArticle[] {
+    const raw: any[] = Array.isArray(list)
+      ? list
+      : Array.isArray(list?.items)
+      ? list.items
+      : Array.isArray(list?.data)
+      ? list.data
+      : [];
+
+    return raw
+      .filter((item: any) => {
+        if (!item) return false;
+        if (item.is_active === 0 || item.is_active === false || item.is_active === '0') return false;
+        if (item.status === 0 || item.status === false || item.status === '0' || item.status === 'draft') {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => this.mapKbArticle(item));
+  }
+
+  mapKbArticle(item: any): KbArticle {
+    const details = item?.details || item?.content || item?.description || '';
+    const updated = item?.updated_at || item?.updatedAt || item?.created_at || '';
+    return {
+      id: item?.id ?? item?._id ?? 0,
+      title: item?.title || item?.name || '',
+      slug: item?.slug || '',
+      details,
+      excerpt: this.stripHtml(details),
+      category:
+        item?.category ||
+        item?.type?.name ||
+        item?.type_name ||
+        (typeof item?.type === 'string' ? item.type : '') ||
+        '',
+      views: Number(item?.views ?? item?.view_count ?? 0) || 0,
+      helpful: Number(item?.helpful ?? item?.helpful_percent ?? 0) || 0,
+      updated_at: this.formatKbDate(updated),
+    };
+  }
+
+  private formatKbDate(value: any): string {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString();
   }
 
   getBlogPosts(): Observable<BlogPost[]> {
@@ -988,34 +1145,61 @@ export class LandingService extends ApiBaseService {
     return of(defaultCats);
   }
 
-  submitTicket(formData: any): Observable<any> {
-    return this.post(apiUrl.ticketCreate, formData).pipe(
-      catchError(() =>
-        of({
-          success: true,
-          message: 'Ticket created successfully! Our team will get back to you shortly.',
-          ticket: { id: Math.floor(1000 + Math.random() * 9000), ...formData },
-        })
-      )
-    );
+  submitTicket(form: any): Observable<any> {
+    return this.post(apiUrl.publicTicketOpen, this.toOpenTicketPayload(form));
+  }
+
+  /** Public /ticket/open form → POST /public/ticket/open only. */
+  private toOpenTicketPayload(form: any): Record<string, any> | FormData {
+    const firstName = String(form?.first_name ?? '').trim();
+    const lastName = String(form?.last_name ?? '').trim();
+    const details = String(form?.details ?? form?.body ?? '').trim();
+    const files: File[] = Array.isArray(form?.files)
+      ? form.files.filter((file: any) => file instanceof File)
+      : [];
+
+    const payload: Record<string, any> = {
+      first_name: firstName,
+      last_name: lastName,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      email: String(form?.email ?? '').trim(),
+      subject: String(form?.subject ?? '').trim(),
+      body: details,
+      details,
+      department_id: this.toOptionalId(form?.department_id),
+      priority_id: this.toOptionalId(form?.priority_id),
+      category_id: this.toOptionalId(form?.category_id),
+    };
+
+    if (!files.length) {
+      return payload;
+    }
+
+    const formData = new FormData();
+    Object.keys(payload).forEach((key) => {
+      const value = payload[key];
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, String(value));
+      }
+    });
+    files.forEach((file) => formData.append('files', file, file.name));
+    return formData;
+  }
+
+  private toOptionalId(value: any): number | string | null {
+    if (value === undefined || value === null || value === '') {
+      return null;
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : value;
   }
 
   submitContactMessage(formData: any): Observable<any> {
-    return this.post(apiUrl.contactCreate, formData).pipe(
-      catchError(() =>
-        of({
-          success: true,
-          message: 'Thank you for reaching out! We have received your message and will respond within 24 hours.',
-        })
-      )
-    );
+    return this.post(apiUrl.contactCreate, formData);
   }
 
   subscribeNewsletter(email: string): Observable<any> {
-    return of({
-      success: true,
-      message: 'Thank you for subscribing to HelpDesk updates!',
-    });
+    return this.post(apiUrl.publicSubscribeNews, { email: String(email || '').trim() });
   }
 
   private cloneJson<T>(value: T): T {

@@ -246,4 +246,6 @@ export const apiUrl = {
   publicKnowledgeBase: '/public/knowledge-base',
   publicServices: '/public/services',
   publicFrontPage: '/public/front-page',
+  publicTicketOpen: '/public/ticket/open',
+  publicSubscribeNews: '/public/subscribe/news',
 };
