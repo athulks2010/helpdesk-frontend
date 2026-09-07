@@ -6,7 +6,7 @@
         <div class="w-full px-4">
           <div class="text-center">
             <h1 class="text-4xl font-semibold text-white">{{ privacyData?.html?.title || privacyData?.title || 'Privacy Policy' }}</h1>
-            <p class="mt-2 text-base leading-7 text-white">Last updated on {{ privacyData?.updated_at || 'March 1, 2026' }}</p>
+            <p class="mt-2 text-base leading-7 text-white">Last updated on {{ (privacyData?.updated_at ? (privacyData.updated_at | date:'MMMM d, y, h:mm a') : 'March 1, 2026') }}</p>
           </div>
         </div>
       </div>
@@ -34,8 +34,14 @@
   <!-- Start Privacy Policy -->
   <section class="relative md:py-20 py-16 bg-slate-50 dark:bg-slate-900">
     <div class="container mx-auto px-4 max-w-4xl">
-      <div id="printArea" class="p-8 sm:p-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700 leading-7 html">
-        <div [innerHTML]="privacyData?.html?.content"></div>
+      <div id="printArea" class="p-8 sm:p-12 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700 leading-7 prose prose-slate dark:prose-invert max-w-none">
+        <div *ngIf="safeContent" [innerHTML]="safeContent"></div>
+        <div *ngIf="!safeContent" class="text-center py-12 text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-sm">No content available. Please update the Privacy Policy from the admin panel.</p>
+        </div>
       </div>
 
       <div class="mt-4 p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 flex justify-end">

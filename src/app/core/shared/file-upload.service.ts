@@ -22,6 +22,33 @@ export class FileUploadService extends ApiBaseService {
   }
 
   /**
+   * Upload an attachment and return structured attachment data (path, name, size, type).
+   * @param file - The File object to upload
+   * @param folder - The folder name to store the file in (default 'tickets')
+   */
+  uploadAttachment(file: File, folder: string = 'tickets'): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    return this.http
+      .post<any>(`${this.baseUrl}/file-upload/upload`, formData)
+      .pipe(
+        map((res: any) => {
+          const item = res?.data?.item ?? res?.item ?? res?.data ?? res;
+          const path = typeof item === 'string' ? item : item?.path || item?.url || '';
+          return {
+            path,
+            name: (typeof item === 'object' ? item?.name || item?.file_name || item?.original_name : null) || file.name,
+            file_name: (typeof item === 'object' ? item?.file_name || item?.name : null) || file.name,
+            file_size: (typeof item === 'object' ? item?.file_size || item?.size : null) || file.size,
+            file_type: (typeof item === 'object' ? item?.file_type || item?.mime_type || item?.type : null) || file.type,
+            ...(typeof item === 'object' ? item : {}),
+          };
+        })
+      );
+  }
+
+  /**
    * Resolve a file path to a full URL.
    * @param path - relative or absolute path from the server
    */

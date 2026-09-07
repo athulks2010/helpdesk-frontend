@@ -1,7 +1,42 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
 import { ToastService } from '../../../../core/toast/toast.service';
+
+import tinymce from 'tinymce/tinymce';
+import 'tinymce/themes/silver/theme';
+import 'tinymce/icons/default/icons';
+import 'tinymce/models/dom/model';
+
+import 'tinymce/plugins/preview';
+import 'tinymce/plugins/importcss';
+import 'tinymce/plugins/searchreplace';
+import 'tinymce/plugins/autolink';
+import 'tinymce/plugins/autosave';
+import 'tinymce/plugins/save';
+import 'tinymce/plugins/directionality';
+import 'tinymce/plugins/code';
+import 'tinymce/plugins/visualblocks';
+import 'tinymce/plugins/visualchars';
+import 'tinymce/plugins/fullscreen';
+import 'tinymce/plugins/image';
+import 'tinymce/plugins/link';
+import 'tinymce/plugins/media';
+import 'tinymce/plugins/codesample';
+import 'tinymce/plugins/table';
+import 'tinymce/plugins/charmap';
+import 'tinymce/plugins/pagebreak';
+import 'tinymce/plugins/nonbreaking';
+import 'tinymce/plugins/anchor';
+import 'tinymce/plugins/insertdatetime';
+import 'tinymce/plugins/advlist';
+import 'tinymce/plugins/lists';
+import 'tinymce/plugins/wordcount';
+import 'tinymce/plugins/help';
+import 'tinymce/plugins/quickbars';
+import 'tinymce/plugins/emoticons';
+
+const TINYMCE_CDN = 'https://cdn.jsdelivr.net/npm/tinymce@6.8.3';
 
 @Component({
   selector: 'app-privacy-page-editor',
@@ -22,10 +57,14 @@ export class PrivacyPageEditorComponent implements OnInit, AfterViewInit, OnDest
   htmlTitle = 'Privacy Policy';
   htmlContent = '';
 
+  private isDestroyed = false;
+
   constructor(
     private settingService: SettingService,
     private landingService: LandingService,
-    private toast: ToastService
+    private toast: ToastService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -33,10 +72,13 @@ export class PrivacyPageEditorComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngAfterViewInit(): void {
-    // Editor initializes after load completes
+    if (!this.loading) {
+      this.initEditor();
+    }
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
     this.destroyEditor();
   }
 
@@ -45,8 +87,10 @@ export class PrivacyPageEditorComponent implements OnInit, AfterViewInit, OnDest
     this.error = '';
     this.success = '';
     this.destroyEditor();
+
     this.settingService.getFrontPage('privacy').subscribe({
       next: (item) => {
+        if (this.isDestroyed) return;
         if (item) {
           this.pageId = item.id ?? item._id ?? null;
           this.pageTitle = item.title || 'Privacy Policy';
@@ -59,12 +103,15 @@ export class PrivacyPageEditorComponent implements OnInit, AfterViewInit, OnDest
           this.applyDefaults();
         }
         this.loading = false;
-        setTimeout(() => this.initEditor(), 0);
+        this.cdr.detectChanges();
+        setTimeout(() => this.initEditor(), 50);
       },
       error: () => {
+        if (this.isDestroyed) return;
         this.applyDefaults();
         this.loading = false;
-        setTimeout(() => this.initEditor(), 0);
+        this.cdr.detectChanges();
+        setTimeout(() => this.initEditor(), 50);
       },
     });
   }
@@ -140,73 +187,68 @@ export class PrivacyPageEditorComponent implements OnInit, AfterViewInit, OnDest
     this.pendingContent = this.htmlContent;
   }
 
-  private initEditor(): void {
-    if (!document.getElementById('privacy-page-editor')) {
+  private initEditor(retryCount = 0): void {
+    if (this.isDestroyed) return;
+
+    const el = document.getElementById('privacy-page-editor') as HTMLTextAreaElement | null;
+    if (!el) {
+      if (retryCount < 10) {
+        setTimeout(() => this.initEditor(retryCount + 1), 100);
+      }
       return;
     }
-    this.loadTinyMce()
-      .then((tinymce) => this.createEditor(tinymce))
-      .catch(() => {
-        this.error = this.error || 'Failed to load editor';
-      });
-  }
 
-  private loadTinyMce(): Promise<any> {
-    const existing = (window as any).tinymce;
-    if (existing) {
-      return Promise.resolve(existing);
-    }
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = '/js/tinymce/tinymce.min.js';
-      script.onload = () => resolve((window as any).tinymce);
-      script.onerror = () => reject(new Error('TinyMCE failed to load'));
-      document.body.appendChild(script);
-    });
-  }
-
-  private createEditor(tinymce: any): void {
-    if (!tinymce || !document.getElementById('privacy-page-editor')) {
-      return;
-    }
     this.destroyEditor();
 
-    tinymce.init({
-      selector: '#privacy-page-editor',
-      base_url: '/js/tinymce',
-      suffix: '.min',
-      skin: 'oxide',
-      content_css: '/js/tinymce/skins/content/default/content.min.css',
-      content_style: `
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          font-size: 14px;
-          line-height: 1.6;
-          color: #334155;
-          margin: 16px;
-        }
-      `,
-      license_key: 'gpl',
-      promotion: false,
-      branding: true,
-      plugins:
-        'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help quickbars emoticons',
-      menubar: 'file edit view insert format tools table help',
-      toolbar_mode: 'wrap',
-      toolbar:
-        'undo redo bold italic underline strikethrough fontfamily fontsize blocks alignleft aligncenter alignright alignjustify | outdent indent numlist bullist | forecolor backcolor removeformat pagebreak | charmap emoticons table fullscreen preview | anchor codesample ltr rtl | code | image media link',
-      height: 480,
-      setup: (editor: any) => {
-        this.editorInstance = editor;
-        editor.on('init', () => {
-          if (this.pendingContent) {
-            editor.setContent(this.pendingContent);
-          }
-        });
-        editor.on('input change undo redo SetContent keyup', () => {
-          this.htmlContent = editor.getContent();
-        });
-      },
+    const initialContent = this.pendingContent || this.htmlContent || '';
+    if (initialContent) {
+      el.value = initialContent;
+    }
+
+    this.ngZone.runOutsideAngular(() => {
+      tinymce
+        .init({
+          target: el,
+          base_url: TINYMCE_CDN,
+          suffix: '.min',
+          skin_url: `${TINYMCE_CDN}/skins/ui/oxide`,
+          skin: 'oxide',
+          content_css: `${TINYMCE_CDN}/skins/content/default/content.min.css`,
+          content_style: `
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-size: 14px;
+              line-height: 1.6;
+              color: #334155;
+              margin: 16px;
+            }
+          `,
+          license_key: 'gpl',
+          promotion: false,
+          branding: false,
+          plugins:
+            'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help quickbars emoticons',
+          menubar: 'file edit view insert format tools table help',
+          toolbar_mode: 'wrap',
+          toolbar:
+            'undo redo bold italic underline strikethrough fontfamily fontsize blocks alignleft aligncenter alignright alignjustify | outdent indent numlist bullist | forecolor backcolor removeformat pagebreak | charmap emoticons table fullscreen preview | anchor codesample ltr rtl | code | image media link',
+          height: 480,
+          setup: (editor: any) => {
+            this.editorInstance = editor;
+            editor.on('init', () => {
+              if (initialContent) {
+                editor.setContent(initialContent);
+              }
+            });
+            editor.on('input change undo redo SetContent keyup', () => {
+              this.ngZone.run(() => {
+                this.htmlContent = editor.getContent();
+                this.pendingContent = this.htmlContent;
+              });
+            });
+          },
+        })
+        .catch(() => {});
     });
   }
 
@@ -217,11 +259,8 @@ export class PrivacyPageEditorComponent implements OnInit, AfterViewInit, OnDest
       } catch {}
       this.editorInstance = null;
     }
-    const tinymce = (window as any).tinymce;
-    if (tinymce) {
-      try {
-        tinymce.remove('#privacy-page-editor');
-      } catch {}
-    }
+    try {
+      tinymce.remove('#privacy-page-editor');
+    } catch {}
   }
 }

@@ -598,24 +598,17 @@ export class LandingService extends ApiBaseService {
   }
 
   getTermsData(): Observable<any> {
-    const defaultHtml = this.getDefaultTermsPageHtml();
-    const defaultData = {
-      title: defaultHtml.title,
-      updated_at: 'March 1, 2026',
-      html: defaultHtml,
-    };
-
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'terms' }).pipe(
       map((res: any) => {
         const item = res?.data ?? res?.item ?? res;
-        const html = this.parseTermsPageHtml(item || defaultData);
+        const html = this.parseTermsPageHtml(item);
         return {
-          title: html.title || item?.title || defaultData.title,
-          updated_at: item?.updated_at || defaultData.updated_at,
+          title: html?.title || item?.title || 'Terms of Services',
+          updated_at: item?.updated_at || '',
           html,
         };
       }),
-      catchError(() => of(defaultData))
+      catchError(() => of({ title: 'Terms of Services', updated_at: '', html: { title: 'Terms of Services', content: '' } }))
     );
   }
 
@@ -693,24 +686,17 @@ export class LandingService extends ApiBaseService {
   }
 
   getPrivacyData(): Observable<any> {
-    const defaultHtml = this.getDefaultPrivacyPageHtml();
-    const defaultData = {
-      title: defaultHtml.title,
-      updated_at: 'March 1, 2026',
-      html: defaultHtml,
-    };
-
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'privacy' }).pipe(
       map((res: any) => {
         const item = res?.data ?? res?.item ?? res;
-        const html = this.parsePrivacyPageHtml(item || defaultData);
+        const html = this.parsePrivacyPageHtml(item);
         return {
-          title: html.title || item?.title || defaultData.title,
-          updated_at: item?.updated_at || defaultData.updated_at,
+          title: html?.title || item?.title || 'Privacy Policy',
+          updated_at: item?.updated_at || '',
           html,
         };
       }),
-      catchError(() => of(defaultData))
+      catchError(() => of({ title: 'Privacy Policy', updated_at: '', html: { title: 'Privacy Policy', content: '' } }))
     );
   }
 
@@ -1168,6 +1154,10 @@ export class LandingService extends ApiBaseService {
       ? form.files.filter((file: any) => file instanceof File)
       : [];
 
+    const path = String(form?.path ?? (Array.isArray(form?.attachments) ? form.attachments[0]?.path || form.attachments[0] : '') ?? '').trim();
+    const filename = String(form?.filename ?? form?.file_name ?? (Array.isArray(form?.attachments) ? form.attachments[0]?.filename || form.attachments[0]?.name : '') ?? '').trim();
+    const size = Number(form?.size ?? form?.file_size ?? (Array.isArray(form?.attachments) ? form.attachments[0]?.size : 0) ?? 0);
+
     const payload: Record<string, any> = {
       first_name: firstName,
       last_name: lastName,
@@ -1176,15 +1166,27 @@ export class LandingService extends ApiBaseService {
       subject: String(form?.subject ?? '').trim(),
       body: details,
       details,
-      department_id: this.toOptionalId(form?.department_id),
-      priority_id: this.toOptionalId(form?.priority_id),
-      category_id: this.toOptionalId(form?.category_id),
-      sub_category_id: this.toOptionalId(form?.sub_category_id),
-      type_id: this.toOptionalId(form?.type_id),
+      message: details,
+      status_id: this.toOptionalId(form?.status_id) ?? 0,
+      priority_id: this.toOptionalId(form?.priority_id) ?? 0,
+      department_id: this.toOptionalId(form?.department_id) ?? 0,
+      category_id: this.toOptionalId(form?.category_id) ?? 0,
+      sub_category_id: this.toOptionalId(form?.sub_category_id) ?? null,
+      type_id: this.toOptionalId(form?.type_id) ?? 0,
+      path,
+      filename,
+      size,
       custom_field: form?.custom_field && typeof form.custom_field === 'object' ? form.custom_field : undefined,
     };
 
-    if (!files.length) {
+    if (form?.attachments !== undefined) {
+      payload['attachments'] = form.attachments;
+    }
+    if (form?.attachment !== undefined) {
+      payload['attachment'] = form.attachment;
+    }
+
+    if (payload['attachments'] || payload['attachment'] || payload['path'] || !files.length) {
       return payload;
     }
 
