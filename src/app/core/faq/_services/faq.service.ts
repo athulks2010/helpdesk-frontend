@@ -29,4 +29,8 @@ export class FaqService extends ApiBaseService {
   deleteById(id: string | number): Observable<any> {
     return this.delete(apiUrl.faqDelete, { id, _id: id });
   }
+
+  getPublicFaq(): Observable<any> {
+    return this.getCollection(apiUrl.faqsPublic, {});
+  }
 }

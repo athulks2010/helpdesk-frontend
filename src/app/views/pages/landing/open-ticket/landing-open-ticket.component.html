@@ -108,24 +108,27 @@
               <span class="text-sm font-medium">{{ submitError }}</span>
             </div>
 
-            <!-- Requester Information -->
+            <!-- Personal Information Section -->
             <div>
-              <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span class="w-2 h-5 bg-primary rounded-full"></span>
-                Contact Information
-              </h4>
+              <div class="flex items-center gap-2.5 mb-5">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <h4 class="text-xl font-bold text-slate-900 dark:text-white">Personal Information</h4>
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                    First Name <span class="text-red-500">*</span>
+                  <label class="ticket-form-label">
+                    First name <span class="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     [(ngModel)]="form.first_name"
                     name="firstName"
-                    placeholder="Enter first name"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    [ngClass]="{'border-red-500': validationErrors['first_name']}"
+                    placeholder="First name"
+                    class="ticket-form-control"
+                    [class.error]="validationErrors['first_name']"
                   />
                   <div *ngIf="validationErrors['first_name']" class="text-xs text-red-500 mt-1">
                     {{ validationErrors['first_name'] }}
@@ -133,16 +136,16 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                    Last Name <span class="text-red-500">*</span>
+                  <label class="ticket-form-label">
+                    Last name <span class="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     [(ngModel)]="form.last_name"
                     name="lastName"
-                    placeholder="Enter last name"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    [ngClass]="{'border-red-500': validationErrors['last_name']}"
+                    placeholder="Last name"
+                    class="ticket-form-control"
+                    [class.error]="validationErrors['last_name']"
                   />
                   <div *ngIf="validationErrors['last_name']" class="text-xs text-red-500 mt-1">
                     {{ validationErrors['last_name'] }}
@@ -150,16 +153,16 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                  <label class="ticket-form-label">
                     Email Address <span class="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
                     [(ngModel)]="form.email"
                     name="email"
-                    placeholder="name@example.com"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    [ngClass]="{'border-red-500': validationErrors['email']}"
+                    placeholder="Email Address"
+                    class="ticket-form-control"
+                    [class.error]="validationErrors['email']"
                   />
                   <div *ngIf="validationErrors['email']" class="text-xs text-red-500 mt-1">
                     {{ validationErrors['email'] }}
@@ -168,84 +171,166 @@
               </div>
             </div>
 
-            <!-- Ticket Routing Details -->
+            <!-- Ticket Details Section -->
             <div>
-              <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span class="w-2 h-5 bg-blue-500 rounded-full"></span>
-                Ticket Routing
-              </h4>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                    Department
-                  </label>
-                  <select
-                    [(ngModel)]="form.department_id"
-                    name="department"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
-                  </select>
-                </div>
+              <div class="flex items-center gap-2.5 mb-5">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <h4 class="text-xl font-bold text-slate-900 dark:text-white">Ticket Details</h4>
+              </div>
 
+              <!-- Row 1: Priority *, Type, Department -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
                 <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                    Category
-                  </label>
-                  <select
-                    [(ngModel)]="form.category_id"
-                    name="category"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                    Priority Tier
+                  <label class="ticket-form-label">
+                    Priority <span class="text-red-500">*</span>
                   </label>
                   <select
                     [(ngModel)]="form.priority_id"
                     name="priority"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    class="ticket-form-select"
+                    [class.error]="validationErrors['priority_id']"
                   >
-                    <option *ngFor="let prio of priorities" [value]="prio.id">{{ prio.name }}</option>
+                    <option [ngValue]="null">Select Priority</option>
+                    <option *ngFor="let prio of priorities" [ngValue]="prio.id">{{ prio.name }}</option>
+                  </select>
+                  <div *ngIf="validationErrors['priority_id']" class="text-xs text-red-500 mt-1">
+                    {{ validationErrors['priority_id'] }}
+                  </div>
+                </div>
+
+                <div>
+                  <label class="ticket-form-label">
+                    Type
+                  </label>
+                  <select
+                    [(ngModel)]="form.type_id"
+                    name="type"
+                    class="ticket-form-select"
+                  >
+                    <option [ngValue]="null">Select a type</option>
+                    <option *ngFor="let t of types" [ngValue]="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="ticket-form-label">
+                    Department
+                  </label>
+                  <select
+                    [(ngModel)]="form.department_id"
+                    (ngModelChange)="onDepartmentChange($event)"
+                    name="department"
+                    class="ticket-form-select"
+                  >
+                    <option [ngValue]="null">Select a department</option>
+                    <option *ngFor="let dept of departments" [ngValue]="dept.id">{{ dept.name }}</option>
                   </select>
                 </div>
               </div>
-            </div>
 
-            <!-- Subject & Details -->
-            <div class="space-y-5">
-              <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Subject Line <span class="text-red-500">*</span>
+              <!-- Row 2: Category, Sub Category (if available), and Custom Fields -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+                <div>
+                  <label class="ticket-form-label">
+                    Category
+                  </label>
+                  <select
+                    [(ngModel)]="form.category_id"
+                    (ngModelChange)="onCategoryChange($event)"
+                    name="category"
+                    class="ticket-form-select"
+                  >
+                    <option [ngValue]="null">Select a category</option>
+                    <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+                  </select>
+                </div>
+
+                <!-- Sub Category: shown only if category has sub categories -->
+                <div *ngIf="subCategories.length > 0">
+                  <label class="ticket-form-label">
+                    Sub Category
+                  </label>
+                  <select
+                    [(ngModel)]="form.sub_category_id"
+                    name="subCategory"
+                    class="ticket-form-select"
+                  >
+                    <option [ngValue]="null">Select a sub category</option>
+                    <option *ngFor="let sub of subCategories" [ngValue]="sub.id">{{ sub.name }}</option>
+                  </select>
+                </div>
+
+                <!-- Custom fields: displayed next to Category, or shifted to next column if Sub Category exists -->
+                <ng-container *ngFor="let field of customFields">
+                  <div [class.md:col-span-2]="field.type === 'textarea'" [class.md:col-span-3]="field.type === 'textarea'">
+                    <label class="ticket-form-label">
+                      {{ field.label || field.name }}
+                      <span *ngIf="field.required" class="text-red-500">*</span>
+                    </label>
+
+                    <select *ngIf="field.type === 'select'" [(ngModel)]="form.custom_field[field.name]" [name]="'cf_' + field.name" class="ticket-form-select">
+                      <option value="">Select {{ field.label || field.name }}</option>
+                      <option *ngFor="let opt of fieldOptions(field)" [value]="opt">{{ opt }}</option>
+                    </select>
+
+                    <textarea *ngIf="field.type === 'textarea'" [(ngModel)]="form.custom_field[field.name]" [name]="'cf_' + field.name" rows="3" class="ticket-form-control" [placeholder]="field.placeholder || ''"></textarea>
+
+                    <div *ngIf="field.type === 'checkbox'" class="pt-2">
+                      <label class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="form.custom_field[field.name]" [name]="'cf_' + field.name" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                        {{ field.placeholder || field.label || field.name }}
+                      </label>
+                    </div>
+
+                    <input *ngIf="field.type !== 'select' && field.type !== 'textarea' && field.type !== 'checkbox'"
+                      [type]="field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : field.type === 'date' ? 'date' : 'text'"
+                      [(ngModel)]="form.custom_field[field.name]"
+                      [name]="'cf_' + field.name"
+                      class="ticket-form-control"
+                      [placeholder]="field.placeholder || ''"
+                    />
+
+                    <p *ngIf="field.hint" class="mt-1 text-xs text-slate-400">{{ field.hint }}</p>
+                    <div *ngIf="validationErrors[field.name]" class="text-xs text-red-500 mt-1">
+                      {{ validationErrors[field.name] }}
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Subject * -->
+              <div class="mb-5">
+                <label class="ticket-form-label">
+                  Subject <span class="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   [(ngModel)]="form.subject"
                   name="subject"
-                  placeholder="Summary of the request or problem..."
-                  class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  [ngClass]="{'border-red-500': validationErrors['subject']}"
+                  placeholder="Brief description of your issue"
+                  class="ticket-form-control"
+                  [class.error]="validationErrors['subject']"
                 />
                 <div *ngIf="validationErrors['subject']" class="text-xs text-red-500 mt-1">
                   {{ validationErrors['subject'] }}
                 </div>
               </div>
 
+              <!-- Problem Description -->
               <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                  Problem Description <span class="text-red-500">*</span>
+                <label class="ticket-form-label">
+                  Details <span class="text-red-500">*</span>
                 </label>
                 <textarea
                   [(ngModel)]="form.details"
                   name="details"
                   rows="6"
                   placeholder="Provide all relevant details, error messages, and reproduction steps..."
-                  class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  [ngClass]="{'border-red-500': validationErrors['details']}"
+                  class="ticket-form-control"
+                  [class.error]="validationErrors['details']"
                 ></textarea>
                 <div *ngIf="validationErrors['details']" class="text-xs text-red-500 mt-1">
                   {{ validationErrors['details'] }}
@@ -260,6 +345,7 @@
               </label>
               <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center hover:border-primary transition-colors cursor-pointer relative bg-slate-50/50 dark:bg-slate-800/40">
                 <input
+                  #fileInput
                   type="file"
                   multiple
                   (change)="onFileChange($event)"

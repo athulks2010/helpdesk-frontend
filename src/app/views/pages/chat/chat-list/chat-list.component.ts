@@ -29,7 +29,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
   selected: any = null;
   draft = '';
   search = '';
-  filter: 'all' | 'unread' = 'all';
+  filter: 'all' | 'internal' | 'customer' | 'unread' = 'all';
   loading = true;
   messagesLoading = false;
   sending = false;
@@ -106,10 +106,56 @@ export class ChatListComponent implements OnInit, OnDestroy {
     return this.auth.currentUserValue?.id ?? null;
   }
 
+  get currentUser(): any {
+    return this.auth.currentUserValue;
+  }
+
+  get currentUserRole(): string {
+    const role = this.currentUser?.role;
+    if (!role) return 'Staff';
+    return typeof role === 'string' ? role : role.name || role.slug || 'Staff';
+  }
+
+  get currentUserInitials(): string {
+    const u = this.currentUser;
+    if (!u) return 'U';
+    const first = u.first_name || u.name || '';
+    const last = u.last_name || '';
+    if (first && last) return (first[0] + last[0]).toUpperCase();
+    if (first) return first.substring(0, 2).toUpperCase();
+    return (u.email || 'U').substring(0, 2).toUpperCase();
+  }
+
   get currentUserName(): string {
-    const u = this.auth.currentUserValue;
+    const u = this.currentUser;
     if (!u) return 'You';
     return [u.first_name, u.last_name].filter(Boolean).join(' ') || u.name || u.email || 'You';
+  }
+
+  clearSearch(): void {
+    this.search = '';
+    this.applyFilters();
+  }
+
+  copyMessage(text: string): void {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.send();
+    }
+  }
+
+  getAvatarInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      return ((parts[0][0] || '') + (parts[1][0] || '')).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   }
 
   load(): void {
@@ -135,6 +181,10 @@ export class ChatListComponent implements OnInit, OnDestroy {
     let list = [...this.rows];
     if (this.filter === 'unread') {
       list = list.filter((r) => this.unreadCount(r) > 0);
+    } else if (this.filter === 'internal') {
+      list = list.filter((r) => this.isInternal(r));
+    } else if (this.filter === 'customer') {
+      list = list.filter((r) => !this.isInternal(r));
     }
     if (q) {
       list = list.filter((r) => {
@@ -150,7 +200,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  setFilter(f: 'all' | 'unread'): void {
+  setFilter(f: 'all' | 'internal' | 'customer' | 'unread'): void {
     this.filter = f;
     this.applyFilters();
   }
@@ -483,10 +533,24 @@ export class ChatListComponent implements OnInit, OnDestroy {
     return row.subject || row.title || `Conversation #${row.id}`;
   }
 
+  isInternal(row: any): boolean {
+    if (!row) return false;
+    const type = (row.type || row.conversation_type || '').toLowerCase();
+    return type === 'internal' || !type;
+  }
+
   formatTime(value: any): string {
     if (!value) return '';
     try {
-      return new Date(value).toLocaleString();
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const now = new Date();
+      const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+      if (diffSec < 45) return 'Just now';
+      if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
+      if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+      if (diffSec < 172800) return 'Yesterday';
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     } catch {
       return String(value);
     }

@@ -1,9 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
 import { ConversationService } from '../../../../core/conversation/_services/conversation.service';
+import { PusherService } from '../../../../core/realtime/pusher.service';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { UserService } from '../../../../core/user/_services/user.service';
 import { ToastService } from '../../../../core/toast/toast.service';
@@ -53,27 +54,28 @@ export class TicketShowComponent implements OnInit, OnDestroy {
     {
       title: 'Status Update',
       description: 'Inform about ticket status changes',
-      message: 'Status Update: We are currently reviewing your request and will keep you informed of any status changes.',
+      message: 'We are currently reviewing your request and will keep you informed of any status changes.',
     },
     {
       title: 'Information Request',
       description: 'Request additional information from customer',
-      message: 'Information Request: Could you please provide additional details or screenshots regarding this ticket?',
+      message: 'Could you please provide additional details or screenshots regarding this ticket?',
     },
     {
       title: 'Resolution Update',
       description: 'Provide resolution or next steps',
-      message: 'Resolution Update: We have investigated the issue and provided resolution steps. Please test and verify.',
+      message: 'We have investigated the issue and provided resolution steps. Please test and verify.',
     },
     {
       title: 'Escalation Notice',
       description: 'Inform about ticket escalation',
-      message: 'Escalation Notice: This ticket has been escalated to our engineering team for further investigation.',
+      message: 'This ticket has been escalated to our engineering team for further investigation.',
     },
   ];
 
   private routeSub?: Subscription;
   private pollSub?: Subscription;
+  private ticketChannelName = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -83,7 +85,9 @@ export class TicketShowComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private auth: AuthService,
     private fb: FormBuilder,
-    private toast: ToastService
+    private toast: ToastService,
+    private pusher: PusherService,
+    private zone: NgZone
   ) { }
 
   ngOnInit(): void {
@@ -103,6 +107,7 @@ export class TicketShowComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.teardownTicketRealtime();
     this.routeSub?.unsubscribe();
     this.pollSub?.unsubscribe();
   }
@@ -166,6 +171,7 @@ export class TicketShowComponent implements OnInit, OnDestroy {
         this.loadFavoriteStatus();
         this.loadComments();
         this.loadConversations();
+        this.setupTicketRealtime(ticket.id);
         this.loadCustomFieldsAndActivities();
         // Laravel polls conversations every 30s
         this.pollSub = interval(30000).subscribe(() => this.loadConversations(true));
@@ -1040,5 +1046,36 @@ export class TicketShowComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       hour12: true,
     });
+  }
+
+  private setupTicketRealtime(ticketId: string | number): void {
+    this.teardownTicketRealtime();
+    this.pusher.initFromBackend().subscribe(() => {
+      if (String(this.ticket?.id || this.id) !== String(ticketId)) return;
+      this.ticketChannelName = `ticket.${ticketId}`;
+      const ch = this.pusher.subscribe(this.ticketChannelName);
+      if (!ch) return;
+
+      ch.bind('ConversationCreated', (payload: any) => {
+        this.zone.run(() => {
+          const conv = payload?.conversation || payload?.item || payload;
+          if (conv && conv.id) {
+            const exists = this.conversations.some((c) => String(c.id) === String(conv.id));
+            if (!exists) {
+              this.conversations = [conv, ...this.conversations];
+            }
+          } else {
+            this.loadConversations(true);
+          }
+        });
+      });
+    });
+  }
+
+  private teardownTicketRealtime(): void {
+    if (this.ticketChannelName) {
+      this.pusher.unsubscribe(this.ticketChannelName);
+      this.ticketChannelName = '';
+    }
   }
 }
