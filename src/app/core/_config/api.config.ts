@@ -119,6 +119,7 @@ export const apiUrl = {
   faqCreate: '/faq/create',
   faqUpdate: '/faq/update',
   faqDelete: '/faq/delete',
+  faqsPublic: '/public/faqs',
 
   /* Blogs / Posts */
   blogs: '/post',
