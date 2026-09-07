@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiBaseService } from '../../shared/api-base.service';
 import { apiUrl } from '../../_config/api.config';
+import { AuthService } from '../../auth/_services/auth.service';
 
 export interface LandingHeroOverlay {
   enabled: boolean;
@@ -74,7 +75,7 @@ export interface BlogPost {
 
 @Injectable({ providedIn: 'root' })
 export class LandingService extends ApiBaseService {
-  constructor(http: HttpClient) {
+  constructor(http: HttpClient, private auth: AuthService) {
     super(http);
   }
 
@@ -1195,7 +1196,8 @@ export class LandingService extends ApiBaseService {
   }
 
   submitContactMessage(formData: any): Observable<any> {
-    return this.post(apiUrl.contactCreate, formData);
+    const path = this.auth.getToken() ? apiUrl.contactCreate : apiUrl.publicContact;
+    return this.post(path, formData);
   }
 
   subscribeNewsletter(email: string): Observable<any> {

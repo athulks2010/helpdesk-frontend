@@ -247,4 +247,5 @@ export const apiUrl = {
   publicFrontPage: '/public/front-page',
   publicTicketOpen: '/public/ticket/open',
   publicSubscribeNews: '/public/subscribe/news',
+  publicContact: '/public/contact',
 };
