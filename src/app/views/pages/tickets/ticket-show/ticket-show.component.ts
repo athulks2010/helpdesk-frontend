@@ -84,7 +84,7 @@ export class TicketShowComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private fb: FormBuilder,
     private toast: ToastService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.commentForm = this.fb.group({
@@ -284,11 +284,11 @@ export class TicketShowComponent implements OnInit, OnDestroy {
             newComment && (newComment.body || newComment.details || newComment.comment || newComment.message)
               ? newComment
               : {
-                  body: text,
-                  details: text,
-                  created_at: new Date().toISOString(),
-                  user: this.currentUser,
-                }
+                body: text,
+                details: text,
+                created_at: new Date().toISOString(),
+                user: this.currentUser,
+              }
           );
           this.comments = [...this.comments, normalized];
         },
@@ -303,45 +303,20 @@ export class TicketShowComponent implements OnInit, OnDestroy {
   loadConversations(silent = false): void {
     if (!silent) this.loadingConversations = true;
     const ticketId = this.ticket?.id || this.id;
-
-    // Prefer dedicated ticket conversations endpoint; fall back to list filter
-    this.ticketService.getTicketConversations(ticketId).subscribe({
-      next: (list) => {
-        if (list.length) {
-          this.conversations = list;
-          this.loadingConversations = false;
-          return;
-        }
-        this.conversationService.getAll({ ticket_id: ticketId }).subscribe({
-          next: (data) => {
-            this.conversations = Array.isArray(data)
-              ? data
-              : data?.items || data?.list || data?.data || [];
-            this.loadingConversations = false;
-          },
-          error: () => {
-            this.conversations = Array.isArray(this.ticket?.conversations)
-              ? this.ticket.conversations
-              : [];
-            this.loadingConversations = false;
-          },
-        });
+    this.conversationService.getAll({ ticket_id: ticketId }).subscribe({
+      next: (data) => {
+        this.conversations = Array.isArray(data)
+          ? data
+          : data?.items || data?.list || [];
+        this.loadingConversations = false;
       },
       error: () => {
-        this.conversationService.getAll({ ticket_id: ticketId }).subscribe({
-          next: (data) => {
-            this.conversations = Array.isArray(data)
-              ? data
-              : data?.items || data?.list || [];
-            this.loadingConversations = false;
-          },
-          error: () => {
-            this.conversations = [];
-            this.loadingConversations = false;
-          },
-        });
+        this.conversations = [];
+        this.loadingConversations = false;
       },
     });
+    //   },
+    // });
   }
 
   toggleFavorite(): void {

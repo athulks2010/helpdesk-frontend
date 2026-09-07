@@ -83,6 +83,12 @@ export class ChatListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+    this.pusher.initFromBackend().subscribe(() => {
+      if (this.selected) {
+        const id = this.selected.id ?? this.selected._id;
+        this.setupRealtime(id);
+      }
+    });
     this.routeSub = this.route.queryParamMap.subscribe((params) => {
       const cid = params.get('conversation_id');
       if (cid && this.rows.length) {
@@ -487,39 +493,45 @@ export class ChatListComponent implements OnInit, OnDestroy {
   }
 
   private setupRealtime(conversationId: string | number): void {
-    this.channelName = `chat.${conversationId}`;
-    const ch = this.pusher.subscribe(this.channelName);
-    this.realtimeConnected = !!ch;
-    if (!ch) return;
+    this.pusher.initFromBackend().subscribe(() => {
+      const currentSelectedId = this.selected?.id ?? this.selected?._id;
+      if (currentSelectedId != null && String(currentSelectedId) !== String(conversationId)) {
+        return;
+      }
+      this.channelName = `chat.${conversationId}`;
+      const ch = this.pusher.subscribe(this.channelName);
+      this.realtimeConnected = !!ch;
+      if (!ch) return;
 
-    const onEvent = (payload: any) => {
-      this.zone.run(() => {
-        const msg = this.normalizeMessage(payload);
-        if (!msg) return;
-        if (
-          msg.conversation_id != null &&
-          String(msg.conversation_id) !== String(conversationId)
-        ) {
-          return;
-        }
-        this.appendMessage(msg);
-        // If message from someone else, mark read
-        if (!this.isMine(msg) && msg.id) {
-          this.service
-            .markRead({
-              conversation_id: conversationId,
-              message_id: msg.id,
-            })
-            .subscribe({ error: () => {} });
-        }
-        this.bumpConversation(conversationId, this.messageText(msg));
-        this.scrollToBottom();
-      });
-    };
+      const onEvent = (payload: any) => {
+        this.zone.run(() => {
+          const msg = this.normalizeMessage(payload);
+          if (!msg) return;
+          if (
+            msg.conversation_id != null &&
+            String(msg.conversation_id) !== String(conversationId)
+          ) {
+            return;
+          }
+          this.appendMessage(msg);
+          // If message from someone else, mark read
+          if (!this.isMine(msg) && msg.id) {
+            this.service
+              .markRead({
+                conversation_id: conversationId,
+                message_id: msg.id,
+              })
+              .subscribe({ error: () => {} });
+          }
+          this.bumpConversation(conversationId, this.messageText(msg));
+          this.scrollToBottom();
+        });
+      };
 
-    ch.bind('NewChatMessage', onEvent);
-    ch.bind('NewPublicChatMessage', onEvent);
-    ch.bind('message.created', onEvent);
+      ch.bind('NewChatMessage', onEvent);
+      ch.bind('NewPublicChatMessage', onEvent);
+      ch.bind('message.created', onEvent);
+    });
   }
 
   private teardownRealtime(): void {

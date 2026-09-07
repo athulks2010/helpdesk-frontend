@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { PusherService } from '../../../../core/realtime/pusher.service';
 import { getApiErrorMessage } from '../../../../core/shared/api-error.util';
 import { ToastService } from '../../../../core/toast/toast.service';
 
@@ -22,6 +23,7 @@ export class PusherSettingsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private settingService: SettingService,
+    private pusherService: PusherService,
     private toast: ToastService
   ) {}
 
@@ -56,7 +58,7 @@ export class PusherSettingsComponent implements OnInit {
     });
   }
 
-  private toApiBody(value: any): Record<string, any> {
+  private toApiBody(value: any) {
     return {
       pusher_app_id: value.app_id,
       pusher_app_key: value.key,
@@ -73,11 +75,14 @@ export class PusherSettingsComponent implements OnInit {
     this.saving = true;
     this.error = '';
     this.success = '';
-    this.settingService.updatePusher(this.toApiBody(this.form.getRawValue())).subscribe({
+    const payload = this.toApiBody(this.form.getRawValue());
+    this.settingService.updatePusher(payload).subscribe({
       next: (res: any) => {
         this.saving = false;
         this.success = 'Pusher settings saved';
         this.toast.success(res?.response?.message || res?.message || 'Pusher settings saved successfully');
+        // Dynamically reconfigure Pusher immediately
+        this.pusherService.configure(payload.pusher_app_key, payload.pusher_app_cluster);
       },
       error: (err) => {
         this.saving = false;

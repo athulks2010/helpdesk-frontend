@@ -293,23 +293,23 @@ export class TicketService extends ApiBaseService {
       );
   }
 
-  getTicketConversations(ticketId: string | number): Observable<any[]> {
-    return this.http
-      .get(`${this.baseUrl}${apiUrl.ticketConversations}`, {
-        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
-      })
-      .pipe(
-        map((res: any) => {
-          if (Array.isArray(res)) return res;
-          if (Array.isArray(res?.data)) return res.data;
-          if (Array.isArray(res?.data?.items)) return res.data.items;
-          if (Array.isArray(res?.items)) return res.items;
-          if (Array.isArray(res?.conversations)) return res.conversations;
-          return [];
-        }),
-        catchError(() => of([]))
-      );
-  }
+  // getTicketConversations(ticketId: string | number): Observable<any[]> {
+  //   return this.http
+  //     .get(`${this.baseUrl}${apiUrl.ticketConversations}`, {
+  //       params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+  //     })
+  //     .pipe(
+  //       map((res: any) => {
+  //         if (Array.isArray(res)) return res;
+  //         if (Array.isArray(res?.data)) return res.data;
+  //         if (Array.isArray(res?.data?.items)) return res.data.items;
+  //         if (Array.isArray(res?.items)) return res.items;
+  //         if (Array.isArray(res?.conversations)) return res.conversations;
+  //         return [];
+  //       }),
+  //       catchError(() => of([]))
+  //     );
+  // }
 
   /**
    * GET /ticket/favorites?ticket_id=
@@ -389,19 +389,19 @@ export class TicketService extends ApiBaseService {
 
     return forkJoin({
       priorities: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.prioritiesAll}`)),
-      statuses:   safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.statusesAll}`)),
-      types:      safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.typesAll}`)),
-      departments:safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.departmentsAll}`)),
+      statuses: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.statusesAll}`)),
+      types: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.typesAll}`)),
+      departments: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.departmentsAll}`)),
       categories: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.categoriesAll}`)),
-      customers:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&pageSize=500`)),
-      assignees:  safe(
+      customers: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&pageSize=500`)),
+      assignees: safe(
         this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id_ne=2&pageSize=500`).pipe(
           map((res) =>
             this.extractArray(res).filter((u: any) => Number(u.role_id ?? u.role?.id) !== 2)
           )
         )
       ),
-      contacts:   safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.contactsAll}`)),
+      contacts: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.contactsAll}`)),
     });
   }
 

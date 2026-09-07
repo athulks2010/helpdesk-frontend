@@ -15,7 +15,7 @@ export const apiUrl = {
   ticketUpdate: '/ticket/update',
   ticketDelete: '/ticket/delete',
   ticketComments: '/ticket/comments',
-  ticketConversations: '/ticket/conversations',
+  // ticketConversations: '/ticket/conversations',
 
   /* Filters (Node.js backend endpoints) */
   filterClients: '/organization/all',
