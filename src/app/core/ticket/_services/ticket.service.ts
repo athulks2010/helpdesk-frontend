@@ -28,34 +28,31 @@ export class TicketService extends ApiBaseService {
   }
 
   /**
-   * GET /organization/all?search=
-   * Returns organizations: [{ id, name }]
+   * GET /user/all?role_id=2&search=
+   * Returns customers/clients: [{ id, name }]
    */
   filterClients(search?: string): Observable<Array<{ id: number | string; name: string }>> {
     return this.http
       .get(`${this.baseUrl}${apiUrl.filterClients}`, {
-        params: this.toParams({ search: search || undefined }),
+        params: this.toParams({
+          search: search || undefined,
+          role_id: 2,
+          pageSize: 100,
+        }),
       })
       .pipe(
         map((res: any) => {
-          const list = Array.isArray(res)
-            ? res
-            : Array.isArray(res?.data?.items)
-              ? res.data.items
-              : Array.isArray(res?.items)
-                ? res.items
-                : Array.isArray(res?.data)
-                  ? res.data
-                  : [];
-          return list.map((c: any) => ({
-            id: c.id ?? c.user_id ?? c._id,
-            name:
-              c.name ||
-              c.title ||
-              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
-              c.email ||
-              String(c.id),
-          }));
+          const list = this.extractArray(res);
+          return list
+            .filter((c: any) => Number(c.role_id ?? c.role?.id ?? 2) === 2)
+            .map((c: any) => ({
+              id: c.id ?? c.user_id ?? c._id,
+              name:
+                [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+                c.name ||
+                c.email ||
+                String(c.id),
+            }));
         }),
         catchError(() => of([]))
       );
