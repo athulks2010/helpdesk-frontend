@@ -1199,10 +1199,7 @@ export class LandingService extends ApiBaseService {
   }
 
   subscribeNewsletter(email: string): Observable<any> {
-    return of({
-      success: true,
-      message: 'Thank you for subscribing to HelpDesk updates!',
-    });
+    return this.post(apiUrl.publicSubscribeNews, { email: String(email || '').trim() });
   }
 
   private cloneJson<T>(value: T): T {

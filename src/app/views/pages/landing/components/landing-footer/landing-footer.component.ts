@@ -19,6 +19,8 @@ export class LandingFooterComponent implements OnInit, OnDestroy {
   email = '';
   isSubmitting = false;
   subscribeSuccess = false;
+  subscribeError = '';
+  subscribeMessage = '';
   logoFailed = false;
   currentYear = new Date().getFullYear();
   footerCms: { text?: string; copyright?: string } = {};
@@ -119,21 +121,35 @@ export class LandingFooterComponent implements OnInit, OnDestroy {
   }
 
   onSubscribe(): void {
-    if (!this.email || !this.email.includes('@')) {
+    if (this.isSubmitting || !this.email || !this.email.includes('@')) {
       return;
     }
     this.isSubmitting = true;
+    this.subscribeSuccess = false;
+    this.subscribeError = '';
+    this.subscribeMessage = '';
+
     this.landingService.subscribeNewsletter(this.email).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isSubmitting = false;
         this.subscribeSuccess = true;
+        this.subscribeMessage =
+          res?.response?.message ||
+          res?.message ||
+          'Thank you for subscribing!';
         this.email = '';
         setTimeout(() => {
           this.subscribeSuccess = false;
+          this.subscribeMessage = '';
         }, 5000);
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting = false;
+        this.subscribeError =
+          err?.error?.response?.message ||
+          err?.error?.message ||
+          err?.message ||
+          'Failed to subscribe. Please try again.';
       },
     });
   }

@@ -192,7 +192,10 @@
               <span *ngIf="isSubmitting">Subscribing...</span>
             </button>
             <div *ngIf="subscribeSuccess" class="text-xs text-emerald-400 font-medium pt-1">
-              ✓ Thank you for subscribing!
+              ✓ {{ subscribeMessage || 'Thank you for subscribing!' }}
+            </div>
+            <div *ngIf="subscribeError" class="text-xs text-rose-400 font-medium pt-1">
+              {{ subscribeError }}
             </div>
           </form>
 
