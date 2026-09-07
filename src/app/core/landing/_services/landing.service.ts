@@ -562,39 +562,80 @@ export class LandingService extends ApiBaseService {
     };
   }
 
+  private extractHtmlContent(raw: any, defaultHtml: { title: string; content: string }): { title: string; content: string } {
+    if (!raw) return this.cloneJson(defaultHtml);
+
+    let parsed: any = raw;
+    while (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        break;
+      }
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      if (parsed.html) {
+        let nestedHtml = parsed.html;
+        while (typeof nestedHtml === 'string') {
+          try {
+            nestedHtml = JSON.parse(nestedHtml);
+          } catch {
+            break;
+          }
+        }
+        if (nestedHtml && typeof nestedHtml === 'object') {
+          return {
+            title: nestedHtml.title || parsed.title || defaultHtml.title,
+            content: nestedHtml.content || defaultHtml.content,
+          };
+        }
+      }
+
+      if (parsed.content) {
+        let nestedContent = parsed.content;
+        while (typeof nestedContent === 'string') {
+          try {
+            const temp = JSON.parse(nestedContent);
+            if (temp && typeof temp === 'object' && (temp.content || temp.title)) {
+              nestedContent = temp.content || nestedContent;
+              if (temp.title && !parsed.title) parsed.title = temp.title;
+            } else {
+              break;
+            }
+          } catch {
+            break;
+          }
+        }
+        return {
+          title: parsed.title || defaultHtml.title,
+          content: nestedContent || defaultHtml.content,
+        };
+      }
+
+      if (parsed.title) {
+        return {
+          title: parsed.title,
+          content: parsed.content || defaultHtml.content,
+        };
+      }
+    }
+
+    if (typeof parsed === 'string') {
+      return {
+        title: defaultHtml.title,
+        content: parsed,
+      };
+    }
+
+    return this.cloneJson(defaultHtml);
+  }
+
   parseTermsPageHtml(data: any): any {
     const defaults = this.getDefaultTermsPageHtml();
     if (!data) return this.cloneJson(defaults);
-
-    let parsed: any = null;
-    const raw = data.content ?? data.html ?? data;
-    if (typeof raw === 'string') {
-      try {
-        let once = JSON.parse(raw);
-        if (typeof once === 'string') {
-          once = JSON.parse(once);
-        }
-        parsed = once;
-      } catch {
-        parsed = { content: raw };
-      }
-    } else if (raw && typeof raw === 'object') {
-      parsed =
-        raw.html &&
-          typeof raw.html === 'object' &&
-          (raw.html.content !== undefined || raw.html.title !== undefined)
-          ? raw.html
-          : raw;
-    }
-
-    if (!parsed || typeof parsed !== 'object') {
-      return this.cloneJson(defaults);
-    }
-
-    return {
-      title: parsed.title || defaults.title,
-      content: parsed.content || defaults.content,
-    };
+    const raw = data.html ?? data.content ?? data;
+    return this.extractHtmlContent(raw, defaults);
   }
 
   getTermsData(): Observable<any> {
@@ -653,36 +694,8 @@ export class LandingService extends ApiBaseService {
   parsePrivacyPageHtml(data: any): any {
     const defaults = this.getDefaultPrivacyPageHtml();
     if (!data) return this.cloneJson(defaults);
-
-    let parsed: any = null;
-    const raw = data.content ?? data.html ?? data;
-    if (typeof raw === 'string') {
-      try {
-        let once = JSON.parse(raw);
-        if (typeof once === 'string') {
-          once = JSON.parse(once);
-        }
-        parsed = once;
-      } catch {
-        parsed = { content: raw };
-      }
-    } else if (raw && typeof raw === 'object') {
-      parsed =
-        raw.html &&
-          typeof raw.html === 'object' &&
-          (raw.html.content !== undefined || raw.html.title !== undefined)
-          ? raw.html
-          : raw;
-    }
-
-    if (!parsed || typeof parsed !== 'object') {
-      return this.cloneJson(defaults);
-    }
-
-    return {
-      title: parsed.title || defaults.title,
-      content: parsed.content || defaults.content,
-    };
+    const raw = data.html ?? data.content ?? data;
+    return this.extractHtmlContent(raw, defaults);
   }
 
   getPrivacyData(): Observable<any> {
