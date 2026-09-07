@@ -62,7 +62,7 @@
               <a
                 *ngIf="isInternalLink(btn)"
                 [routerLink]="btn.link"
-                [target]="openInNewTab(btn) ? '_blank' : null"
+                [target]="openInNewTab(btn) ? '_blank' : '_self'"
                 class="group inline-flex items-center justify-center gap-3 px-6 py-3.5 text-base font-semibold rounded-2xl transition-all duration-300 hover:scale-105"
                 [ngClass]="i === 0
                   ? 'text-slate-900 bg-white hover:bg-slate-100 shadow-xl'
@@ -77,7 +77,7 @@
                 *ngIf="!isInternalLink(btn)"
                 [href]="btn.link"
                 [target]="openInNewTab(btn) ? '_blank' : '_self'"
-                [rel]="openInNewTab(btn) ? 'noopener noreferrer' : null"
+                [rel]="openInNewTab(btn) ? 'noopener noreferrer' : ''"
                 class="group inline-flex items-center justify-center gap-3 px-6 py-3.5 text-base font-semibold rounded-2xl transition-all duration-300 hover:scale-105"
                 [ngClass]="i === 0
                   ? 'text-slate-900 bg-white hover:bg-slate-100 shadow-xl'

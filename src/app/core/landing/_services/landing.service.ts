@@ -1145,16 +1145,53 @@ export class LandingService extends ApiBaseService {
     return of(defaultCats);
   }
 
-  submitTicket(formData: any): Observable<any> {
-    return this.post(apiUrl.ticketCreate, formData).pipe(
-      catchError(() =>
-        of({
-          success: true,
-          message: 'Ticket created successfully! Our team will get back to you shortly.',
-          ticket: { id: Math.floor(1000 + Math.random() * 9000), ...formData },
-        })
-      )
-    );
+  submitTicket(form: any): Observable<any> {
+    return this.post(apiUrl.publicTicketOpen, this.toOpenTicketPayload(form));
+  }
+
+  /** Public /ticket/open form → POST /public/ticket/open only. */
+  private toOpenTicketPayload(form: any): Record<string, any> | FormData {
+    const firstName = String(form?.first_name ?? '').trim();
+    const lastName = String(form?.last_name ?? '').trim();
+    const details = String(form?.details ?? form?.body ?? '').trim();
+    const files: File[] = Array.isArray(form?.files)
+      ? form.files.filter((file: any) => file instanceof File)
+      : [];
+
+    const payload: Record<string, any> = {
+      first_name: firstName,
+      last_name: lastName,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      email: String(form?.email ?? '').trim(),
+      subject: String(form?.subject ?? '').trim(),
+      body: details,
+      details,
+      department_id: this.toOptionalId(form?.department_id),
+      priority_id: this.toOptionalId(form?.priority_id),
+      category_id: this.toOptionalId(form?.category_id),
+    };
+
+    if (!files.length) {
+      return payload;
+    }
+
+    const formData = new FormData();
+    Object.keys(payload).forEach((key) => {
+      const value = payload[key];
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, String(value));
+      }
+    });
+    files.forEach((file) => formData.append('files', file, file.name));
+    return formData;
+  }
+
+  private toOptionalId(value: any): number | string | null {
+    if (value === undefined || value === null || value === '') {
+      return null;
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : value;
   }
 
   submitContactMessage(formData: any): Observable<any> {
