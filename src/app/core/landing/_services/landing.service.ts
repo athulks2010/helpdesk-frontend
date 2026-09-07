@@ -744,55 +744,127 @@ export class LandingService extends ApiBaseService {
     );
   }
 
-  getFaqs(): Observable<FaqItem[]> {
-    const defaultFaqs: FaqItem[] = [
-      {
-        id: 1,
-        name: 'How do customers submit a support ticket?',
-        details:
-          '<p>Customers can open a support ticket either via the public ticket submission form or through the authenticated customer portal. Each submission receives a unique tracking ID and confirmation email.</p>',
-        category: 'Ticketing',
+  getDefaultFaqPageHtml(): any {
+    return {
+      hero: {
+        badge: 'Help Center FAQ',
+        title: 'Frequently Asked Questions',
+        subtitle:
+          'Find clear answers to common support, billing, security, and workflow questions.',
+        search_placeholder: 'Search by topic, issue, or keyword...',
+        trust_one: 'Operations-focused answers',
+        trust_two: 'Policy-aligned guidance',
+        trust_three: 'Support-team reviewed',
       },
-      {
-        id: 2,
-        name: 'Can tickets be automatically assigned to specific departments?',
-        details:
-          '<p>Yes. HelpDesk includes automated routing rules that direct incoming requests to the appropriate team based on department, ticket category, and priority level.</p>',
-        category: 'Routing',
+      faq_section: {
+        badge: 'FAQ Section',
+        title: 'Most Asked Questions',
+        subtitle:
+          'Review concise answers used by support teams to resolve recurring customer issues faster.',
       },
-      {
-        id: 3,
-        name: 'How are SLAs and response deadlines managed?',
-        details:
-          '<p>SLA policies can be configured per priority tier (Low, Medium, High, Urgent). Real-time countdowns alert agents and managers before response or resolution thresholds are breached.</p>',
-        category: 'Operations',
+      cta: {
+        title: 'Still have questions?',
+        subtitle: "Can't find the answer you are looking for? Reach out directly.",
+        primary_button_text: 'Contact Team',
+        primary_button_link: '/contact',
+        secondary_button_text: 'Submit Ticket',
+        secondary_button_link: '/ticket/open',
       },
-      {
-        id: 4,
-        name: 'Can agents add internal private notes to tickets?',
-        details:
-          '<p>Yes. Agents can post private internal notes that remain hidden from customers, allowing team members to discuss diagnostics, escalation steps, and technical notes collaboratively.</p>',
-        category: 'Collaboration',
-      },
-      {
-        id: 5,
-        name: 'Is file attachment upload supported on ticket submissions?',
-        details:
-          '<p>Yes. Both customers and agents can attach screenshots, log files, PDFs, and documents up to the maximum upload size defined in system settings.</p>',
-        category: 'Features',
-      },
-      {
-        id: 6,
-        name: 'Can customers check ticket status without logging in?',
-        details:
-          '<p>When a ticket is submitted publicly, the customer receives a tracking link via email allowing them to view ticket progress and post additional replies securely.</p>',
-        category: 'Ticketing',
-      },
-    ];
+    };
+  }
 
-    return this.getCollection(apiUrl.publicFaqs).pipe(
-      catchError(() => of(defaultFaqs))
+  parseFaqPageHtml(data: any): any {
+    const defaults = this.getDefaultFaqPageHtml();
+    if (!data) return this.cloneJson(defaults);
+
+    let parsed: any = null;
+    const raw = data.content ?? data.html ?? data;
+    if (typeof raw === 'string') {
+      try {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
+        parsed = null;
+      }
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && !raw.hero ? raw.html : raw;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return this.cloneJson(defaults);
+    }
+
+    return {
+      hero: { ...defaults.hero, ...(parsed.hero || {}) },
+      faq_section: { ...defaults.faq_section, ...(parsed.faq_section || {}) },
+      cta: { ...defaults.cta, ...(parsed.cta || {}) },
+    };
+  }
+
+  getFaqPageData(): Observable<any> {
+    const defaultData = {
+      title: 'FAQ',
+      html: this.getDefaultFaqPageHtml(),
+    };
+
+    return this.getSingle(apiUrl.publicFrontPage, { slug: 'faq' }).pipe(
+      map((res: any) => {
+        const item = res?.data ?? res?.item ?? res;
+        return {
+          title: item?.title || defaultData.title,
+          html: this.parseFaqPageHtml(item || defaultData),
+        };
+      }),
+      catchError(() => of(defaultData))
     );
+  }
+
+  getFaqs(): Observable<FaqItem[]> {
+    return this.getCollection(apiUrl.publicFaqs, {
+      pageNumber: 1,
+      pageSize: 15,
+    }).pipe(
+      map((res: any) => this.normalizeFaqList(res)),
+      catchError(() => of([]))
+    );
+  }
+
+  normalizeFaqList(list: any): FaqItem[] {
+    const raw: any[] = Array.isArray(list)
+      ? list
+      : Array.isArray(list?.items)
+      ? list.items
+      : Array.isArray(list?.data)
+      ? list.data
+      : [];
+
+    return raw
+      .filter((item: any) => {
+        if (!item) return false;
+        if (item.is_active === 0 || item.is_active === false || item.is_active === '0') return false;
+        if (item.status === 0 || item.status === false || item.status === '0' || item.status === 'draft') {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => this.mapFaqItem(item));
+  }
+
+  mapFaqItem(item: any): FaqItem {
+    return {
+      id: item?.id ?? item?._id ?? 0,
+      name: item?.name || item?.question || item?.title || '',
+      details: item?.details || item?.answer || item?.content || '',
+      category:
+        item?.category ||
+        item?.type?.name ||
+        item?.type_name ||
+        (typeof item?.type === 'string' ? item.type : '') ||
+        '',
+    };
   }
 
   getServicesList(): Observable<ServiceItem[]> {

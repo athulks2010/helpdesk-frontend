@@ -24,17 +24,17 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>Help Center FAQ</span>
+        <span>{{ hero.badge }}</span>
       </div>
 
       <!-- Main Heading -->
       <h1 class="mb-6 text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
-        Frequently Asked Questions
+        {{ hero.title }}
       </h1>
 
       <!-- Subtitle -->
       <p class="mb-10 text-lg sm:text-xl text-white/80 leading-relaxed max-w-3xl mx-auto">
-        Find clear answers to common support, billing, security, and workflow questions.
+        {{ hero.subtitle }}
       </p>
 
       <!-- Search Section -->
@@ -47,7 +47,7 @@
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input type="search" [(ngModel)]="searchQuery" (input)="onSearch()"
-            placeholder="Search by topic, issue, or keyword..."
+            [placeholder]="hero.search_placeholder || 'Search by topic, issue, or keyword...'"
             class="w-full pl-14 pr-6 py-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary backdrop-blur-md text-base" />
         </div>
       </div>
@@ -58,19 +58,19 @@
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          <span>Operations-focused answers</span>
+          <span>{{ hero.trust_one }}</span>
         </div>
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          <span>Policy-aligned guidance</span>
+          <span>{{ hero.trust_two }}</span>
         </div>
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
           </svg>
-          <span>Support-team reviewed</span>
+          <span>{{ hero.trust_three }}</span>
         </div>
       </div>
     </div>
@@ -80,21 +80,19 @@
   <!-- ====== FAQ Section Start ====== -->
   <section class="py-24 bg-slate-50 dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Section Header -->
       <div class="text-center mb-16">
         <div
           class="inline-flex items-center gap-2 px-4 py-2 mb-4 text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 rounded-full border border-primary/20">
-          FAQ Section
+          {{ faqSection.badge }}
         </div>
         <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
-          Most Asked Questions
+          {{ faqSection.title }}
         </h2>
         <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Review concise answers used by support teams to resolve recurring customer issues faster.
+          {{ faqSection.subtitle }}
         </p>
 
-        <!-- Category Tabs -->
-        <!-- <div class="flex flex-wrap items-center justify-center gap-2 mt-8">
+        <div *ngIf="categories.length > 1" class="flex flex-wrap items-center justify-center gap-2 mt-8">
           <button
             *ngFor="let cat of categories"
             type="button"
@@ -106,64 +104,72 @@
           >
             {{ cat }}
           </button>
-        </div> -->
+        </div>
       </div>
 
-      <!-- FAQ Accordion -->
       <div class="max-w-4xl mx-auto space-y-4">
-        <div *ngFor="let faq of filteredFaqs"
-          class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-slate-200/80 dark:border-slate-700 overflow-hidden">
-          <button type="button" (click)="toggleFaq(faq)"
-            class="w-full p-6 text-left focus:outline-none transition-all flex items-center justify-between gap-4"
-            [ngClass]="{'bg-primary/5 dark:bg-primary/10': faq.active}">
-            <div class="flex items-center gap-4 flex-1">
-              <div
-                class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div *ngIf="loading" class="space-y-4">
+          <div *ngFor="let _ of [1, 2, 3]" class="h-20 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 animate-pulse"></div>
+        </div>
+
+        <ng-container *ngIf="!loading">
+          <div *ngFor="let faq of filteredFaqs"
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all border border-slate-200/80 dark:border-slate-700 overflow-hidden">
+            <button type="button" (click)="toggleFaq(faq)"
+              class="w-full p-6 text-left focus:outline-none transition-all flex items-center justify-between gap-4"
+              [ngClass]="{'bg-primary/5 dark:bg-primary/10': faq.active}">
+              <div class="flex items-center gap-4 flex-1">
+                <div
+                  class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  {{ faq.name }}
+                </h3>
+              </div>
+
+              <div class="flex-shrink-0">
+                <svg class="w-5 h-5 text-slate-400 transition-transform duration-300"
+                  [ngClass]="{'rotate-180 text-primary': faq.active}" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                {{ faq.name }}
-              </h3>
-            </div>
+            </button>
 
-            <div class="flex-shrink-0">
-              <svg class="w-5 h-5 text-slate-400 transition-transform duration-300"
-                [ngClass]="{'rotate-180 text-primary': faq.active}" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </button>
+            <div *ngIf="faq.active"
+              class="px-6 pb-6 pt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base border-t border-slate-100 dark:border-slate-700/60"
+              [innerHTML]="faq.details"></div>
+          </div>
 
-          <!-- Accordion Answer -->
-          <div *ngIf="faq.active"
-            class="px-6 pb-6 pt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base border-t border-slate-100 dark:border-slate-700/60"
-            [innerHTML]="faq.details"></div>
-        </div>
+          <div *ngIf="!faqs.length" class="text-center py-16 px-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+            <p class="text-base font-semibold text-slate-800 dark:text-slate-100">No FAQs available yet</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Published FAQs will appear here automatically.</p>
+          </div>
 
-        <div *ngIf="!filteredFaqs.length" class="text-center py-12 text-slate-500">
-          No FAQs match your search query.
-        </div>
+          <div *ngIf="faqs.length && !filteredFaqs.length" class="text-center py-12 text-slate-500">
+            No FAQs match your search query.
+          </div>
+        </ng-container>
       </div>
 
-      <!-- Still Need Help Card -->
       <div
         class="mt-16 max-w-3xl mx-auto p-8 rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
         <div>
-          <h4 class="text-2xl font-bold mb-1">Still have questions?</h4>
-          <p class="text-blue-100 text-sm">Can't find the answer you are looking for? Reach out directly.</p>
+          <h4 class="text-2xl font-bold mb-1">{{ cta.title }}</h4>
+          <p class="text-blue-100 text-sm">{{ cta.subtitle }}</p>
         </div>
         <div class="flex gap-3">
-          <a routerLink="/contact"
+          <a [routerLink]="cta.primary_button_link || '/contact'"
             class="px-6 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-blue-50 transition-colors text-sm">
-            Contact Team
+            {{ cta.primary_button_text }}
           </a>
-          <a routerLink="/ticket/open"
+          <a [routerLink]="cta.secondary_button_link || '/ticket/open'"
             class="px-6 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold transition-colors text-sm">
-            Submit Ticket
+            {{ cta.secondary_button_text }}
           </a>
         </div>
       </div>
