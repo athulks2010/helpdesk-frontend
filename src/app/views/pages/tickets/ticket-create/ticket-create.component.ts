@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
 import { ToastService } from '../../../../core/toast/toast.service';
 
@@ -23,6 +24,9 @@ export class TicketCreateComponent implements OnInit {
   statuses: any[] = [];
   types: any[] = [];
   departments: any[] = [];
+  allCategories: any[] = [];
+  filteredCategories: any[] = [];
+  filteredSubCategories: any[] = [];
   categories: any[] = [];
   customers: any[] = [];
   assignees: any[] = [];
@@ -36,23 +40,46 @@ export class TicketCreateComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
+    private auth: AuthService,
     private ticketService: TicketService,
     private toast: ToastService
   ) {}
+
+  get currentUser(): any {
+    return this.auth.currentUserValue;
+  }
+
+  get roleSlug(): string {
+    const role = this.currentUser?.role;
+    if (!role) return '';
+    return typeof role === 'string' ? role : role.slug || role.name || '';
+  }
+
+  get isCustomer(): boolean {
+    const user = this.currentUser;
+    if (!user) return false;
+    const roleId = Number(user.role_id ?? user.role?.id ?? 0);
+    const slug = (this.roleSlug || '').toLowerCase();
+    const name = (user.role?.name || '').toLowerCase();
+    return roleId === 2 || slug === 'customer' || name === 'customer';
+  }
 
   ngOnInit(): void {
     this.ticketId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.ticketId;
 
+    const currentUserId = Number(this.currentUser?.id) || 0;
+
     this.form = this.fb.group({
       id: [this.ticketId ? Number(this.ticketId) : 0],
-      user_id: [0],
+      user_id: [this.isCustomer ? currentUserId : 0],
       contact_id: [0],
-      priority_id: [0, Validators.required],
+      priority_id: [0],
       status_id: [0],
       type_id: [0],
       department_id: [0],
       category_id: [0],
+      sub_category_id: [0],
       assigned_to: [0],
       subject: ['', Validators.required],
       body: ['', Validators.required],
@@ -60,13 +87,77 @@ export class TicketCreateComponent implements OnInit {
     });
 
     if (!this.isEditMode) {
-      this.form.get('user_id')?.setValidators([Validators.required, Validators.min(1)]);
-      this.form.get('user_id')?.updateValueAndValidity();
-      this.form.get('priority_id')?.setValidators([Validators.required, Validators.min(1)]);
-      this.form.get('priority_id')?.updateValueAndValidity();
+      if (this.isCustomer) {
+        this.form.patchValue({
+          user_id: currentUserId,
+          assigned_to: 0,
+        });
+      } else {
+        this.form.get('user_id')?.setValidators([Validators.required, Validators.min(1)]);
+        this.form.get('user_id')?.updateValueAndValidity();
+        this.form.get('priority_id')?.setValidators([Validators.required, Validators.min(1)]);
+        this.form.get('priority_id')?.updateValueAndValidity();
+      }
     }
 
+    this.form.get('department_id')?.valueChanges.subscribe((deptId) => {
+      this.onDepartmentChange(deptId);
+    });
+
+    this.form.get('category_id')?.valueChanges.subscribe((catId) => {
+      this.onCategoryChange(catId);
+    });
+
     this.loadData();
+  }
+
+  onDepartmentChange(deptId: any): void {
+    const dId = Number(deptId) || 0;
+    if (dId > 0) {
+      // Find top-level categories that belong to this department (no parent_id or parent_id == 0)
+      this.filteredCategories = this.allCategories.filter((c) => {
+        const cDept = Number(c.department_id || c.department?.id || 0);
+        const pId = Number(c.parent_id || c.parent?.id || 0);
+        return cDept === dId && pId === 0;
+      });
+      // Fallback: If no top-level category filtered, include any category with matching department_id
+      if (this.filteredCategories.length === 0) {
+        this.filteredCategories = this.allCategories.filter(
+          (c) => Number(c.department_id || c.department?.id || 0) === dId
+        );
+      }
+    } else {
+      this.filteredCategories = [];
+    }
+    this.categories = this.filteredCategories;
+
+    // If currently selected category does not belong to filteredCategories, reset it
+    const currentCatId = Number(this.form.get('category_id')?.value) || 0;
+    if (!this.filteredCategories.some((c) => Number(c.id) === currentCatId)) {
+      this.form.get('category_id')?.setValue(0, { emitEvent: false });
+      this.filteredSubCategories = [];
+      this.form.get('sub_category_id')?.setValue(0, { emitEvent: false });
+    } else {
+      this.onCategoryChange(currentCatId);
+    }
+  }
+
+  onCategoryChange(catId: any): void {
+    const cId = Number(catId) || 0;
+    if (cId > 0) {
+      // Subcategories are categories where parent_id matches selected category_id
+      this.filteredSubCategories = this.allCategories.filter((c) => {
+        const pId = Number(c.parent_id || c.parent?.id || 0);
+        return pId === cId;
+      });
+    } else {
+      this.filteredSubCategories = [];
+    }
+
+    const currentSubCatId = Number(this.form.get('sub_category_id')?.value) || 0;
+    if (!this.filteredSubCategories.some((c) => Number(c.id) === currentSubCatId)) {
+      this.form.get('sub_category_id')?.setValue(0, { emitEvent: false });
+    }
   }
 
   get customFieldGroup(): FormGroup {
@@ -112,14 +203,14 @@ export class TicketCreateComponent implements OnInit {
       fields: this.ticketService.getCustomFieldDefinitions({ pageSize: 200 }),
     }).subscribe({
       next: ({ dropdowns, fields }) => {
-        this.priorities = dropdowns.priorities;
-        this.statuses = dropdowns.statuses;
-        this.types = dropdowns.types;
-        this.departments = dropdowns.departments;
-        this.categories = dropdowns.categories;
-        this.customers = dropdowns.customers;
-        this.assignees = dropdowns.assignees;
-        this.contacts = dropdowns.contacts;
+        this.priorities = dropdowns.priorities || [];
+        this.statuses = dropdowns.statuses || [];
+        this.types = dropdowns.types || [];
+        this.departments = dropdowns.departments || [];
+        this.allCategories = dropdowns.categories || [];
+        this.customers = dropdowns.customers || [];
+        this.assignees = dropdowns.assignees || [];
+        this.contacts = dropdowns.contacts || [];
         this.customFieldDefs = fields || [];
 
         if (this.isEditMode && this.ticketId) {
@@ -127,19 +218,48 @@ export class TicketCreateComponent implements OnInit {
             next: (res) => {
               const t = res?.ticket || res?.item || res;
               if (t) {
-                this.form.patchValue({
-                  id: Number(t.id || this.ticketId) || 0,
-                  user_id: Number(t.user_id || t.user?.id) || 0,
-                  contact_id: Number(t.contact_id || t.contact?.id) || 0,
-                  priority_id: Number(t.priority_id || t.priority?.id) || 0,
-                  status_id: Number(t.status_id || t.status?.id) || 0,
-                  type_id: Number(t.type_id || t.type?.id) || 0,
-                  department_id: Number(t.department_id || t.department?.id) || 0,
-                  category_id: Number(t.category_id || t.category?.id) || 0,
-                  assigned_to: Number(t.assigned_to || t.assignedTo?.id || t.assignee?.id) || 0,
-                  subject: t.subject || t.title || '',
-                  body: t.body || t.details || t.description || '',
-                });
+                const deptId = Number(t.department_id || t.department?.id) || 0;
+                const catId = Number(t.category_id || t.category?.id) || 0;
+                const subCatId = Number(t.sub_category_id || t.subCategory?.id || t.sub_category?.id) || 0;
+
+                if (deptId > 0) {
+                  this.filteredCategories = this.allCategories.filter((c) => {
+                    const cDept = Number(c.department_id || c.department?.id || 0);
+                    const pId = Number(c.parent_id || c.parent?.id || 0);
+                    return cDept === deptId && pId === 0;
+                  });
+                  if (this.filteredCategories.length === 0) {
+                    this.filteredCategories = this.allCategories.filter(
+                      (c) => Number(c.department_id || c.department?.id || 0) === deptId
+                    );
+                  }
+                  this.categories = this.filteredCategories;
+                }
+                if (catId > 0) {
+                  this.filteredSubCategories = this.allCategories.filter((c) => {
+                    const pId = Number(c.parent_id || c.parent?.id || 0);
+                    return pId === catId;
+                  });
+                }
+
+                this.form.patchValue(
+                  {
+                    id: Number(t.id || this.ticketId) || 0,
+                    user_id: Number(t.user_id || t.user?.id) || 0,
+                    contact_id: Number(t.contact_id || t.contact?.id) || 0,
+                    priority_id: Number(t.priority_id || t.priority?.id) || 0,
+                    status_id: Number(t.status_id || t.status?.id) || 0,
+                    type_id: Number(t.type_id || t.type?.id) || 0,
+                    department_id: deptId,
+                    category_id: catId,
+                    sub_category_id: subCatId,
+                    assigned_to: Number(t.assigned_to || t.assignedTo?.id || t.assignee?.id) || 0,
+                    subject: t.subject || t.title || '',
+                    body: t.body || t.details || t.description || '',
+                  },
+                  { emitEvent: false }
+                );
+
                 const values = t.custom_field || t.custom_fields || {};
                 this.buildCustomFieldControls(this.customFieldDefs, values);
               } else {
@@ -154,14 +274,23 @@ export class TicketCreateComponent implements OnInit {
             },
           });
         } else {
-          const defPriority = this.priorities.find((p) =>
-            /generally|medium|normal/i.test(p.name || '')
+          const defPriority =
+            this.priorities.find((p) => /generally|medium|normal/i.test(p.name || '')) ||
+            this.priorities[0];
+          const pendingStatus =
+            this.statuses.find((s) => /pending/i.test(s.name || s.slug || '')) ||
+            this.statuses.find((s) => /open|new|active/i.test(s.name || s.slug || '')) ||
+            this.statuses[0];
+
+          this.form.patchValue(
+            {
+              user_id: this.isCustomer ? (Number(this.currentUser?.id) || 0) : 0,
+              priority_id: defPriority?.id ? Number(defPriority.id) : 0,
+              status_id: pendingStatus?.id ? Number(pendingStatus.id) : 0,
+              assigned_to: 0,
+            },
+            { emitEvent: false }
           );
-          const defStatus = this.statuses.find((s) => /open|new/i.test(s.name || ''));
-          this.form.patchValue({
-            priority_id: defPriority?.id ? Number(defPriority.id) : 0,
-            status_id: defStatus?.id ? Number(defStatus.id) : 0,
-          });
           this.buildCustomFieldControls(this.customFieldDefs);
           this.loadingData = false;
         }
@@ -191,6 +320,23 @@ export class TicketCreateComponent implements OnInit {
   }
 
   submit(): void {
+    if (this.isCustomer && this.currentUser?.id) {
+      this.form.patchValue({
+        user_id: Number(this.currentUser.id),
+        assigned_to: 0,
+      });
+    }
+
+    if (!this.isEditMode) {
+      const pendingStatus =
+        this.statuses.find((s) => /pending/i.test(s.name || s.slug || '')) ||
+        this.statuses.find((s) => /open|new|active/i.test(s.name || s.slug || '')) ||
+        this.statuses[0];
+      if (pendingStatus?.id) {
+        this.form.patchValue({ status_id: Number(pendingStatus.id) });
+      }
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -217,7 +363,10 @@ export class TicketCreateComponent implements OnInit {
 
   private onSuccess(res?: any): void {
     this.loading = false;
-    const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Ticket updated successfully' : 'Ticket created successfully');
+    const msg =
+      res?.response?.message ||
+      res?.message ||
+      (this.isEditMode ? 'Ticket updated successfully' : 'Ticket created successfully');
     this.toast.success(msg);
     this.router.navigate(['/tickets']);
   }

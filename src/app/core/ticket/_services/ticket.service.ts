@@ -180,6 +180,7 @@ export class TicketService extends ApiBaseService {
       department_id: this.toId(raw['department_id']),
       type_id: this.toId(raw['type_id']),
       category_id: this.toId(raw['category_id']),
+      sub_category_id: this.toId(raw['sub_category_id']),
       assigned_to: this.toId(raw['assigned_to']),
       custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
     };
@@ -197,6 +198,7 @@ export class TicketService extends ApiBaseService {
       department_id: this.toId(raw['department_id']),
       type_id: this.toId(raw['type_id']),
       category_id: this.toId(raw['category_id']),
+      sub_category_id: this.toId(raw['sub_category_id']),
       custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
     };
   }

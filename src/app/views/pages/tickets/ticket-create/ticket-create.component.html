@@ -20,10 +20,20 @@
         {{ error }}
       </div>
 
+      <!-- Customer Information Banner -->
+      <div *ngIf="isCustomer && !isEditMode" class="flex items-center gap-3 mx-6 mt-6 p-4 rounded-xl bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-sm">
+        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <div>
+          Submitting ticket as <strong class="font-semibold text-blue-900 dark:text-blue-100">{{ displayName(currentUser) }}</strong> ({{ currentUser?.email }})
+        </div>
+      </div>
+
       <div class="p-6 space-y-6">
 
-        <!-- Create-only: Customer / Contact / Priority / Type -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode">
+        <!-- Create-only for Staff: Customer & Priority -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode && !isCustomer">
           <div>
             <label class="form-label">Customer <span class="text-red-500">*</span></label>
             <select formControlName="user_id" class="form-select"
@@ -36,17 +46,6 @@
             <p *ngIf="f['user_id'].touched && f['user_id'].invalid" class="form-error">Customer is required</p>
           </div>
 
-          <!-- Contact field (commented out for now) -->
-          <!--
-          <div>
-            <label class="form-label">Contact</label>
-            <select formControlName="contact_id" class="form-select">
-              <option [ngValue]="0">— None —</option>
-              <option *ngFor="let c of contacts" [ngValue]="+c.id">{{ contactLabel(c) }}</option>
-            </select>
-          </div>
-          -->
-
           <div>
             <label class="form-label">Priority <span class="text-red-500">*</span></label>
             <select formControlName="priority_id" class="form-select"
@@ -58,7 +57,7 @@
           </div>
         </div>
 
-        <!-- Edit-only: Priority / Status / Assigned (matches /ticket/update) -->
+        <!-- Edit-only: Priority / Status / Assigned -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5" *ngIf="isEditMode">
           <div>
             <label class="form-label">Priority</label>
@@ -74,7 +73,7 @@
               <option *ngFor="let s of statuses" [ngValue]="+s.id">{{ s.name }}</option>
             </select>
           </div>
-          <div>
+          <div *ngIf="!isCustomer">
             <label class="form-label">Assigned To</label>
             <select formControlName="assigned_to" class="form-select">
               <option [ngValue]="0">— Unassigned —</option>
@@ -85,15 +84,8 @@
           </div>
         </div>
 
-        <!-- Create-only taxonomy row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode">
-          <div>
-            <label class="form-label">Type</label>
-            <select formControlName="type_id" class="form-select">
-              <option [ngValue]="0">— Select Type —</option>
-              <option *ngFor="let t of types" [ngValue]="+t.id">{{ t.name }}</option>
-            </select>
-          </div>
+        <!-- Taxonomy row: Department, Category, Sub Category, Type -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           <div>
             <label class="form-label">Department</label>
             <select formControlName="department_id" class="form-select">
@@ -101,27 +93,36 @@
               <option *ngFor="let d of departments" [ngValue]="+d.id">{{ d.name }}</option>
             </select>
           </div>
-          <!-- Category field (commented out for now) -->
-          <!--
-          <div>
+
+          <!-- Category: visible when a Department is selected -->
+          <div *ngIf="+form.get('department_id')?.value > 0">
             <label class="form-label">Category</label>
             <select formControlName="category_id" class="form-select">
               <option [ngValue]="0">— Select category —</option>
-              <option *ngFor="let c of categories" [ngValue]="+c.id">{{ c.name }}</option>
+              <option *ngFor="let c of filteredCategories" [ngValue]="+c.id">{{ c.name }}</option>
             </select>
           </div>
-          -->
+
+          <!-- Sub Category: visible when a Category is selected and sub-categories exist -->
+          <div *ngIf="+form.get('category_id')?.value > 0 && filteredSubCategories.length > 0">
+            <label class="form-label">Sub Category</label>
+            <select formControlName="sub_category_id" class="form-select">
+              <option [ngValue]="0">— Select sub category —</option>
+              <option *ngFor="let sc of filteredSubCategories" [ngValue]="+sc.id">{{ sc.name }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label">Type</label>
+            <select formControlName="type_id" class="form-select">
+              <option [ngValue]="0">— Select Type —</option>
+              <option *ngFor="let t of types" [ngValue]="+t.id">{{ t.name }}</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Create-only: Status + Assignee -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode">
-          <div>
-            <label class="form-label">Status</label>
-            <select formControlName="status_id" class="form-select">
-              <option [ngValue]="0">— Select status —</option>
-              <option *ngFor="let s of statuses" [ngValue]="+s.id">{{ s.name }}</option>
-            </select>
-          </div>
+        <!-- Create-only for Staff: Assignee (Status defaults to Pending) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5" *ngIf="!isEditMode && !isCustomer">
           <div>
             <label class="form-label">Assigned To</label>
             <select formControlName="assigned_to" class="form-select">
@@ -130,6 +131,39 @@
                 {{ displayName(a) }} ({{ a.email }})
               </option>
             </select>
+          </div>
+        </div>
+
+        <!-- Custom fields inline with main fields (no separate section/header) -->
+        <div *ngIf="customFieldDefs.length" formGroupName="custom_field" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div *ngFor="let field of customFieldDefs" [class.md:col-span-2]="field.type === 'textarea'" [class.lg:col-span-3]="field.type === 'textarea'">
+            <label class="form-label">
+              {{ field.label || field.name }}
+              <span *ngIf="field.required === 1 || field.required === true" class="text-red-500">*</span>
+            </label>
+
+            <select *ngIf="field.type === 'select'" class="form-select" [formControlName]="field.name">
+              <option value="">— Select {{ field.label || field.name }} —</option>
+              <option *ngFor="let opt of fieldOptions(field)" [value]="opt">{{ opt }}</option>
+            </select>
+
+            <textarea *ngIf="field.type === 'textarea'" class="form-input resize-y min-h-[80px]" rows="3"
+              [formControlName]="field.name" [placeholder]="field.placeholder || ''"></textarea>
+
+            <div *ngIf="field.type === 'checkbox'" class="pt-2">
+              <label class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input type="checkbox" class="rounded border-slate-300" [formControlName]="field.name" />
+                {{ field.placeholder || field.label || field.name }}
+              </label>
+            </div>
+
+            <input *ngIf="field.type !== 'select' && field.type !== 'textarea' && field.type !== 'checkbox'"
+              class="form-input"
+              [type]="field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : field.type === 'date' ? 'date' : field.type === 'file' ? 'text' : 'text'"
+              [formControlName]="field.name"
+              [placeholder]="field.placeholder || ''" />
+
+            <p *ngIf="field.hint" class="mt-1 text-xs text-slate-400">{{ field.hint }}</p>
           </div>
         </div>
 
@@ -148,42 +182,6 @@
             class="form-input font-mono resize-y min-h-[200px]"
             [class.border-red-400]="f['body'].touched && f['body'].invalid"></textarea>
           <p *ngIf="f['body'].touched && f['body'].invalid" class="form-error">Details are required</p>
-        </div>
-
-        <!-- Custom fields (ticket_fields → ticket_entries) -->
-        <div *ngIf="customFieldDefs.length" formGroupName="custom_field" class="space-y-4">
-          <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2">
-            Custom Fields
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div *ngFor="let field of customFieldDefs" [class.md:col-span-2]="field.type === 'textarea'">
-              <label class="form-label">
-                {{ field.label || field.name }}
-                <span *ngIf="field.required === 1 || field.required === true" class="text-red-500">*</span>
-              </label>
-
-              <select *ngIf="field.type === 'select'" class="form-select" [formControlName]="field.name">
-                <option value="">— Select —</option>
-                <option *ngFor="let opt of fieldOptions(field)" [value]="opt">{{ opt }}</option>
-              </select>
-
-              <textarea *ngIf="field.type === 'textarea'" class="form-input resize-y min-h-[80px]" rows="3"
-                [formControlName]="field.name" [placeholder]="field.placeholder || ''"></textarea>
-
-              <label *ngIf="field.type === 'checkbox'" class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <input type="checkbox" class="rounded border-slate-300" [formControlName]="field.name" />
-                {{ field.placeholder || field.label || field.name }}
-              </label>
-
-              <input *ngIf="field.type !== 'select' && field.type !== 'textarea' && field.type !== 'checkbox'"
-                class="form-input"
-                [type]="field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : field.type === 'file' ? 'text' : 'text'"
-                [formControlName]="field.name"
-                [placeholder]="field.placeholder || ''" />
-
-              <p *ngIf="field.hint" class="mt-1 text-xs text-slate-400">{{ field.hint }}</p>
-            </div>
-          </div>
         </div>
 
         <div *ngIf="!isEditMode">
