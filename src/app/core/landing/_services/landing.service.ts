@@ -1114,35 +1114,79 @@ export class LandingService extends ApiBaseService {
     return of(posts);
   }
 
+  private extractArray(res: any): any[] {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.items)) return res.items;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.items)) return res.data.items;
+    if (typeof res === 'object') {
+      const vals = Object.values(res);
+      if (vals.length && typeof vals[0] === 'object') return vals;
+    }
+    return [];
+  }
+
+  getTicketFormData(): Observable<{
+    departments: any[];
+    categories: any[];
+    all_categories: any[];
+    priorities: any[];
+    types: any[];
+    custom_fields: any[];
+  }> {
+    return this.http.get<any>(`${this.baseUrl}${apiUrl.publicTicketFormData}`).pipe(
+      map((raw: any) => {
+        const data = raw?.data ?? raw ?? {};
+        const cats = this.extractArray(data.all_categories || data.categories);
+        return {
+          departments: this.extractArray(data.departments),
+          categories: cats,
+          all_categories: cats,
+          priorities: this.extractArray(data.priorities),
+          types: this.extractArray(data.types),
+          custom_fields: this.extractArray(data.custom_fields),
+        };
+      }),
+      catchError(() =>
+        of({
+          departments: [],
+          categories: [],
+          all_categories: [],
+          priorities: [],
+          types: [],
+          custom_fields: [],
+        })
+      )
+    );
+  }
+
   getDepartments(): Observable<any[]> {
-    const defaultDepts = [
-      { id: 1, name: 'Technical Support' },
-      { id: 2, name: 'Billing & Subscriptions' },
-      { id: 3, name: 'Product Onboarding' },
-      { id: 4, name: 'General Inquiries' },
-    ];
-    return of(defaultDepts);
+    return this.http.get<any>(`${this.baseUrl}${apiUrl.publicDepartments}`).pipe(
+      map((res: any) => this.extractArray(res)),
+      catchError(() => of([]))
+    );
   }
 
   getPriorities(): Observable<any[]> {
-    const defaultPriorities = [
-      { id: 1, name: 'Low', color: '#10b981' },
-      { id: 2, name: 'Medium', color: '#3b82f6' },
-      { id: 3, name: 'High', color: '#f59e0b' },
-      { id: 4, name: 'Urgent', color: '#ef4444' },
-    ];
-    return of(defaultPriorities);
+    return this.http.get<any>(`${this.baseUrl}${apiUrl.publicPriorities}`).pipe(
+      map((res: any) => this.extractArray(res)),
+      catchError(() => of([]))
+    );
   }
 
   getCategories(): Observable<any[]> {
-    const defaultCats = [
-      { id: 1, name: 'Account & Login' },
-      { id: 2, name: 'Billing Issue' },
-      { id: 3, name: 'Software Bug' },
-      { id: 4, name: 'Feature Request' },
-      { id: 5, name: 'Integration Help' },
-    ];
-    return of(defaultCats);
+    return this.http.get<any>(`${this.baseUrl}${apiUrl.publicCategories}`).pipe(
+      map((res: any) => this.extractArray(res)),
+      catchError(() => of([]))
+    );
+  }
+
+  getTypes(): Observable<any[]> {
+    return this.http.get<any>(`${this.baseUrl}${apiUrl.publicTypes}`).pipe(
+      map((res: any) => this.extractArray(res)),
+      catchError(() => of([]))
+    );
   }
 
   submitTicket(form: any): Observable<any> {
@@ -1169,6 +1213,9 @@ export class LandingService extends ApiBaseService {
       department_id: this.toOptionalId(form?.department_id),
       priority_id: this.toOptionalId(form?.priority_id),
       category_id: this.toOptionalId(form?.category_id),
+      sub_category_id: this.toOptionalId(form?.sub_category_id),
+      type_id: this.toOptionalId(form?.type_id),
+      custom_field: form?.custom_field && typeof form.custom_field === 'object' ? form.custom_field : undefined,
     };
 
     if (!files.length) {
@@ -1179,7 +1226,11 @@ export class LandingService extends ApiBaseService {
     Object.keys(payload).forEach((key) => {
       const value = payload[key];
       if (value !== undefined && value !== null && value !== '') {
-        formData.append(key, String(value));
+        if (typeof value === 'object') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
       }
     });
     files.forEach((file) => formData.append('files', file, file.name));
@@ -1187,7 +1238,7 @@ export class LandingService extends ApiBaseService {
   }
 
   private toOptionalId(value: any): number | string | null {
-    if (value === undefined || value === null || value === '') {
+    if (value === undefined || value === null || value === '' || value === 0 || value === '0') {
       return null;
     }
     const numeric = Number(value);
