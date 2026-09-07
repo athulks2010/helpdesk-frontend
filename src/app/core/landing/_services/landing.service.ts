@@ -302,21 +302,21 @@ export class LandingService extends ApiBaseService {
     const defaults = this.getDefaultHomePageData();
     if (!data) return defaults.html;
 
+    const item = data?.data ?? data?.item ?? data;
     let parsed: any = null;
-    if (typeof data.content === 'string') {
+    const raw = item?.content ?? item?.html ?? item;
+    if (typeof raw === 'string') {
       try {
-        parsed = JSON.parse(data.content);
-      } catch (e) {
+        let once = JSON.parse(raw);
+        if (typeof once === 'string') {
+          once = JSON.parse(once);
+        }
+        parsed = once;
+      } catch {
         parsed = null;
       }
-    } else if (data.html) {
-      try {
-        parsed = typeof data.html === 'string' ? JSON.parse(data.html) : data.html;
-      } catch (e) {
-        parsed = null;
-      }
-    } else if (data.sections) {
-      parsed = data;
+    } else if (raw && typeof raw === 'object') {
+      parsed = raw.html && typeof raw.html === 'object' && raw.html.sections ? raw.html : raw;
     }
 
     if (!parsed || !parsed.sections) {
@@ -338,6 +338,8 @@ export class LandingService extends ApiBaseService {
         channels: incoming.channels && Object.keys(incoming.channels).length ? incoming.channels : defSec.channels,
         hero_overlays: incoming.hero_overlays && Object.keys(incoming.hero_overlays).length ? incoming.hero_overlays : defSec.hero_overlays,
         trust_indicators: incoming.trust_indicators && Object.keys(incoming.trust_indicators).length ? incoming.trust_indicators : defSec.trust_indicators,
+        buttons: incoming.buttons && Object.keys(incoming.buttons).length ? incoming.buttons : defSec.buttons,
+        kb_button: incoming.kb_button ? { ...defSec.kb_button, ...incoming.kb_button } : defSec.kb_button,
       };
     });
 
@@ -347,7 +349,7 @@ export class LandingService extends ApiBaseService {
   getHomePageData(): Observable<any> {
     const defaultData = this.getDefaultHomePageData();
     return this.getSingle(apiUrl.publicFrontPage, { slug: 'home' }).pipe(
-      map((res: any) => this.parseHomePageData(res)),
+      map((res: any) => this.parseHomePageData(res?.data ?? res?.item ?? res)),
       catchError(() => of(defaultData.html))
     );
   }
@@ -366,6 +368,25 @@ export class LandingService extends ApiBaseService {
       phone_details:
         'Call for urgent operational issues that require immediate triage.',
       contact_recipient: 'support@yourhelpdesk.com',
+      badge: 'Contact Support Team',
+      primary_button_text: 'Send a Message',
+      primary_button_link: '#contact-info',
+      secondary_button_text: 'Browse FAQ',
+      secondary_button_link: '/faq',
+      trust_one: 'SLA-aware response',
+      trust_two: 'Specialist routing',
+      trust_three: 'Secure communication',
+      trust_four: '24h first response',
+      section_badge: 'Get In Touch',
+      section_title: 'We Are Here To Help',
+      section_subtitle:
+        'Have a question about technical configuration, account management, or ticket escalations? Use the contact methods below or send us a message directly.',
+      location_label: 'Our Location',
+      phone_label: 'Phone Number',
+      email_label: 'Email Address',
+      form_title: 'Send Us A Message',
+      form_subtitle: 'Share your request and we will respond with the right next step',
+      form_submit_text: 'Send Message',
     };
   }
 
@@ -1137,14 +1158,7 @@ export class LandingService extends ApiBaseService {
   }
 
   submitContactMessage(formData: any): Observable<any> {
-    return this.post(apiUrl.contactCreate, formData).pipe(
-      catchError(() =>
-        of({
-          success: true,
-          message: 'Thank you for reaching out! We have received your message and will respond within 24 hours.',
-        })
-      )
-    );
+    return this.post(apiUrl.contactCreate, formData);
   }
 
   subscribeNewsletter(email: string): Observable<any> {
