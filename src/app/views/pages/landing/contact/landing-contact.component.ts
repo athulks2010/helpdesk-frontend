@@ -14,7 +14,7 @@ export class LandingContactComponent implements OnInit {
   form = {
     name: '',
     email: '',
-    subject: '',
+    phone: '',
     message: '',
   };
 
@@ -67,8 +67,8 @@ export class LandingContactComponent implements OnInit {
     if (!this.form.email.trim() || !this.form.email.includes('@')) {
       this.validationErrors['email'] = 'Valid email is required.';
     }
-    if (!this.form.subject.trim()) {
-      this.validationErrors['subject'] = 'Subject is required.';
+    if (!this.form.phone.trim() || !/\d{7,}/.test(this.form.phone.replace(/\D/g, ''))) {
+      this.validationErrors['phone'] = 'Valid phone number is required.';
     }
     if (!this.form.message.trim()) {
       this.validationErrors['message'] = 'Message is required.';
@@ -98,7 +98,7 @@ export class LandingContactComponent implements OnInit {
           res?.response?.message ||
           res?.message ||
           'Thank you for reaching out! We have received your message and will respond shortly.';
-        this.form = { name: '', email: '', subject: '', message: '' };
+        this.form = { name: '', email: '', phone: '', message: '' };
       },
       error: (err) => {
         this.isSubmitting = false;
