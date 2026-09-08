@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
 
 @Component({
@@ -8,14 +9,20 @@ import { LandingService } from '../../../../core/landing/_services/landing.servi
 })
 export class LandingPrivacyComponent implements OnInit {
   privacyData: any = null;
+  safeContent: SafeHtml = '';
 
-  constructor(private landingService: LandingService) {}
+  constructor(
+    private landingService: LandingService,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.landingService.getPrivacyData().subscribe((data: any) => {
       this.privacyData = data;
+      const raw = data?.html?.content || '';
+      this.safeContent = this.sanitizer.bypassSecurityTrustHtml(raw);
     });
   }
 

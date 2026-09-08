@@ -1,10 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
+import { FileUploadService } from '../../../../core/shared/file-upload.service';
 import { ToastService } from '../../../../core/toast/toast.service';
+
+export interface TicketAttachment {
+  name: string;
+  size: number;
+  path: string;
+  uploading?: boolean;
+}
 
 @Component({
   selector: 'app-ticket-create',
@@ -34,7 +42,7 @@ export class TicketCreateComponent implements OnInit {
   /** ticket_fields definitions */
   customFieldDefs: any[] = [];
 
-  attachedFiles: File[] = [];
+  attachedFiles: TicketAttachment[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -42,6 +50,7 @@ export class TicketCreateComponent implements OnInit {
     private router: Router,
     private auth: AuthService,
     private ticketService: TicketService,
+    private fileUpload: FileUploadService,
     private toast: ToastService
   ) {}
 
@@ -303,10 +312,31 @@ export class TicketCreateComponent implements OnInit {
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files) {
-      Array.from(input.files).forEach((f) => this.attachedFiles.push(f));
-      input.value = '';
-    }
+    if (!input.files || !input.files.length) return;
+
+    const files = Array.from(input.files);
+    input.value = '';
+
+    files.forEach((file) => {
+      const item: TicketAttachment = {
+        name: file.name,
+        size: file.size,
+        path: '',
+        uploading: true,
+      };
+      this.attachedFiles.push(item);
+
+      this.fileUpload.upload(file, 'tickets').subscribe({
+        next: (path: string) => {
+          item.path = path;
+          item.uploading = false;
+        },
+        error: (err: any) => {
+          item.uploading = false;
+          this.toast.error(`Failed to upload ${file.name}`);
+        },
+      });
+    });
   }
 
   removeFile(index: number): void {
@@ -341,11 +371,40 @@ export class TicketCreateComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+
+    const isUploading = this.attachedFiles.some((f) => f.uploading);
+    if (isUploading) {
+      this.toast.warning('Please wait for file upload to complete');
+      return;
+    }
+
     this.loading = true;
     this.error = '';
 
     const raw = this.form.getRawValue();
+    const firstUploaded = this.attachedFiles.find((f) => f.path && !f.uploading);
+    if (firstUploaded) {
+      raw.path = firstUploaded.path;
+      raw.filename = firstUploaded.name;
+      raw.size = firstUploaded.size || 0;
+    } else {
+      raw.path = '';
+      raw.filename = '';
+      raw.size = 0;
+    }
 
+    const uploadedPaths = this.attachedFiles
+      .filter((f) => f.path && !f.uploading)
+      .map((f) => f.path);
+
+    raw.attachments = uploadedPaths;
+    raw.attachment = uploadedPaths;
+    raw.details = raw.details || raw.body || '';
+
+    this.executeSave(raw);
+  }
+
+  private executeSave(raw: any): void {
     if (this.isEditMode) {
       this.ticketService.updateTicket(raw).subscribe({
         next: (res) => this.onSuccess(res),

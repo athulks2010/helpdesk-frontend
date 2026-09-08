@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { LandingService } from '../../../../core/landing/_services/landing.service';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
+import { FileUploadService } from '../../../../core/shared/file-upload.service';
 
 @Component({
   selector: 'app-landing-open-ticket',
@@ -37,6 +38,7 @@ export class LandingOpenTicketComponent implements OnInit {
   };
 
   selectedFilesSummary: string = '';
+  isUploadingFiles = false;
   isSubmitting = false;
   submitSuccess = false;
   submitError = '';
@@ -45,7 +47,8 @@ export class LandingOpenTicketComponent implements OnInit {
 
   constructor(
     private landingService: LandingService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fileUpload: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -70,15 +73,18 @@ export class LandingOpenTicketComponent implements OnInit {
       priorities: this.landingService.getPriorities(),
       types: this.landingService.getTypes(),
     }).subscribe({
-      next: (res) => {
-        this.populateData({
-          departments: res.departments,
-          categories: res.categories,
-          all_categories: res.categories,
-          priorities: res.priorities,
-          types: res.types,
-          custom_fields: [],
-        });
+      next: (res: any) => {
+        this.departments = res.departments || [];
+        this.allCategories = res.categories || [];
+        this.priorities = res.priorities || [];
+        this.types = res.types || [];
+
+        // Set default priority if available
+        if (!this.form.priority_id && this.priorities.length > 0) {
+          const highPrio = this.priorities.find((p: any) => /high/i.test(p.name));
+          this.form.priority_id = highPrio ? highPrio.id : this.priorities[0].id;
+        }
+
         this.loadingData = false;
       },
       error: () => {
@@ -87,39 +93,17 @@ export class LandingOpenTicketComponent implements OnInit {
     });
   }
 
-  private populateData(data: any): void {
-    this.departments = data.departments || [];
-    this.allCategories = data.all_categories || data.categories || [];
-    this.priorities = data.priorities || [];
-    this.types = data.types || [];
-    this.customFields = data.custom_fields || [];
-
-    // Set default priority if available
-    if (!this.form.priority_id && this.priorities.length > 0) {
-      const highPrio = this.priorities.find((p: any) => /high/i.test(p.name));
-      this.form.priority_id = highPrio ? highPrio.id : this.priorities[0].id;
-    }
-
-    // Initialize custom field values
-    if (this.customFields.length > 0) {
-      this.customFields.forEach((cf: any) => {
-        if (cf.name && this.form.custom_field[cf.name] === undefined) {
-          this.form.custom_field[cf.name] = cf.type === 'checkbox' ? false : '';
-        }
-      });
-    }
-  }
-
-  onDepartmentChange(deptId: any): void {
+  onDepartmentChange(event: any): void {
+    const deptId = event.target ? event.target.value : event;
     const dId = Number(deptId) || 0;
     if (dId > 0) {
-      // Find top-level categories for this department (no parent_id or parent_id == 0)
+      // Find top-level categories that belong to this department (no parent_id or parent_id == 0)
       this.categories = this.allCategories.filter((c) => {
         const cDept = Number(c.department_id || c.department?.id || 0);
         const pId = Number(c.parent_id || c.parent?.id || 0);
         return cDept === dId && pId === 0;
       });
-      // Fallback: If no top-level category filtered, include any category with matching department_id
+      // Fallback: If no top-level category matches, include any category with matching department_id
       if (this.categories.length === 0) {
         this.categories = this.allCategories.filter(
           (c) => Number(c.department_id || c.department?.id || 0) === dId
@@ -129,7 +113,6 @@ export class LandingOpenTicketComponent implements OnInit {
       this.categories = [];
     }
 
-    // Reset category & subcategory if currently selected category doesn't belong to this department
     const currentCatId = Number(this.form.category_id) || 0;
     if (!this.categories.some((c) => Number(c.id) === currentCatId)) {
       this.form.category_id = null;
@@ -140,7 +123,8 @@ export class LandingOpenTicketComponent implements OnInit {
     }
   }
 
-  onCategoryChange(catId: any): void {
+  onCategoryChange(event: any): void {
+    const catId = event.target ? event.target.value : event;
     const cId = Number(catId) || 0;
     if (cId > 0) {
       // Subcategories are categories where parent_id matches selected category_id
@@ -175,15 +159,44 @@ export class LandingOpenTicketComponent implements OnInit {
   }
 
   onFileChange(event: any): void {
-    const files = event.target.files;
-    if (files && files.length) {
-      this.form.files = Array.from(files);
-      this.selectedFilesSummary = `${this.form.files.length} file(s) attached`;
-    }
+    const files: FileList = event.target.files;
+    if (!files || !files.length) return;
+
+    this.isUploadingFiles = true;
+    this.selectedFilesSummary = `Uploading ${files.length} file(s)...`;
+
+    const firstFile = files[0];
+    const fileArray = Array.from(files);
+    const uploadTasks: Observable<string>[] = fileArray.map((file) =>
+      this.fileUpload.upload(file, 'tickets')
+    );
+
+    forkJoin(uploadTasks).subscribe({
+      next: (paths: string[]) => {
+        this.isUploadingFiles = false;
+        const validPaths = paths.filter(Boolean);
+        this.form.attachments = validPaths;
+        this.form.attachment = validPaths;
+        this.form.path = validPaths[0] || '';
+        this.form.filename = firstFile ? firstFile.name : '';
+        this.form.size = firstFile ? firstFile.size : 0;
+        this.selectedFilesSummary = `${validPaths.length} file(s) attached`;
+      },
+      error: () => {
+        this.isUploadingFiles = false;
+        this.selectedFilesSummary = '';
+        this.validationErrors['files'] = 'Failed to upload attachments. Please try again.';
+      },
+    });
   }
 
   removeFiles(): void {
     this.form.files = [];
+    this.form.attachments = [];
+    this.form.attachment = [];
+    this.form.path = '';
+    this.form.filename = '';
+    this.form.size = 0;
     this.selectedFilesSummary = '';
     if (this.fileInput?.nativeElement) {
       this.fileInput.nativeElement.value = '';
@@ -223,7 +236,7 @@ export class LandingOpenTicketComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.isSubmitting || !this.validate()) {
+    if (this.isSubmitting || this.isUploadingFiles || !this.validate()) {
       return;
     }
 
@@ -248,7 +261,6 @@ export class LandingOpenTicketComponent implements OnInit {
         this.submitError =
           err?.error?.response?.message ||
           err?.error?.message ||
-          err?.message ||
           'Failed to submit ticket. Please try again.';
       },
     });

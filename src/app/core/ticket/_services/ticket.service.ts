@@ -28,34 +28,31 @@ export class TicketService extends ApiBaseService {
   }
 
   /**
-   * GET /organization/all?search=
-   * Returns organizations: [{ id, name }]
+   * GET /user/all?role_id=2&search=
+   * Returns customers/clients: [{ id, name }]
    */
   filterClients(search?: string): Observable<Array<{ id: number | string; name: string }>> {
     return this.http
       .get(`${this.baseUrl}${apiUrl.filterClients}`, {
-        params: this.toParams({ search: search || undefined }),
+        params: this.toParams({
+          search: search || undefined,
+          role_id: 2,
+          pageSize: 100,
+        }),
       })
       .pipe(
         map((res: any) => {
-          const list = Array.isArray(res)
-            ? res
-            : Array.isArray(res?.data?.items)
-              ? res.data.items
-              : Array.isArray(res?.items)
-                ? res.items
-                : Array.isArray(res?.data)
-                  ? res.data
-                  : [];
-          return list.map((c: any) => ({
-            id: c.id ?? c.user_id ?? c._id,
-            name:
-              c.name ||
-              c.title ||
-              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
-              c.email ||
-              String(c.id),
-          }));
+          const list = this.extractArray(res);
+          return list
+            .filter((c: any) => Number(c.role_id ?? c.role?.id ?? 2) === 2)
+            .map((c: any) => ({
+              id: c.id ?? c.user_id ?? c._id,
+              name:
+                [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+                c.name ||
+                c.email ||
+                String(c.id),
+            }));
         }),
         catchError(() => of([]))
       );
@@ -170,37 +167,64 @@ export class TicketService extends ApiBaseService {
 
   /** Maps UI form values → POST /ticket/create body */
   toCreatePayload(raw: Record<string, any>): Record<string, any> {
-    return {
+    const details = String(raw['details'] ?? raw['body'] ?? '').trim();
+    const payload: Record<string, any> = {
       subject: String(raw['subject'] ?? '').trim(),
-      body: String(raw['body'] ?? raw['details'] ?? '').trim(),
+      details,
+      body: details,
       user_id: this.toId(raw['user_id']),
       contact_id: this.toId(raw['contact_id']),
-      status_id: this.toId(raw['status_id']),
       priority_id: this.toId(raw['priority_id']),
+      status_id: this.toId(raw['status_id']),
       department_id: this.toId(raw['department_id']),
-      type_id: this.toId(raw['type_id']),
-      category_id: this.toId(raw['category_id']),
-      sub_category_id: this.toId(raw['sub_category_id']),
       assigned_to: this.toId(raw['assigned_to']),
+      category_id: this.toId(raw['category_id']),
+      sub_category_id: raw['sub_category_id'] ? Number(raw['sub_category_id']) : null,
+      type_id: this.toId(raw['type_id']),
+      tags: Array.isArray(raw['tags']) ? raw['tags'] : [],
+      path: String(raw['path'] ?? (Array.isArray(raw['attachments']) ? raw['attachments'][0]?.path || raw['attachments'][0] : '') ?? '').trim(),
+      filename: String(raw['filename'] ?? raw['file_name'] ?? (Array.isArray(raw['attachments']) ? raw['attachments'][0]?.filename || raw['attachments'][0]?.name : '') ?? '').trim(),
+      size: Number(raw['size'] ?? raw['file_size'] ?? (Array.isArray(raw['attachments']) ? raw['attachments'][0]?.size || raw['attachments'][0]?.file_size : 0) ?? 0),
       custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
     };
+
+    if (raw['attachments'] !== undefined) {
+      payload['attachments'] = raw['attachments'];
+    }
+    if (raw['attachment'] !== undefined) {
+      payload['attachment'] = raw['attachment'];
+    }
+    return payload;
   }
 
   /** Maps UI form values → PUT /ticket/update body */
   toUpdatePayload(raw: Record<string, any>): Record<string, any> {
-    return {
+    const details = String(raw['details'] ?? raw['body'] ?? '').trim();
+    const payload: Record<string, any> = {
       id: this.toId(raw['id']),
       subject: String(raw['subject'] ?? '').trim(),
-      body: String(raw['body'] ?? raw['details'] ?? '').trim(),
+      details,
+      body: details,
       status_id: this.toId(raw['status_id']),
       priority_id: this.toId(raw['priority_id']),
       assigned_to: this.toId(raw['assigned_to']),
       department_id: this.toId(raw['department_id']),
       type_id: this.toId(raw['type_id']),
       category_id: this.toId(raw['category_id']),
-      sub_category_id: this.toId(raw['sub_category_id']),
+      sub_category_id: raw['sub_category_id'] ? Number(raw['sub_category_id']) : null,
+      path: String(raw['path'] ?? (Array.isArray(raw['attachments']) ? raw['attachments'][0]?.path || raw['attachments'][0] : '') ?? '').trim(),
+      filename: String(raw['filename'] ?? raw['file_name'] ?? (Array.isArray(raw['attachments']) ? raw['attachments'][0]?.filename || raw['attachments'][0]?.name : '') ?? '').trim(),
+      size: Number(raw['size'] ?? raw['file_size'] ?? (Array.isArray(raw['attachments']) ? raw['attachments'][0]?.size || raw['attachments'][0]?.file_size : 0) ?? 0),
       custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
     };
+
+    if (raw['attachments'] !== undefined) {
+      payload['attachments'] = raw['attachments'];
+    }
+    if (raw['attachment'] !== undefined) {
+      payload['attachment'] = raw['attachment'];
+    }
+    return payload;
   }
 
   private normalizeCustomField(value: any): Record<string, any> {

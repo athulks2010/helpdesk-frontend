@@ -1,3 +1,216 @@
 :host {
   display: block;
 }
+
+:host ::ng-deep .html-content {
+  line-height: 1.75;
+  color: #334155;
+
+  h1 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: -0.025em;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    line-height: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h4, h5, h6 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #475569;
+    line-height: 1.75;
+  }
+
+  ul {
+    list-style-type: disc !important;
+    padding-left: 1.5rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1.25rem !important;
+
+    li {
+      margin-bottom: 0.35rem;
+      color: #475569;
+      line-height: 1.6;
+      p {
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+
+  ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5rem !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1.25rem !important;
+
+    li {
+      margin-bottom: 0.35rem;
+      color: #475569;
+      line-height: 1.6;
+      p {
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+
+  strong, b {
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  a {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.15s;
+
+    &:hover {
+      color: #1d4ed8;
+    }
+  }
+
+  blockquote {
+    border-left: 4px solid #3b82f6;
+    padding: 0.75rem 1rem;
+    margin: 1.25rem 0;
+    background-color: #f8fafc;
+    border-radius: 0 0.75rem 0.75rem 0;
+    color: #475569;
+    font-style: italic;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 2rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.875rem;
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 0.625rem 0.875rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8fafc;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    td {
+      color: #475569;
+    }
+  }
+
+  code {
+    background-color: #f1f5f9;
+    color: #4f46e5;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    font-size: 0.875em;
+    font-family: monospace;
+  }
+}
+
+:host-context(.dark) ::ng-deep .html-content {
+  color: #cbd5e1;
+
+  h1 {
+    color: #f8fafc;
+  }
+
+  h2 {
+    color: #f1f5f9;
+    border-bottom-color: #334155;
+  }
+
+  h3, h4, h5, h6 {
+    color: #e2e8f0;
+  }
+
+  p {
+    color: #94a3b8;
+  }
+
+  ul li, ol li {
+    color: #94a3b8;
+  }
+
+  strong, b {
+    color: #f8fafc;
+  }
+
+  a {
+    color: #60a5fa;
+
+    &:hover {
+      color: #93c5fd;
+    }
+  }
+
+  blockquote {
+    border-left-color: #3b82f6;
+    background-color: rgba(15, 23, 42, 0.6);
+    color: #94a3b8;
+  }
+
+  hr {
+    border-top-color: #334155;
+  }
+
+  table {
+    th, td {
+      border-color: #334155;
+    }
+
+    th {
+      background-color: #1e293b;
+      color: #f1f5f9;
+    }
+
+    td {
+      color: #cbd5e1;
+    }
+  }
+
+  code {
+    background-color: #1e293b;
+    color: #818cf8;
+  }
+}
