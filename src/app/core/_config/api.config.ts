@@ -252,4 +252,5 @@ export const apiUrl = {
   publicPriorities: '/public/priorities',
   publicTypes: '/public/types',
   publicSubscribeNews: '/public/subscribe/news',
+  publicContact: '/public/contact',
 };
