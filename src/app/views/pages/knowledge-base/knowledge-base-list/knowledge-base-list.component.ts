@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/knowledge-base.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { TypeService } from '../../../../core/type/_services/type.service';
 
 @Component({
   selector: 'app-knowledge-base-list',
@@ -10,18 +12,35 @@ import { KnowledgeBaseService } from '../../../../core/knowledge-base/_services/
 export class KnowledgeBaseListComponent implements OnInit {
   rows: any[] = [];
   filtered: any[] = [];
+  types: any[] = [];
   loading = true;
   error = '';
   search = '';
+  typeFilter: string | number = '';
+  typeMenuOpen = false;
   deletingId: string | number | null = null;
 
   constructor(
     private service: KnowledgeBaseService,
-    private router: Router
-  ) {}
+    private typeService: TypeService,
+    private router: Router,
+    private confirmService: ConfirmDialogService
+  ) { }
 
   ngOnInit(): void {
     this.load();
+    this.loadTypes();
+  }
+
+  get selectedTypeLabel(): string {
+    if (this.typeFilter === '' || this.typeFilter == null) return 'All Types';
+    const match = this.types.find((t) => (t.id || t._id) == this.typeFilter);
+    return match?.name || 'All Types';
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.typeMenuOpen = false;
   }
 
   load(): void {
@@ -40,19 +59,74 @@ export class KnowledgeBaseListComponent implements OnInit {
     });
   }
 
+  Math = Math;
+  pageSize = 10;
+  currentPage = 1;
+  totalCount = 0;
+  totalPages = 1;
+  pages: number[] = [];
+
+  loadTypes(): void {
+    this.typeService.getAll().subscribe({
+      next: (d) => {
+        this.types = Array.isArray(d) ? d : (d?.items || d?.list || d?.data || []);
+      },
+    });
+  }
+
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
-    if (!q) {
-      this.filtered = [...this.rows];
-      return;
+    let list = [...this.rows];
+
+    if (this.typeFilter !== '' && this.typeFilter != null) {
+      list = list.filter((row) => {
+        const id = row.type_id ?? row.type?.id ?? row.type?._id;
+        return String(id) === String(this.typeFilter);
+      });
     }
-    this.filtered = this.rows.filter((row) =>
-      JSON.stringify(row).toLowerCase().includes(q)
-    );
+
+    if (q) {
+      list = list.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
+    }
+
+    this.totalCount = list.length;
+    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const start = (this.currentPage - 1) * Number(this.pageSize);
+    this.filtered = list.slice(start, start + Number(this.pageSize));
   }
 
   onSearchChange(): void {
+    this.currentPage = 1;
     this.applyFilter();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.applyFilter();
+  }
+
+  toggleTypeMenu(): void {
+    this.typeMenuOpen = !this.typeMenuOpen;
+  }
+
+  selectType(id: string | number): void {
+    this.typeFilter = id;
+    this.typeMenuOpen = false;
+    this.applyFilter();
+  }
+
+  isTypeSelected(t: any): boolean {
+    return String(this.typeFilter) === String(t.id || t._id);
   }
 
   createNew(): void {
@@ -64,12 +138,19 @@ export class KnowledgeBaseListComponent implements OnInit {
     this.router.navigate(['/knowledge-base', id, 'edit']);
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm('Delete this article? This can usually be restored from the API if soft-delete is enabled.')) {
-      return;
-    }
+    const name = row.name || row.title || 'this article';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Article',
+      message: 'Are you sure you want to delete this article? This can usually be restored from the API if soft-delete is enabled.',
+      itemName: `${name}`,
+      confirmText: 'Delete Article',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

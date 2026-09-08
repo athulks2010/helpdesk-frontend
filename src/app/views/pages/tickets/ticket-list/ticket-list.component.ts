@@ -1,8 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, ElementRef, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { TicketService } from '../../../../core/ticket/_services/ticket.service';
+import { AuthService } from '../../../../core/auth/_services/auth.service';
+import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-ticket-list',
@@ -12,6 +15,7 @@ import { TicketService } from '../../../../core/ticket/_services/ticket.service'
 export class TicketListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
+  private clientSearchSubject = new Subject<string>();
 
   // Data
   allTickets: any[] = [];
@@ -32,6 +36,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
   departments: any[] = [];
   assignees: any[] = [];
 
+  // Client autocomplete (filter.clients → filter by user_id)
+  clients: Array<{ id: number | string; name: string }> = [];
+  clientQuery = '';
+  selectedClient: { id: number | string; name: string } | null = null;
+  showClientDropdown = false;
+  clientLoading = false;
+
   // View
   viewMode: 'list' | 'grid' = 'list';
 
@@ -39,11 +50,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
   searchText = '';
   pageSize = 10;
   currentPage = 1;
-  sortField = 'created_at';
-  sortOrder: 'asc' | 'desc' = 'desc';
+  sortField = '';
+  sortOrder = '';
 
   filters = {
-    clientSearch: '',
+    user_id: '' as string | number,
     type_id: '',
     department_id: '',
     priority_id: '',
@@ -62,9 +73,18 @@ export class TicketListComponent implements OnInit, OnDestroy {
   totalPages = 1;
   pages: number[] = [];
 
-  constructor(private ticketService: TicketService, private router: Router) {}
+  constructor(
+    private ticketService: TicketService,
+    private authService: AuthService,
+    private settingService: SettingService,
+    private route: ActivatedRoute,
+    private confirmService: ConfirmDialogService,
+    private router: Router,
+    private host: ElementRef<HTMLElement>
+  ) { }
 
   ngOnInit(): void {
+    this.applyQueryFilters();
     this.loadDropdowns();
     this.load();
 
@@ -74,11 +94,44 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.currentPage = 1;
         this.applyFilters();
       });
+
+    this.clientSearchSubject
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((search) => this.fetchClients(search));
+  }
+
+  private applyQueryFilters(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const departmentId = qp.get('department_id');
+    const userId = qp.get('user_id') || qp.get('customer_id');
+
+    if (departmentId) {
+      this.filters.department_id = departmentId;
+    }
+    if (userId) {
+      this.filters.user_id = userId;
+      this.clientQuery = `Customer #${userId}`;
+      this.selectedClient = { id: userId, name: this.clientQuery };
+    }
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /** Laravel: shown when user_id not hidden and user has ticket.update */
+  get showClientFilter(): boolean {
+    if (!this.hasAccess('ticket', 'update')) return false;
+    return !this.getHiddenTicketFields().includes('user_id');
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const root = this.host.nativeElement.querySelector('[data-client-filter]');
+    if (root && !root.contains(event.target as Node)) {
+      this.showClientDropdown = false;
+    }
   }
 
   loadDropdowns(): void {
@@ -95,7 +148,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = '';
     this.ticketService
-      .getAll({ pageNumber: 1, pageSize: 1000, sortField: 'created_at', sortOrder: 'desc' })
+      .getAll({
+        pageNumber: this.currentPage,
+        pageSize: this.pageSize,
+        sortField: this.sortField,
+        sortOrder: this.sortOrder,
+        user_id: this.filters.user_id || undefined,
+      })
       .subscribe({
         next: (data: any) => {
           const list = Array.isArray(data) ? data : data?.items || data?.list || data?.tickets || [];
@@ -109,6 +168,64 @@ export class TicketListComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
       });
+  }
+
+  /** Focus / type in Client box → GET filter.clients?search= (does not filter tickets) */
+  onClientFocus(): void {
+    this.showClientDropdown = true;
+    this.fetchClients(this.clientQuery);
+  }
+
+  onClientInput(value: string): void {
+    this.clientQuery = value;
+    // Typing clears a prior selection until a new client is picked
+    if (this.selectedClient && value !== this.selectedClient.name) {
+      this.selectedClient = null;
+      if (this.filters.user_id) {
+        this.filters.user_id = '';
+        this.currentPage = 1;
+        this.load();
+      }
+    }
+    this.showClientDropdown = true;
+    this.clientSearchSubject.next(value || '');
+  }
+
+  private fetchClients(search: string): void {
+    this.clientLoading = true;
+    this.ticketService.filterClients(search).subscribe({
+      next: (list) => {
+        this.clients = list;
+        this.clientLoading = false;
+        this.showClientDropdown = true;
+      },
+      error: () => {
+        this.clients = [];
+        this.clientLoading = false;
+      },
+    });
+  }
+
+  selectClient(client: { id: number | string; name: string }): void {
+    this.selectedClient = client;
+    this.clientQuery = client.name;
+    this.filters.user_id = client.id;
+    this.showClientDropdown = false;
+    this.currentPage = 1;
+    this.load();
+  }
+
+  clearClient(event?: Event): void {
+    event?.stopPropagation();
+    this.selectedClient = null;
+    this.clientQuery = '';
+    this.clients = [];
+    this.showClientDropdown = false;
+    if (this.filters.user_id) {
+      this.filters.user_id = '';
+      this.currentPage = 1;
+      this.load();
+    }
   }
 
   computeStats(tickets: any[]): void {
@@ -138,13 +255,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
       );
     }
 
-    if (this.filters.clientSearch) {
-      const q = this.filters.clientSearch.toLowerCase();
+    // Client filter = exact ticket owner id (not free-text search)
+    if (this.filters.user_id) {
       filtered = filtered.filter(
-        (t) =>
-          (t.user?.first_name || '').toLowerCase().includes(q) ||
-          (t.user?.last_name || '').toLowerCase().includes(q) ||
-          (t.user?.email || '').toLowerCase().includes(q)
+        (t) => String(t.user_id ?? t.user?.id ?? '') === String(this.filters.user_id)
       );
     }
 
@@ -207,7 +321,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
       let aVal = a[this.sortField] || a.created_at || '';
       let bVal = b[this.sortField] || b.created_at || '';
       if (this.sortField === 'priority') { aVal = a.priority?.name || ''; bVal = b.priority?.name || ''; }
-      if (this.sortField === 'status')   { aVal = a.status?.name || '';   bVal = b.status?.name || ''; }
+      if (this.sortField === 'status') { aVal = a.status?.name || ''; bVal = b.status?.name || ''; }
       return this.sortOrder === 'asc'
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
@@ -224,7 +338,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
   countActiveFilters(): void {
     let count = 0;
-    if (this.filters.clientSearch) count++;
+    if (this.filters.user_id) count++;
     if (this.filters.type_id) count++;
     if (this.filters.department_id) count++;
     if (this.filters.priority_id) count++;
@@ -262,8 +376,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
   }
 
   clearFilters(): void {
+    const hadUserId = !!this.filters.user_id;
     this.filters = {
-      clientSearch: '',
+      user_id: '',
       type_id: '',
       department_id: '',
       priority_id: '',
@@ -275,8 +390,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
       favorites: false,
     };
     this.searchText = '';
+    this.selectedClient = null;
+    this.clientQuery = '';
+    this.clients = [];
+    this.showClientDropdown = false;
     this.currentPage = 1;
-    this.applyFilters();
+    if (hadUserId) {
+      this.load();
+    } else {
+      this.applyFilters();
+    }
   }
 
   goToPage(page: number): void {
@@ -295,7 +418,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
   }
 
   open(row: any): void {
-    this.router.navigate(['/tickets', row.id]);
+    const id = row?.id ?? row?._id;
+    if (!id) return;
+    this.router.navigate(['/tickets', id]);
   }
 
   edit(row: any, e: Event): void {
@@ -303,9 +428,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/tickets', row.id, 'edit']);
   }
 
-  deleteTicket(row: any, e: Event): void {
+  async deleteTicket(row: any, e: Event): Promise<void> {
     e.stopPropagation();
-    if (!confirm('Delete this ticket?')) return;
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Ticket',
+      message: 'Are you sure you want to delete this ticket? This action cannot be undone.',
+      itemName: this.ticketKey(row) ? `${this.ticketKey(row)}: ${row.subject}` : row.subject,
+      confirmText: 'Delete Ticket',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.ticketService.deleteTicket(row.id).subscribe({
       next: () => {
         this.allTickets = this.allTickets.filter((t) => t.id !== row.id);
@@ -368,6 +501,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
   private buildFilterParams(): Record<string, any> {
     return {
       search: this.searchText || undefined,
+      user_id: this.filters.user_id || undefined,
       type_id: this.filters.type_id || undefined,
       department_id: this.filters.department_id || undefined,
       priority_id: this.filters.priority_id || undefined,
@@ -376,6 +510,50 @@ export class TicketListComponent implements OnInit, OnDestroy {
       date_from: this.filters.date_from || undefined,
       date_to: this.filters.date_to || undefined,
     };
+  }
+
+  private hasAccess(module: string, action: 'read' | 'create' | 'update' | 'delete' = 'read'): boolean {
+    const user = this.authService.currentUserValue;
+    if (!user) return false;
+
+    const role = user.role;
+    const roleSlug = typeof role === 'string' ? role : role?.slug;
+    if (roleSlug === 'admin') return true;
+
+    const directAccess = (user as any).access;
+    if (directAccess && directAccess[module]) {
+      return !!directAccess[module][action];
+    }
+
+    if (role && typeof role === 'object' && (role as any).access) {
+      try {
+        const parsed =
+          typeof (role as any).access === 'string'
+            ? JSON.parse((role as any).access)
+            : (role as any).access;
+        if (parsed && parsed[module]) {
+          return !!parsed[module][action];
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return false;
+  }
+
+  private getHiddenTicketFields(): string[] {
+    const raw = this.settingService.getSettingValue('hide_ticket_fields', []);
+    if (Array.isArray(raw)) return raw.map(String);
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
   }
 
   getPriorityClass(priority: string): string {

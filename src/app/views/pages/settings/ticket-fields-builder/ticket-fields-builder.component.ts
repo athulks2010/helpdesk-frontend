@@ -1,32 +1,81 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { SettingService } from '../../../../core/setting/_services/setting.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-ticket-fields-builder',
   templateUrl: './ticket-fields-builder.component.html',
   styleUrls: ['./ticket-fields-builder.component.scss'],
 })
-export class TicketFieldsBuilderComponent implements OnInit {
+export class TicketFieldsBuilderComponent implements OnInit, OnDestroy {
   rows: any[] = [];
   loading = true;
   saving = false;
   error = '';
+  success = '';
   form!: FormGroup;
+  private nameTouched = false;
+  private destroy$ = new Subject<void>();
 
-  readonly fieldTypes = ['text', 'textarea', 'select', 'checkbox', 'number', 'date'];
+  readonly fieldTypes = [
+    { id: 'text', label: 'Text', icon: 'Aa' },
+    { id: 'textarea', label: 'Textarea', icon: '¶' },
+    { id: 'select', label: 'Select', icon: '▾' },
+    { id: 'checkbox', label: 'Checkbox', icon: '☑' },
+    { id: 'file', label: 'File', icon: '📎' },
+    { id: 'email', label: 'Email', icon: '@' },
+    { id: 'number', label: 'Number', icon: '#' },
+  ];
 
-  constructor(private fb: FormBuilder, private settingService: SettingService) {}
+  constructor(
+    private fb: FormBuilder,
+    private settingService: SettingService,
+    private confirmService: ConfirmDialogService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
       type: ['text', Validators.required],
       label: ['', Validators.required],
       name: ['', Validators.required],
+      placeholder: [''],
       required: [false],
       options: [''],
     });
+
+    this.form
+      .get('label')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe((label: string) => {
+        if (this.nameTouched) return;
+        this.form.patchValue({ name: this.toFieldName(label) }, { emitEvent: false });
+      });
+
     this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  markNameTouched(): void {
+    this.nameTouched = true;
+  }
+
+  private toFieldName(label: string): string {
+    return String(label || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s_]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
   }
 
   load(): void {
@@ -34,7 +83,9 @@ export class TicketFieldsBuilderComponent implements OnInit {
     this.error = '';
     this.settingService.getTicketFields({}).subscribe({
       next: (data) => {
-        this.rows = Array.isArray(data) ? data : data?.items || data?.list || data?.data || [];
+        this.rows = Array.isArray(data)
+          ? data
+          : data?.items || data?.list || data?.data || data?.fields || [];
         this.loading = false;
       },
       error: () => {
@@ -51,6 +102,7 @@ export class TicketFieldsBuilderComponent implements OnInit {
     }
     this.saving = true;
     this.error = '';
+    this.success = '';
     const raw = this.form.getRawValue();
     const options =
       typeof raw.options === 'string'
@@ -60,39 +112,76 @@ export class TicketFieldsBuilderComponent implements OnInit {
             .filter(Boolean)
         : raw.options;
 
-    this.settingService
-      .createTicketField({
-        type: raw.type,
-        label: raw.label,
-        name: raw.name,
-        required: !!raw.required,
-        options,
-      })
-      .subscribe({
-        next: () => {
-          this.saving = false;
-          this.form.reset({ type: 'text', label: '', name: '', required: false, options: '' });
-          this.load();
-        },
-        error: (err) => {
-          this.saving = false;
-          this.error = err?.error?.message || err?.message || 'Create failed';
-        },
-      });
+    const body: any = {
+      type: raw.type,
+      label: raw.label,
+      name: raw.name,
+      placeholder: raw.placeholder || '',
+      required: !!raw.required,
+    };
+    if (raw.type === 'select' || raw.type === 'checkbox') {
+      body.options = options;
+    }
+
+    this.settingService.createTicketField(body).subscribe({
+      next: (res: any) => {
+        this.saving = false;
+        this.success = 'Field added';
+        this.toast.success(res?.response?.message || res?.message || 'Field added successfully');
+        this.nameTouched = false;
+        this.form.reset({
+          type: 'text',
+          label: '',
+          name: '',
+          placeholder: '',
+          required: false,
+          options: '',
+        });
+        this.load();
+      },
+      error: (err) => {
+        this.saving = false;
+        this.error = err?.error?.message || err?.message || 'Create failed';
+      },
+    });
   }
 
-  remove(row: any): void {
+  async remove(row: any): Promise<void> {
     const id = row.id || row._id;
-    if (!id || !confirm('Delete this custom field?')) return;
+    if (!id) return;
+    const name = row.label || row.name || 'this custom field';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Custom Field',
+      message: 'Are you sure you want to delete this custom field? This may affect tickets using it.',
+      itemName: `${name}`,
+      confirmText: 'Delete Field',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.settingService.deleteTicketField(id).subscribe({
-      next: () => this.load(),
+      next: (res: any) => {
+        this.toast.success(res?.response?.message || res?.message || 'Field deleted successfully');
+        this.load();
+      },
       error: () => (this.error = 'Failed to delete field'),
     });
   }
 
-  optionsLabel(row: any): string {
-    const opts = row.options;
-    if (Array.isArray(opts)) return opts.join(', ');
-    return opts || '—';
+  asOptions(row: any): string[] {
+    const opts = row?.options;
+    if (Array.isArray(opts)) return opts.map(String);
+    if (typeof opts === 'string') {
+      return opts
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }
+
+  hasError(control: string): boolean {
+    const c = this.form.get(control);
+    return !!(c && c.invalid && (c.dirty || c.touched));
   }
 }

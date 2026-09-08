@@ -1,24 +1,46 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../../core/auth/_services/auth.service';
+import { SettingService } from '../../../../core/setting/_services/setting.service';
 
 @Component({
   selector: 'app-forgot-password',
   templateUrl: './forgot-password.component.html',
   styleUrls: ['./forgot-password.component.scss'],
 })
-export class ForgotPasswordComponent implements OnInit {
+export class ForgotPasswordComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   loading = false;
   error = '';
   success = '';
+  logoFailed = false;
+  private settingsSub?: Subscription;
 
-  constructor(private fb: FormBuilder, private auth: AuthService) {}
+  constructor(
+    private fb: FormBuilder,
+    private auth: AuthService,
+    public settingService: SettingService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
     });
+    this.settingService.loadBrandSettings();
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
   }
 
   submit(): void {

@@ -2,8 +2,19 @@
   <header class="border-b border-slate-200 bg-white/80 backdrop-blur">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="h-9 w-9 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">H</div>
-        <span class="font-semibold text-slate-900">HelpDesk</span>
+        <img
+          *ngIf="!logoFailed"
+          [src]="settingService.logoUrl"
+          [alt]="settingService.appName"
+          class="h-9 w-auto max-w-[160px] object-contain"
+          (error)="onLogoError($event)"
+        />
+        <ng-container *ngIf="logoFailed">
+          <div class="h-9 w-9 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+            {{ settingService.appName.charAt(0) || 'H' }}
+          </div>
+          <span class="font-semibold text-slate-900">{{ settingService.appName }}</span>
+        </ng-container>
       </div>
       <a routerLink="/auth/login" class="hd-btn-primary">Admin Sign In</a>
     </div>

@@ -15,6 +15,12 @@ export const apiUrl = {
   ticketUpdate: '/ticket/update',
   ticketDelete: '/ticket/delete',
   ticketComments: '/ticket/comments',
+  // ticketConversations: '/ticket/conversations',
+
+  /* Filters (Node.js backend endpoints) */
+  filterClients: '/organization/all',
+  filterAssignees: '/user/all',
+  filterCustomers: '/contact/all',
 
   /* Conversations / Chat */
   conversations: '/conversation',
@@ -23,6 +29,8 @@ export const apiUrl = {
   conversationCreate: '/conversation/create',
   conversationMessages: '/conversation/messages',
   conversationMarkRead: '/conversation/mark-read',
+  conversationDelete: '/conversation/delete',
+  conversationUpload: '/conversation/upload-attachments',
 
   /* Users */
   users: '/user',
@@ -140,6 +148,7 @@ export const apiUrl = {
   settings: '/setting',
   settingsAll: '/setting/all',
   settingSingle: '/setting/single',
+  settingBySlug: '/setting/by-slug',
   settingUpdate: '/setting/update',
 
   /* Dashboard */
@@ -172,14 +181,20 @@ export const apiUrl = {
   languageCreate: '/language/create',
   languageUpdate: '/language/update',
   languageDelete: '/language/delete',
+  languageTranslations: '/language/translations',
+  languagePhrase: '/language/phrase',
+
+  /* Countries */
+  countries: '/country',
+  countriesAll: '/country/all',
 
   /* Navigation Menus */
-  menus: '/menu',
-  menusAll: '/menu/all',
-  menuCreate: '/menu/create',
-  menuUpdate: '/menu/update',
-  menuDelete: '/menu/delete',
-  menuReorder: '/menu/reorder',
+  menus: '/navigation-menu',
+  menusAll: '/navigation-menu/all',
+  menuCreate: '/navigation-menu/create',
+  menuUpdate: '/navigation-menu/update',
+  menuDelete: '/navigation-menu/delete',
+  menuReorder: '/navigation-menu/reorder',
 
   /* Email Templates */
   emailTemplates: '/email-template',
@@ -194,28 +209,35 @@ export const apiUrl = {
   pusherSettings: '/setting/pusher',
   pusherUpdate: '/setting/pusher/update',
   pusherTest: '/setting/pusher/test',
-  pipingSettings: '/setting/piping',
-  pipingUpdate: '/setting/piping/update',
+  pipingSettings: '/setting/email-piping',
+  pipingUpdate: '/setting/email-piping/update',
+  pipingTest: '/setting/email-piping/test',
 
   /* Ticket extras */
   ticketRestore: '/ticket/restore',
-  ticketFavorite: '/ticket/favorite',
+  ticketFavorite: '/ticket/favorites',
+  ticketFavorites: '/ticket/favorites',
+  ticketActivities: '/ticket/activities',
   ticketImport: '/ticket/import',
   ticketExport: '/ticket/export',
   ticketFields: '/ticket-field',
   ticketFieldsAll: '/ticket-field/all',
   ticketFieldCreate: '/ticket-field/create',
   ticketFieldDelete: '/ticket-field/delete',
+  ticketFieldUpdate: '/ticket-field/update',
+  ticketFieldSingle: '/ticket-field/single',
 
   /* Pending users */
-  pendingUsersAll: '/user/pending/all',
+  pendingUsersAll: '/user/pending',
   pendingUserApprove: '/user/pending/approve',
   pendingUserDecline: '/user/pending/decline',
 
   /* Front pages CMS */
   frontPages: '/front-page',
+  frontPagesAll: '/front-page/all',
   frontPageSingle: '/front-page/single',
   frontPageUpdate: '/front-page/update',
+  frontPageCreate: '/front-page/create',
 
   /* Public */
   publicFaqs: '/public/faqs',
@@ -223,4 +245,6 @@ export const apiUrl = {
   publicKnowledgeBase: '/public/knowledge-base',
   publicServices: '/public/services',
   publicFrontPage: '/public/front-page',
+  publicTicketOpen: '/public/ticket/open',
+  publicSubscribeNews: '/public/subscribe/news',
 };

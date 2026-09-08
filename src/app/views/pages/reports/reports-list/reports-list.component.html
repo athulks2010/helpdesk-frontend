@@ -1,8 +1,4 @@
 <div class="space-y-6">
-  <div>
-    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Reports</h1>
-    <p class="text-sm text-slate-500 mt-0.5">Generate and view helpdesk reports</p>
-  </div>
 
   <form class="hd-card" [formGroup]="form" (ngSubmit)="generate()">
     <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -23,9 +19,6 @@
       <div class="flex items-end gap-2">
         <button type="submit" class="hd-btn-primary" [disabled]="generating">
           {{ generating ? 'Generating…' : 'Generate' }}
-        </button>
-        <button type="button" class="hd-btn-secondary" (click)="loadResults(lastReportId || undefined)" [disabled]="loading">
-          Refresh
         </button>
       </div>
     </div>

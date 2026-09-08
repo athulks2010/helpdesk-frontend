@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PriorityService } from '../../../../core/priority/_services/priority.service';
-
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-priorities-form',
@@ -17,12 +17,12 @@ export class PrioritiesFormComponent implements OnInit {
   isEditMode = false;
   entityId: string | null = null;
 
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: PriorityService
+    private service: PriorityService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -32,11 +32,7 @@ export class PrioritiesFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
-      color: ['#3b82f6'],
     });
-
-
-    this.loadExtras();
 
     if (this.isEditMode && this.entityId) {
       this.loadingData = true;
@@ -45,8 +41,7 @@ export class PrioritiesFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          color: item.color ?? null,
+            name: item.name ?? null,
           });
 
           this.loadingData = false;
@@ -56,13 +51,7 @@ export class PrioritiesFormComponent implements OnInit {
           this.loadingData = false;
         },
       });
-    } else {
-
     }
-  }
-
-  loadExtras(): void {
-    // no extras
   }
 
   submit(): void {
@@ -74,17 +63,15 @@ export class PrioritiesFormComponent implements OnInit {
     this.error = '';
     const raw = { ...this.form.getRawValue() };
 
-    if (!raw.password) {
-      delete raw.password;
-    }
-
     const req$ = this.isEditMode
       ? this.service.update(raw)
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Priority updated successfully' : 'Priority created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/priorities']);
       },
       error: (err) => {

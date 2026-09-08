@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaqService } from '../../../../core/faq/_services/faq.service';
-
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-faqs-form',
@@ -16,13 +16,14 @@ export class FaqsFormComponent implements OnInit {
   error = '';
   isEditMode = false;
   entityId: string | null = null;
-
+  deleting = false;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: FaqService
+    private service: FaqService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -46,9 +47,9 @@ export class FaqsFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          status: item.status ?? 1,
-          details: item.details ?? null,
+            name: item.name ?? null,
+            status: this.toStatusValue(item.status),
+            details: item.details ?? null,
           });
 
           this.loadingData = false;
@@ -76,17 +77,15 @@ export class FaqsFormComponent implements OnInit {
     this.error = '';
     const raw = { ...this.form.getRawValue() };
 
-    if (!raw.password) {
-      delete raw.password;
-    }
-
     const req$ = this.isEditMode
       ? this.service.update(raw)
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'FAQ updated successfully' : 'FAQ created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/faqs']);
       },
       error: (err) => {
@@ -100,8 +99,36 @@ export class FaqsFormComponent implements OnInit {
     this.router.navigate(['/faqs']);
   }
 
+  remove(): void {
+    if (!this.entityId) return;
+    if (!confirm('Delete this FAQ? This can usually be restored from the API if soft-delete is enabled.')) {
+      return;
+    }
+    this.deleting = true;
+    this.error = '';
+    this.service.deleteById(this.entityId).subscribe({
+      next: (res: any) => {
+        this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'FAQ deleted successfully';
+        this.toast.success(msg);
+        this.router.navigate(['/faqs']);
+      },
+      error: (err) => {
+        this.deleting = false;
+        this.error = err?.error?.message || err?.message || 'Failed to delete FAQ';
+      },
+    });
+  }
+
   hasError(control: string): boolean {
     const c = this.form.get(control);
     return !!(c && c.invalid && (c.dirty || c.touched));
+  }
+
+  private toStatusValue(status: any): number {
+    if (status === 0 || status === false || status === '0' || status === 'inactive' || status === 'Inactive' || status === 'draft' || status === 'Draft') {
+      return 0;
+    }
+    return 1;
   }
 }

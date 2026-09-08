@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DepartmentService } from '../../../../core/department/_services/department.service';
-
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-departments-form',
@@ -13,16 +13,17 @@ export class DepartmentsFormComponent implements OnInit {
   form!: FormGroup;
   loading = false;
   loadingData = false;
+  deleting = false;
   error = '';
   isEditMode = false;
   entityId: string | null = null;
-
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: DepartmentService
+    private service: DepartmentService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -32,11 +33,7 @@ export class DepartmentsFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
-      color: ['#3b82f6'],
     });
-
-
-    this.loadExtras();
 
     if (this.isEditMode && this.entityId) {
       this.loadingData = true;
@@ -45,10 +42,8 @@ export class DepartmentsFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
-          color: item.color ?? null,
+            name: item.name ?? null,
           });
-
           this.loadingData = false;
         },
         error: () => {
@@ -56,13 +51,7 @@ export class DepartmentsFormComponent implements OnInit {
           this.loadingData = false;
         },
       });
-    } else {
-
     }
-  }
-
-  loadExtras(): void {
-    // no extras
   }
 
   submit(): void {
@@ -74,17 +63,15 @@ export class DepartmentsFormComponent implements OnInit {
     this.error = '';
     const raw = { ...this.form.getRawValue() };
 
-    if (!raw.password) {
-      delete raw.password;
-    }
-
     const req$ = this.isEditMode
       ? this.service.update(raw)
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Department updated successfully' : 'Department created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/departments']);
       },
       error: (err) => {
@@ -94,8 +81,45 @@ export class DepartmentsFormComponent implements OnInit {
     });
   }
 
+  remove(): void {
+    if (!this.entityId) return;
+    if (!confirm('Delete this department? This can usually be restored from the API if soft-delete is enabled.')) {
+      return;
+    }
+    this.deleting = true;
+    this.error = '';
+    this.service.deleteById(this.entityId).subscribe({
+      next: (res: any) => {
+        this.deleting = false;
+        const msg = res?.response?.message || res?.message || 'Department deleted successfully';
+        this.toast.success(msg);
+        this.router.navigate(['/departments']);
+      },
+      error: () => {
+        this.deleting = false;
+        this.error = 'Failed to delete department';
+      },
+    });
+  }
+
   cancel(): void {
     this.router.navigate(['/departments']);
+  }
+
+  goToAgents(): void {
+    this.router.navigate(['/users']);
+  }
+
+  goToCategories(): void {
+    this.router.navigate(['/categories'], {
+      queryParams: { department_id: this.entityId },
+    });
+  }
+
+  goToTickets(): void {
+    this.router.navigate(['/tickets'], {
+      queryParams: { department_id: this.entityId },
+    });
   }
 
   hasError(control: string): boolean {

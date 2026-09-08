@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ContactService } from '../../../../core/contact/_services/contact.service';
 import { DepartmentService } from '../../../../core/department/_services/department.service';
 import { OrganizationService } from '../../../../core/organization/_services/organization.service';
+import { CountryService, CountryItem } from '../../../../core/country/_services/country.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-contacts-form',
@@ -19,6 +21,7 @@ export class ContactsFormComponent implements OnInit {
   entityId: string | null = null;
   departments: any[] = [];
   organizations: any[] = [];
+  countries: CountryItem[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -26,7 +29,9 @@ export class ContactsFormComponent implements OnInit {
     private router: Router,
     private service: ContactService,
     private departmentService: DepartmentService,
-    private organizationService: OrganizationService
+    private organizationService: OrganizationService,
+    private countryService: CountryService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -44,7 +49,7 @@ export class ContactsFormComponent implements OnInit {
       phone: [''],
       address: [''],
       city: [''],
-      country: [''],
+      country: [null],
       status: [1],
     });
 
@@ -58,17 +63,17 @@ export class ContactsFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          first_name: item.first_name ?? null,
-          last_name: item.last_name ?? null,
-          title: item.title ?? null,
-          organization_id: item.organization_id ?? null,
-          department_id: item.department_id ?? null,
-          email: item.email ?? null,
-          phone: item.phone ?? null,
-          address: item.address ?? null,
-          city: item.city ?? null,
-          country: item.country ?? null,
-          status: item.status ?? 1,
+            first_name: item.first_name ?? null,
+            last_name: item.last_name ?? null,
+            title: item.title ?? null,
+            organization_id: item.organization_id ?? null,
+            department_id: item.department_id ?? null,
+            email: item.email ?? null,
+            phone: item.phone ?? null,
+            address: item.address ?? null,
+            city: item.city ?? null,
+            country: item.country ? +item.country : (item.country_id ? +item.country_id : null),
+            status: item.status ?? 1,
           });
 
           this.loadingData = false;
@@ -86,6 +91,14 @@ export class ContactsFormComponent implements OnInit {
   loadExtras(): void {
     this.departmentService.getAll().subscribe({ next: (d) => { this.departments = Array.isArray(d) ? d : (d?.items || d?.list || []); } });
     this.organizationService.getAll().subscribe({ next: (d) => { this.organizations = Array.isArray(d) ? d : (d?.items || d?.list || []); } });
+    this.countryService.getAll().subscribe({
+      next: (items) => {
+        this.countries = items;
+      },
+      error: (err) => {
+        console.error('Failed to load countries', err);
+      },
+    });
   }
 
   submit(): void {
@@ -97,6 +110,10 @@ export class ContactsFormComponent implements OnInit {
     this.error = '';
     const raw = { ...this.form.getRawValue() };
 
+    if (raw.country) {
+      raw.country = +raw.country;
+    }
+
     if (!raw.password) {
       delete raw.password;
     }
@@ -106,8 +123,10 @@ export class ContactsFormComponent implements OnInit {
       : this.service.createContact(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Contact updated successfully' : 'Contact created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/contacts']);
       },
       error: (err) => {

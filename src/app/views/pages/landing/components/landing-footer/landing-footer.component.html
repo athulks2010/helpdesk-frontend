@@ -34,21 +34,21 @@
         <div class="xl:col-span-2 space-y-6">
           <a routerLink="/" class="inline-flex items-center gap-3 group">
             <img
-              src="/images/logo_white.png"
-              alt="HelpDesk Logo"
+              [src]="settingService.logoWhiteUrl"
+              [alt]="settingService.appName + ' Logo'"
               class="h-9 w-auto max-w-[160px] object-contain group-hover:scale-105 transition-transform duration-300"
-              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+              (error)="onLogoError($event)"
             />
-            <div class="hidden items-center gap-2">
+            <div *ngIf="logoFailed" class="flex items-center gap-2">
               <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg">
-                H
+                {{ settingService.appName.charAt(0) || 'H' }}
               </div>
-              <span class="font-bold text-2xl tracking-tight text-white">HelpDesk</span>
+              <span class="font-bold text-2xl tracking-tight text-white">{{ settingService.appName }}</span>
             </div>
           </a>
 
           <p class="text-slate-300 leading-relaxed text-base max-w-sm">
-            Start working with HelpDesk and streamline customer support operations from first response to final resolution.
+            {{ footerText }}
           </p>
 
           <!-- Social Links -->
@@ -131,41 +131,32 @@
           </ul>
         </div>
 
-        <!-- Support Links -->
-        <div>
+        <!-- Support Links (same navigation-menu API as header) -->
+        <div *ngIf="supportNavItems.length">
           <h4 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
             <span class="w-1.5 h-5 bg-emerald-500 rounded-full"></span>
             Support
           </h4>
           <ul class="space-y-3 text-sm">
-            <li>
-              <a routerLink="/ticket/open" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
+            <li *ngFor="let item of supportNavItems">
+              <a
+                *ngIf="!item.external"
+                [routerLink]="item.route"
+                [target]="item.target === '_blank' ? '_blank' : '_self'"
+                class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all"
+              >
                 <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Submit Ticket</span>
+                <span>{{ item.label }}</span>
               </a>
-            </li>
-            <li>
-              <a routerLink="/kb" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
+              <a
+                *ngIf="item.external"
+                [href]="item.route"
+                [target]="item.target || '_blank'"
+                rel="noopener noreferrer"
+                class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all"
+              >
                 <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Knowledge Base</span>
-              </a>
-            </li>
-            <li>
-              <a routerLink="/faq" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
-                <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>FAQs</span>
-              </a>
-            </li>
-            <li>
-              <a routerLink="/services" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
-                <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Services</span>
-              </a>
-            </li>
-            <li>
-              <a routerLink="/contact" class="text-slate-300 hover:text-white hover:translate-x-1 inline-flex items-center gap-2 transition-all">
-                <span class="w-1 h-1 rounded-full bg-emerald-400"></span>
-                <span>Contact</span>
+                <span>{{ item.label }}</span>
               </a>
             </li>
           </ul>
@@ -201,7 +192,10 @@
               <span *ngIf="isSubmitting">Subscribing...</span>
             </button>
             <div *ngIf="subscribeSuccess" class="text-xs text-emerald-400 font-medium pt-1">
-              ✓ Thank you for subscribing!
+              ✓ {{ subscribeMessage || 'Thank you for subscribing!' }}
+            </div>
+            <div *ngIf="subscribeError" class="text-xs text-rose-400 font-medium pt-1">
+              {{ subscribeError }}
             </div>
           </form>
 
@@ -215,7 +209,7 @@
 
       <!-- Bottom Bar -->
       <div class="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-        <p>© 2026 HelpDesk. All rights reserved.</p>
+        <p [innerHTML]="copyrightHtml"></p>
         <p>Built for modern support operations.</p>
       </div>
     </div>

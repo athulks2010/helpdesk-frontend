@@ -27,16 +27,219 @@ export class TicketService extends ApiBaseService {
     return this.getCollection(apiUrl.ticketsAll, params);
   }
 
+  /**
+   * GET /organization/all?search=
+   * Returns organizations: [{ id, name }]
+   */
+  filterClients(search?: string): Observable<Array<{ id: number | string; name: string }>> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.filterClients}`, {
+        params: this.toParams({ search: search || undefined }),
+      })
+      .pipe(
+        map((res: any) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data?.items)
+              ? res.data.items
+              : Array.isArray(res?.items)
+                ? res.items
+                : Array.isArray(res?.data)
+                  ? res.data
+                  : [];
+          return list.map((c: any) => ({
+            id: c.id ?? c.user_id ?? c._id,
+            name:
+              c.name ||
+              c.title ||
+              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+              c.email ||
+              String(c.id),
+          }));
+        }),
+        catchError(() => of([]))
+      );
+  }
+
+  /**
+   * GET /user/all?role_id_ne=2&search=
+   * Assignees = all users except customers (role_id != 2)
+   */
+  filterAssignees(search?: string): Observable<Array<{ id: number | string; name: string }>> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.filterAssignees}`, {
+        params: this.toParams({
+          search: search || undefined,
+          role_id_ne: 2,
+          pageSize: 500,
+        }),
+      })
+      .pipe(
+        map((res: any) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data?.items)
+              ? res.data.items
+              : Array.isArray(res?.items)
+                ? res.items
+                : Array.isArray(res?.data)
+                  ? res.data
+                  : [];
+          return list
+            .filter((c: any) => Number(c.role_id ?? c.role?.id) !== 2)
+            .map((c: any) => ({
+              id: c.id ?? c.user_id ?? c._id,
+              name:
+                c.name ||
+                [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+                c.email ||
+                String(c.id),
+            }));
+        }),
+        catchError(() => of([]))
+      );
+  }
+
+  /**
+   * GET /contact/all?search=
+   * Returns contacts/customers: [{ id, name }]
+   */
+  filterCustomers(search?: string): Observable<Array<{ id: number | string; name: string }>> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.filterCustomers}`, {
+        params: this.toParams({ search: search || undefined }),
+      })
+      .pipe(
+        map((res: any) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data?.items)
+              ? res.data.items
+              : Array.isArray(res?.items)
+                ? res.items
+                : Array.isArray(res?.data)
+                  ? res.data
+                  : [];
+          return list.map((c: any) => ({
+            id: c.id ?? c.user_id ?? c._id,
+            name:
+              c.name ||
+              [c.first_name, c.last_name].filter(Boolean).join(' ') ||
+              c.email ||
+              String(c.id),
+          }));
+        }),
+        catchError(() => of([]))
+      );
+  }
+
+  /**
+   * GET /ticket/single?id={id}
+   * Response shape:
+   * { response: {...}, data: { item: { id, subject, status, priority, ... } } }
+   */
   getById(id: string | number): Observable<any> {
-    return this.getSingle(apiUrl.ticketSingle, { id, _id: id });
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketSingle}`, {
+        params: this.toParams({ id }),
+      })
+      .pipe(
+        map((res: any) => {
+          if (!res) return null;
+          // Primary shape from API
+          if (res.data?.item) return res.data.item;
+          if (res.item) return res.item;
+          if (res.ticket) return res.ticket;
+          if (res.data?.ticket) return res.data.ticket;
+          if (res.data && typeof res.data === 'object' && !Array.isArray(res.data) && res.data.id) {
+            return res.data;
+          }
+          if (res.id) return res;
+          return null;
+        })
+      );
   }
 
   createTicket(body: any): Observable<any> {
-    return this.post(apiUrl.ticketCreate, body);
+    return this.post(apiUrl.ticketCreate, this.toCreatePayload(body));
   }
 
   updateTicket(body: any): Observable<any> {
-    return this.put(apiUrl.ticketUpdate, body);
+    return this.put(apiUrl.ticketUpdate, this.toUpdatePayload(body));
+  }
+
+  /** Maps UI form values → POST /ticket/create body */
+  toCreatePayload(raw: Record<string, any>): Record<string, any> {
+    return {
+      subject: String(raw['subject'] ?? '').trim(),
+      body: String(raw['body'] ?? raw['details'] ?? '').trim(),
+      user_id: this.toId(raw['user_id']),
+      contact_id: this.toId(raw['contact_id']),
+      status_id: this.toId(raw['status_id']),
+      priority_id: this.toId(raw['priority_id']),
+      department_id: this.toId(raw['department_id']),
+      type_id: this.toId(raw['type_id']),
+      category_id: this.toId(raw['category_id']),
+      sub_category_id: this.toId(raw['sub_category_id']),
+      assigned_to: this.toId(raw['assigned_to']),
+      custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
+    };
+  }
+
+  /** Maps UI form values → PUT /ticket/update body */
+  toUpdatePayload(raw: Record<string, any>): Record<string, any> {
+    return {
+      id: this.toId(raw['id']),
+      subject: String(raw['subject'] ?? '').trim(),
+      body: String(raw['body'] ?? raw['details'] ?? '').trim(),
+      status_id: this.toId(raw['status_id']),
+      priority_id: this.toId(raw['priority_id']),
+      assigned_to: this.toId(raw['assigned_to']),
+      department_id: this.toId(raw['department_id']),
+      type_id: this.toId(raw['type_id']),
+      category_id: this.toId(raw['category_id']),
+      sub_category_id: this.toId(raw['sub_category_id']),
+      custom_field: this.normalizeCustomField(raw['custom_field'] ?? raw['custom_fields']),
+    };
+  }
+
+  private normalizeCustomField(value: any): Record<string, any> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const out: Record<string, any> = {};
+    Object.keys(value).forEach((key) => {
+      const v = value[key];
+      if (v === undefined || v === null || v === '') return;
+      out[key] = v;
+    });
+    return out;
+  }
+
+  /** GET /ticket-field/all — custom field definitions */
+  getCustomFieldDefinitions(params?: Record<string, any>): Observable<any[]> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketFieldsAll}`, { params: this.toParams(params) })
+      .pipe(
+        map((res) => this.extractArray(res)),
+        catchError(() => of([]))
+      );
+  }
+
+  /** GET /ticket/activities?ticket_id= */
+  getActivities(ticketId: string | number): Observable<any[]> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketActivities}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map((res) => this.extractArray(res)),
+        catchError(() => of([]))
+      );
+  }
+
+  private toId(value: any): number {
+    if (value === null || value === undefined || value === '') return 0;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
   }
 
   deleteTicket(id: string | number): Observable<any> {
@@ -44,15 +247,112 @@ export class TicketService extends ApiBaseService {
   }
 
   getComments(ticketId: string | number): Observable<any> {
-    return this.getSingle(apiUrl.ticketComments, { ticket_id: ticketId, id: ticketId });
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketComments}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map((res: any) => {
+          if (!res) return [];
+          if (Array.isArray(res)) return res;
+          if (res.data?.items) return res.data.items;
+          if (res.data?.comments) return res.data.comments;
+          if (Array.isArray(res.data)) return res.data;
+          if (res.items) return res.items;
+          if (res.comments) return res.comments;
+          return [];
+        })
+      );
   }
 
-  addComment(body: any): Observable<any> {
-    return this.post(apiUrl.ticketComments, body);
+  /**
+   * POST /ticket/comments
+   * Laravel uses { ticket_id, user_id, comment }; Angular API may use body.
+   * Send both comment and body for compatibility.
+   */
+  addComment(payload: {
+    ticket_id: string | number;
+    comment?: string;
+    body?: string;
+    user_id?: string | number;
+  }): Observable<any> {
+    const text = payload.comment ?? payload.body ?? '';
+    return this.http
+      .post(`${this.baseUrl}${apiUrl.ticketComments}`, {
+        ticket_id: payload.ticket_id,
+        user_id: payload.user_id,
+        comment: text,
+        body: text,
+      })
+      .pipe(
+        map((res: any) => {
+          if (res?.data?.item) return res.data.item;
+          if (res?.data?.comment) return res.data.comment;
+          if (res?.item) return res.item;
+          if (res?.data && typeof res.data === 'object' && !Array.isArray(res.data)) return res.data;
+          return res;
+        })
+      );
   }
 
-  toggleFavorite(id: string | number): Observable<any> {
-    return this.post(apiUrl.ticketFavorite, { id, _id: id, ticket_id: id });
+  // getTicketConversations(ticketId: string | number): Observable<any[]> {
+  //   return this.http
+  //     .get(`${this.baseUrl}${apiUrl.ticketConversations}`, {
+  //       params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+  //     })
+  //     .pipe(
+  //       map((res: any) => {
+  //         if (Array.isArray(res)) return res;
+  //         if (Array.isArray(res?.data)) return res.data;
+  //         if (Array.isArray(res?.data?.items)) return res.data.items;
+  //         if (Array.isArray(res?.items)) return res.items;
+  //         if (Array.isArray(res?.conversations)) return res.conversations;
+  //         return [];
+  //       }),
+  //       catchError(() => of([]))
+  //     );
+  // }
+
+  /**
+   * GET /ticket/favorites?ticket_id=
+   * 200 + item => favorited; 404 => not favorited
+   */
+  getFavoriteStatus(ticketId: string | number): Observable<boolean> {
+    return this.http
+      .get(`${this.baseUrl}${apiUrl.ticketFavorites}`, {
+        params: this.toParams({ ticket_id: ticketId, id: ticketId }),
+      })
+      .pipe(
+        map(() => true),
+        catchError((err) => of(err?.status === 404 ? false : false))
+      );
+  }
+
+  /** POST /ticket/favorites { ticket_id } */
+  addFavorite(ticketId: string | number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}${apiUrl.ticketFavorites}`, { ticket_id: ticketId })
+      .pipe(this.unwrap());
+  }
+
+  /** DELETE /ticket/favorites { ticket_id } */
+  removeFavorite(ticketId: string | number): Observable<any> {
+    return this.http
+      .request('delete', `${this.baseUrl}${apiUrl.ticketFavorites}`, {
+        body: { ticket_id: ticketId },
+      })
+      .pipe(this.unwrap());
+  }
+
+  /** Toggle favorite: add if off, remove if on. Returns new favorited state. */
+  toggleFavorite(ticketId: string | number, currentlyFavorited: boolean): Observable<boolean> {
+    const req$ = currentlyFavorited
+      ? this.removeFavorite(ticketId)
+      : this.addFavorite(ticketId);
+    return req$.pipe(
+      map(() => !currentlyFavorited),
+      catchError(() => of(currentlyFavorited))
+    );
   }
 
   restoreTicket(id: string | number): Observable<any> {
@@ -78,8 +378,10 @@ export class TicketService extends ApiBaseService {
     statuses: any[];
     types: any[];
     departments: any[];
+    categories: any[];
     customers: any[];
     assignees: any[];
+    contacts: any[];
   }> {
     const safe = (obs: Observable<any>) =>
       obs.pipe(
@@ -89,30 +391,42 @@ export class TicketService extends ApiBaseService {
 
     return forkJoin({
       priorities: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.prioritiesAll}`)),
-      statuses:   safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.statusesAll}`)),
-      types:      safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.typesAll}`)),
-      departments:safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.departmentsAll}`)),
-      customers:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2`)),
-      assignees:  safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=6`)),
+      statuses: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.statusesAll}`)),
+      types: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.typesAll}`)),
+      departments: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.departmentsAll}`)),
+      categories: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.categoriesAll}`)),
+      customers: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&pageSize=500`)),
+      assignees: safe(
+        this.http.get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id_ne=2&pageSize=500`).pipe(
+          map((res) =>
+            this.extractArray(res).filter((u: any) => Number(u.role_id ?? u.role?.id) !== 2)
+          )
+        )
+      ),
+      contacts: safe(this.http.get<any>(`${environment.apiUrl}${apiUrl.contactsAll}`)),
     });
   }
 
   /** Search customers by name/email */
   searchCustomers(query: string): Observable<any[]> {
     return this.http
-      .get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&search=${encodeURIComponent(query)}`)
+      .get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=2&search=${encodeURIComponent(query)}&pageSize=50`)
       .pipe(
         map((res) => this.extractArray(res)),
         catchError(() => of([]))
       );
   }
 
-  /** Search staff/agents for assignment */
+  /** Search staff for assignment — all users except customers (role_id != 2) */
   searchAssignees(query: string): Observable<any[]> {
     return this.http
-      .get<any>(`${environment.apiUrl}${apiUrl.usersAll}?role_id=6&search=${encodeURIComponent(query)}`)
+      .get<any>(
+        `${environment.apiUrl}${apiUrl.usersAll}?role_id_ne=2&search=${encodeURIComponent(query)}&pageSize=50`
+      )
       .pipe(
-        map((res) => this.extractArray(res)),
+        map((res) =>
+          this.extractArray(res).filter((u: any) => Number(u.role_id ?? u.role?.id) !== 2)
+        ),
         catchError(() => of([]))
       );
   }

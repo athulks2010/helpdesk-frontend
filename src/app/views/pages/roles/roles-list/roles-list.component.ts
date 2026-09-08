@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { RoleService } from '../../../../core/role/_services/role.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-roles-list',
@@ -17,7 +18,8 @@ export class RolesListComponent implements OnInit {
 
   constructor(
     private service: RoleService,
-    private router: Router
+    private router: Router,
+    private confirmService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -40,18 +42,44 @@ export class RolesListComponent implements OnInit {
     });
   }
 
+  Math = Math;
+  pageSize = 10;
+  currentPage = 1;
+  totalCount = 0;
+  totalPages = 1;
+  pages: number[] = [];
+
   applyFilter(): void {
     const q = (this.search || '').toLowerCase().trim();
-    if (!q) {
-      this.filtered = [...this.rows];
-      return;
+    let res = this.rows;
+    if (q) {
+      res = this.rows.filter((row) =>
+        JSON.stringify(row).toLowerCase().includes(q)
+      );
     }
-    this.filtered = this.rows.filter((row) =>
-      JSON.stringify(row).toLowerCase().includes(q)
-    );
+    this.totalCount = res.length;
+    this.totalPages = Math.max(1, Math.ceil(this.totalCount / Number(this.pageSize)));
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const start = (this.currentPage - 1) * Number(this.pageSize);
+    this.filtered = res.slice(start, start + Number(this.pageSize));
   }
 
   onSearchChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.applyFilter();
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
     this.applyFilter();
   }
 
@@ -64,12 +92,26 @@ export class RolesListComponent implements OnInit {
     this.router.navigate(['/roles', id, 'edit']);
   }
 
-  remove(row: any): void {
+  /** System roles 1–6 are protected; only custom roles can be deleted. */
+  canDeleteRole(row: any): boolean {
+    const id = Number(row?.id ?? row?._id);
+    return Number.isFinite(id) && id > 6;
+  }
+
+  async remove(row: any): Promise<void> {
+    if (!this.canDeleteRole(row)) return;
     const id = row.id || row._id;
     if (!id) return;
-    if (!confirm(`Delete role "${row.name || id}"? This action cannot be undone.`)) {
-      return;
-    }
+    const name = row.name || id;
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Role',
+      message: `Are you sure you want to delete role "${name}"? This action cannot be undone.`,
+      itemName: `${name}`,
+      confirmText: 'Delete Role',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
       next: () => {

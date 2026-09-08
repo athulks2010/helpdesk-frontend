@@ -5,12 +5,14 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/_services/auth.service';
 import { UserModel } from '../../../core/auth/_models/user.model';
 import { NotificationService } from '../../../core/notification/_services/notification.service';
+import { SettingService } from '../../../core/setting/_services/setting.service';
 
 export interface SubMenuItem {
   name: string;
   path: string;
   icon?: string;
   permission?: string;
+  optionSlug?: string;
   adminOnly?: boolean;
 }
 
@@ -19,6 +21,7 @@ export interface MenuItem {
   path?: string;
   icon: string;
   permission?: string;
+  optionSlug?: string;
   adminOnly?: boolean;
   submenu?: SubMenuItem[];
 }
@@ -26,6 +29,11 @@ export interface MenuItem {
 export interface MenuGroup {
   title: string;
   items: MenuItem[];
+}
+
+export interface Breadcrumb {
+  label: string;
+  path?: string;
 }
 
 @Component({
@@ -39,12 +47,18 @@ export class BaseComponent implements OnInit, OnDestroy {
   currentUser: UserModel | null = null;
   private authSub?: Subscription;
   private routerSub?: Subscription;
+  private settingsSub?: Subscription;
+  logoFailed = false;
 
   currentUrl = '';
   currentTitle = 'Dashboard';
+  breadcrumbs: Breadcrumb[] = [];
 
   // Submenu toggle state
   expandedMenus = new Set<string>();
+
+  /** Cached so *ngFor does not recreate links on every change-detection cycle. */
+  menuGroups: MenuGroup[] = [];
 
   // Topbar dropdown states
   userDropdownOpen = false;
@@ -75,20 +89,30 @@ export class BaseComponent implements OnInit, OnDestroy {
   constructor(
     private auth: AuthService,
     private router: Router,
-    private notificationService: NotificationService
-  ) {}
+    private notificationService: NotificationService,
+    public settingService: SettingService
+  ) { }
 
   ngOnInit(): void {
     this.currentUser$ = this.auth.currentUser$;
     this.authSub = this.currentUser$.subscribe((user) => {
       this.currentUser = user;
+      this.refreshMenuGroups();
     });
 
     if (this.auth.getToken() && !this.auth.currentUserValue) {
       this.auth.me().subscribe();
     }
 
+    this.settingService.loadBrandSettings();
+    this.settingService.getAll({}).subscribe({ error: () => { } });
+    this.settingsSub = this.settingService.settings$.subscribe(() => {
+      this.logoFailed = false;
+      this.refreshMenuGroups();
+    });
+
     this.loadNotifications();
+    this.refreshMenuGroups();
 
     this.currentUrl = this.router.url;
     this.updateCurrentTitle(this.currentUrl);
@@ -116,6 +140,13 @@ export class BaseComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSub?.unsubscribe();
     this.routerSub?.unsubscribe();
+    this.settingsSub?.unsubscribe();
+  }
+
+  onLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) img.style.display = 'none';
+    this.logoFailed = true;
   }
 
   @HostListener('document:click', ['$event'])
@@ -139,11 +170,27 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Checks item visibility based on admin status, module permissions, and setting enable_options
+   */
+  isItemVisible(item: MenuItem | SubMenuItem): boolean {
+    if (item.adminOnly && !this.isAdmin) {
+      return false;
+    }
+    if (item.permission && !this.hasAccess(item.permission, 'read')) {
+      return false;
+    }
+    if (item.optionSlug && !this.settingService.isOptionEnabled(item.optionSlug)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Permission access checking matching Laravel MainMenu.vue:
    * Checks user.access[module][action] or parsed role.access
    */
   hasAccess(module: string, action: 'read' | 'create' | 'update' | 'delete' = 'read'): boolean {
-    if (!this.currentUser) return true; // fallback if loaded before profile
+    if (!this.currentUser) return false;
 
     const role = this.currentUser.role;
     const roleSlug = typeof role === 'string' ? role : role?.slug;
@@ -178,54 +225,50 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Computes menu groups filtered by authenticated user permissions
+   * Rebuild menu only when user/permissions/settings change — not on every CD cycle.
+   * Recreating menu DOM each cycle was breaking routerLink clicks (esp. Front Pages + TinyMCE).
    */
-  get menuGroups(): MenuGroup[] {
+  refreshMenuGroups(): void {
     const groups: MenuGroup[] = [
       {
         title: 'MAIN',
         items: [
           { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
           { name: 'Tickets', path: '/tickets', icon: 'ticket', permission: 'ticket' },
-          { name: 'Chat', path: '/chat', icon: 'chat', permission: 'chat' },
-        ].filter((item) => !item.permission || this.hasAccess(item.permission, 'read')),
+          { name: 'Chat', path: '/chat', icon: 'chat', permission: 'chat', optionSlug: 'chat' },
+        ].filter((item) => this.isItemVisible(item)),
       },
       {
         title: 'CONTENT',
         items: [
-          { name: 'Knowledge Base', path: '/knowledge-base', icon: 'knowledge', permission: 'knowledge_base' },
-          { name: 'FAQs', path: '/faqs', icon: 'faq', permission: 'faq' },
-          { name: 'Blog', path: '/blogs', icon: 'blog', permission: 'blog' },
-          { name: 'Services', path: '/admin-services', icon: 'service', permission: 'front_page' },
+          { name: 'Knowledge Base', path: '/knowledge-base', icon: 'knowledge', permission: 'knowledge_base', optionSlug: 'kb' },
+          { name: 'FAQs', path: '/faqs', icon: 'faq', permission: 'faq', optionSlug: 'faq' },
+          { name: 'Blog', path: '/blogs', icon: 'blog', permission: 'blog', optionSlug: 'blog' },
+          { name: 'Services', path: '/admin-services', icon: 'service', permission: 'front_page', optionSlug: 'service' },
           {
             name: 'Front Pages',
-            icon: 'settings',
+            icon: 'gear',
             permission: 'front_page',
             submenu: [
-              { name: 'Home', path: '/front-pages/home' },
-              { name: 'Services', path: '/front-pages/services' },
-              { name: 'Contact', path: '/front-pages/contact' },
-              { name: 'Privacy Policy', path: '/front-pages/privacy' },
-              { name: 'Terms of services', path: '/front-pages/terms' },
-              { name: 'Footer', path: '/front-pages/footer' },
+              { name: 'Home', path: '/front-pages/home', icon: 'page' },
+              { name: 'Services', path: '/front-pages/services', icon: 'page' },
+              { name: 'Contact', path: '/front-pages/contact', icon: 'page' },
+              { name: 'Privacy Policy', path: '/front-pages/privacy', icon: 'page' },
+              { name: 'Terms of services', path: '/front-pages/terms', icon: 'page' },
+              { name: 'Footer', path: '/front-pages/footer', icon: 'page' },
             ],
           },
-        ].filter((item) => !item.permission || this.hasAccess(item.permission, 'read')),
+        ].filter((item) => this.isItemVisible(item)),
       },
       {
         title: 'MANAGEMENT',
         items: [
           { name: 'Customers', path: '/customers', icon: 'users', permission: 'customer' },
-          { name: 'Contacts', path: '/contacts', icon: 'contact', permission: 'contact' },
-          { name: 'Organizations', path: '/organizations', icon: 'office', permission: 'organization' },
-          { name: 'Notes', path: '/notes', icon: 'notes' },
+          { name: 'Contacts', path: '/contacts', icon: 'contact', permission: 'contact', optionSlug: 'contact' },
+          { name: 'Organizations', path: '/organizations', icon: 'office', permission: 'organization', optionSlug: 'organization' },
+          { name: 'Notes', path: '/notes', icon: 'notes', optionSlug: 'note' },
           { name: 'Manage Users', path: '/users', icon: 'users', permission: 'user' },
-          { name: 'Pending Users', path: '/pending-users', icon: 'users', permission: 'user', adminOnly: true },
-          { name: 'Reports', path: '/reports', icon: 'dashboard', permission: 'global' },
-        ].filter((item) => {
-          if (item.adminOnly) return this.isAdmin;
-          return !item.permission || this.hasAccess(item.permission, 'read');
-        }),
+        ].filter((item) => this.isItemVisible(item)),
       },
       {
         title: 'CONFIGURATION',
@@ -233,13 +276,31 @@ export class BaseComponent implements OnInit, OnDestroy {
       },
     ];
 
-    // Only return groups that have items
-    return groups.filter((g) => g.items.length > 0);
+    this.menuGroups = groups.filter((g) => g.items.length > 0);
+  }
+
+  trackByGroupTitle(_index: number, group: MenuGroup): string {
+    return group.title;
+  }
+
+  trackByMenuName(_index: number, item: MenuItem): string {
+    return item.name;
+  }
+
+  trackBySubPath(_index: number, sub: SubMenuItem): string {
+    return sub.path;
+  }
+
+  navigateTo(path: string | undefined, event?: Event): void {
+    if (!path) return;
+    event?.preventDefault();
+    this.mobileMenuOpen = false;
+    void this.router.navigateByUrl(path);
   }
 
   private buildConfigurationItems(): MenuItem[] {
     const settingSubmenus: SubMenuItem[] = [
-      { name: 'Global', path: '/settings', icon: 'global_setting', permission: 'global' },
+      { name: 'Global', path: '/settings/global', icon: 'global_setting', permission: 'global' },
       { name: 'Languages', path: '/settings/languages', icon: 'edit', permission: 'language' },
       { name: 'Navigation Menus', path: '/settings/menus', icon: 'page', permission: 'front_page' },
       { name: 'Custom fields', path: '/settings/ticket-fields', icon: 'form-builder', permission: 'global' },
@@ -251,16 +312,12 @@ export class BaseComponent implements OnInit, OnDestroy {
       { name: 'Email Templates', path: '/settings/email-templates', icon: 'email', permission: 'email_template' },
       { name: 'SMTP Mail', path: '/settings/smtp', icon: 'email_template', permission: 'smtp' },
       { name: 'Pusher Chat', path: '/settings/pusher', icon: 'chat', permission: 'pusher' },
-      { name: 'Email to ticket', path: '/settings/piping', icon: 'ticket', adminOnly: true },
+      { name: 'Email to ticket', path: '/settings/piping', icon: 'ticket', adminOnly: true, optionSlug: 'enable_piping' },
       { name: 'User Roles', path: '/roles', icon: 'user_role', adminOnly: true },
       { name: 'Ai Settings', path: '/ai', icon: 'settings', adminOnly: true },
       { name: 'License', path: '/settings/license', icon: 'user_role', adminOnly: true },
-      { name: 'Latest Updates', path: '/settings', icon: 'archive', adminOnly: true },
-    ].filter((sub) => {
-      if (sub.adminOnly) return this.isAdmin;
-      if (sub.permission) return this.hasAccess(sub.permission, 'read');
-      return true;
-    });
+      { name: 'Latest Updates', path: '/settings/latest-update', icon: 'archive', adminOnly: true },
+    ].filter((sub) => this.isItemVisible(sub));
 
     if (settingSubmenus.length > 0) {
       return [
@@ -280,6 +337,8 @@ export class BaseComponent implements OnInit, OnDestroy {
     } else {
       this.expandedMenus.add(name);
     }
+    // New Set reference so the template reliably re-evaluates expanded state
+    this.expandedMenus = new Set(this.expandedMenus);
   }
 
   isSubmenuExpanded(name: string): boolean {
@@ -288,12 +347,15 @@ export class BaseComponent implements OnInit, OnDestroy {
 
   private autoExpandActiveSubmenus(url: string): void {
     const cleanUrl = url.split('?')[0].split('#')[0];
+    let changed = false;
     if (
       cleanUrl.startsWith('/front-pages') ||
-      cleanUrl.startsWith('/services') ||
-      cleanUrl.startsWith('/landing')
+      cleanUrl.startsWith('/admin-services')
     ) {
-      this.expandedMenus.add('Front Pages');
+      if (!this.expandedMenus.has('Front Pages')) {
+        this.expandedMenus.add('Front Pages');
+        changed = true;
+      }
     }
     if (
       cleanUrl.startsWith('/settings') ||
@@ -305,7 +367,13 @@ export class BaseComponent implements OnInit, OnDestroy {
       cleanUrl.startsWith('/roles') ||
       cleanUrl.startsWith('/ai')
     ) {
-      this.expandedMenus.add('Settings');
+      if (!this.expandedMenus.has('Settings')) {
+        this.expandedMenus.add('Settings');
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.expandedMenus = new Set(this.expandedMenus);
     }
   }
 
@@ -319,8 +387,10 @@ export class BaseComponent implements OnInit, OnDestroy {
   }
 
   isSubItemActive(sub: SubMenuItem): boolean {
+    if (!sub.path) return false;
     const cleanCurrent = this.currentUrl.split('?')[0].split('#')[0];
-    return cleanCurrent === sub.path || (sub.path !== '/' && cleanCurrent.startsWith(sub.path + '/'));
+    // Exact match for leaf admin pages (avoids /front-pages/home matching a sibling)
+    return cleanCurrent === sub.path || cleanCurrent === sub.path + '/';
   }
 
   isParentActive(item: MenuItem): boolean {
@@ -328,35 +398,168 @@ export class BaseComponent implements OnInit, OnDestroy {
     return item.submenu.some((sub) => this.isSubItemActive(sub));
   }
 
+  private setPage(title: string, breadcrumbs: Breadcrumb[]): void {
+    this.currentTitle = title;
+    this.breadcrumbs = breadcrumbs;
+  }
+
   private updateCurrentTitle(url: string): void {
     const clean = url.split('?')[0].split('#')[0];
-    const segment = clean.replace(/^\//, '').split('/')[0];
-    const titles: Record<string, string> = {
-      dashboard: 'Dashboard',
-      tickets: 'Tickets',
-      chat: 'Chat',
-      'knowledge-base': 'Knowledge Base',
-      faqs: 'FAQs',
-      blogs: 'Blog',
-      'admin-services': 'Services',
-      services: 'Services',
-      customers: 'Customers',
-      contacts: 'Contacts',
-      organizations: 'Organizations',
-      notes: 'Notes',
-      users: 'Manage Users',
-      settings: 'Settings',
-      departments: 'Departments',
-      categories: 'Categories',
-      statuses: 'Statuses',
-      priorities: 'Priorities',
-      types: 'Ticket Types',
-      roles: 'User Roles',
-      ai: 'AI Settings',
-      reports: 'Reports',
-      notifications: 'Notifications',
+    const parts = clean.replace(/^\//, '').split('/').filter(Boolean);
+    const segment = parts[0] || 'dashboard';
+
+    const modules: Record<string, { title: string; singular: string; path: string }> = {
+      dashboard: { title: 'Dashboard', singular: 'dashboard', path: '/dashboard' },
+      tickets: { title: 'Tickets', singular: 'ticket', path: '/tickets' },
+      chat: { title: 'Chat', singular: 'chat', path: '/chat' },
+      customers: { title: 'Customers', singular: 'customer', path: '/customers' },
+      contacts: { title: 'Contacts', singular: 'contact', path: '/contacts' },
+      organizations: { title: 'Organizations', singular: 'organization', path: '/organizations' },
+      notes: { title: 'Notes', singular: 'note', path: '/notes' },
+      users: { title: 'Users', singular: 'user', path: '/users' },
+      'pending-users': { title: 'Pending Users', singular: 'pending user', path: '/pending-users' },
+      'knowledge-base': { title: 'Knowledge Base', singular: 'article', path: '/knowledge-base' },
+      faqs: { title: 'FAQs', singular: 'FAQ', path: '/faqs' },
+      blogs: { title: 'Blog Posts', singular: 'blog post', path: '/blogs' },
+      'admin-services': { title: 'Services', singular: 'service', path: '/admin-services' },
+      services: { title: 'Services', singular: 'service', path: '/admin-services' },
+      departments: { title: 'Departments', singular: 'department', path: '/departments' },
+      categories: { title: 'Categories', singular: 'category', path: '/categories' },
+      statuses: { title: 'Statuses', singular: 'status', path: '/statuses' },
+      priorities: { title: 'Priorities', singular: 'priority', path: '/priorities' },
+      types: { title: 'Types', singular: 'type', path: '/types' },
+      roles: { title: 'Roles', singular: 'role', path: '/roles' },
+      ai: { title: 'AI Settings', singular: 'AI setting', path: '/ai' },
+      reports: { title: 'Reports', singular: 'report', path: '/reports' },
+      notifications: { title: 'Notifications', singular: 'notification', path: '/notifications' },
+      settings: { title: 'Settings', singular: 'setting', path: '/settings' },
+      'front-pages': { title: 'Front Pages', singular: 'front page', path: '/front-pages' },
     };
-    this.currentTitle = titles[segment] || 'Dashboard';
+
+    if (segment === 'settings') {
+      const settingsPages: Record<string, string> = {
+        global: 'Global Settings',
+        smtp: 'SMTP Settings',
+        pusher: 'Pusher Settings',
+        piping: 'Email Piping Settings',
+        languages: 'Languages',
+        menus: 'Navigation Menus',
+        'email-templates': 'Email Templates',
+        'ticket-fields': 'Ticket Form Builder',
+        license: 'License',
+        'latest-update': 'Latest Updates',
+        updates: 'Latest Updates',
+      };
+
+      if (!parts[1] || parts[1] === 'global') {
+        this.setPage('Global Settings', [{ label: 'Global Settings' }]);
+        return;
+      }
+
+      if (parts[1] === 'email-templates' && parts[3] === 'edit') {
+        this.setPage('Edit email template', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Email Templates', path: '/settings/email-templates' },
+          { label: 'Edit email template' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'languages' && parts[2] === 'create') {
+        this.setPage('Create a new language', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Languages', path: '/settings/languages' },
+          { label: 'Create a new language' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'languages' && parts[3] === 'edit') {
+        this.setPage('Edit language', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Languages', path: '/settings/languages' },
+          { label: 'Edit language' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'menus' && parts[2] === 'create') {
+        this.setPage('Create a new menu item', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Navigation Menus', path: '/settings/menus' },
+          { label: 'Create a new menu item' },
+        ]);
+        return;
+      }
+
+      if (parts[1] === 'menus' && parts[3] === 'edit') {
+        this.setPage('Edit menu item', [
+          { label: 'Settings', path: '/settings' },
+          { label: 'Navigation Menus', path: '/settings/menus' },
+          { label: 'Edit menu item' },
+        ]);
+        return;
+      }
+
+      const nestedTitle = settingsPages[parts[1]] || 'Settings';
+      this.setPage(nestedTitle, [
+        { label: 'Settings', path: '/settings' },
+        { label: nestedTitle },
+      ]);
+      return;
+    }
+
+    if (segment === 'front-pages') {
+      const frontPages: Record<string, string> = {
+        home: 'Home',
+        services: 'Services',
+        contact: 'Contact',
+        privacy: 'Privacy Policy',
+        terms: 'Terms of Services',
+        footer: 'Footer',
+      };
+      const pageKey = parts[1] || 'home';
+      const label = frontPages[pageKey] || 'Front Pages';
+      this.setPage(label, [
+        { label: 'Front Pages', path: '/front-pages/home' },
+        { label },
+      ]);
+      return;
+    }
+
+    const mod = modules[segment];
+    if (!mod) {
+      this.setPage('Dashboard', [{ label: 'Dashboard' }]);
+      return;
+    }
+
+    if (parts[1] === 'create') {
+      const title = `Create a new ${mod.singular}`;
+      this.setPage(title, [
+        { label: mod.title, path: mod.path },
+        { label: title },
+      ]);
+      return;
+    }
+
+    if (parts[2] === 'edit') {
+      const title = `Edit ${mod.singular}`;
+      this.setPage(title, [
+        { label: mod.title, path: mod.path },
+        { label: title },
+      ]);
+      return;
+    }
+
+    if (segment === 'tickets' && parts[1]) {
+      this.setPage('Ticket details', [
+        { label: 'Tickets', path: '/tickets' },
+        { label: 'Ticket details' },
+      ]);
+      return;
+    }
+
+    this.setPage(mod.title, [{ label: mod.title }]);
   }
 
   switchMode(): void {

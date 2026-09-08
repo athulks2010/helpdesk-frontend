@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TypeService } from '../../../../core/type/_services/type.service';
-
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-types-form',
@@ -17,12 +17,12 @@ export class TypesFormComponent implements OnInit {
   isEditMode = false;
   entityId: string | null = null;
 
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private service: TypeService
+    private service: TypeService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -32,10 +32,14 @@ export class TypesFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [this.entityId],
       name: ['', Validators.required],
+      slug: [''],
     });
 
-
-    this.loadExtras();
+    if (!this.isEditMode) {
+      this.form.get('name')?.valueChanges.subscribe((name: string) => {
+        this.form.patchValue({ slug: this.toSlug(name) }, { emitEvent: false });
+      });
+    }
 
     if (this.isEditMode && this.entityId) {
       this.loadingData = true;
@@ -44,9 +48,9 @@ export class TypesFormComponent implements OnInit {
           const item = res?.data ?? res?.item ?? res;
           this.form.patchValue({
             id: item.id || item._id || this.entityId,
-          name: item.name ?? null,
+            name: item.name ?? null,
+            slug: item.slug ?? '',
           });
-
           this.loadingData = false;
         },
         error: () => {
@@ -54,13 +58,14 @@ export class TypesFormComponent implements OnInit {
           this.loadingData = false;
         },
       });
-    } else {
-
     }
   }
 
-  loadExtras(): void {
-    // no extras
+  private toSlug(value: string): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_');
   }
 
   submit(): void {
@@ -71,9 +76,8 @@ export class TypesFormComponent implements OnInit {
     this.loading = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
-
-    if (!raw.password) {
-      delete raw.password;
+    if (!this.isEditMode) {
+      raw.slug = this.toSlug(raw.name);
     }
 
     const req$ = this.isEditMode
@@ -81,8 +85,10 @@ export class TypesFormComponent implements OnInit {
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res) => {
         this.loading = false;
+        const msg = res?.response?.message || res?.message || (this.isEditMode ? 'Type updated successfully' : 'Type created successfully');
+        this.toast.success(msg);
         this.router.navigate(['/types']);
       },
       error: (err) => {

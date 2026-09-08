@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NoteService } from '../../../../core/note/_services/note.service';
+import { ConfirmDialogService } from '../../../theme/confirm-dialog/confirm-dialog.service';
+import { AuthService } from '../../../../core/auth/_services/auth.service';
+import { ToastService } from '../../../../core/toast/toast.service';
 
 @Component({
   selector: 'app-notes-list',
@@ -22,14 +25,18 @@ export class NotesListComponent implements OnInit {
 
   constructor(
     private service: NoteService,
-    private fb: FormBuilder
-  ) {}
+    private fb: FormBuilder,
+    private confirmService: ConfirmDialogService,
+    private auth: AuthService,
+    private toast: ToastService
+  ) { }
 
   ngOnInit(): void {
     this.form = this.fb.group({
       id: [null],
       name: ['', Validators.required],
       details: ['', Validators.required],
+      user_id: [this.currentUserId()],
     });
     this.load();
   }
@@ -54,11 +61,11 @@ export class NotesListComponent implements OnInit {
     const q = (this.search || '').toLowerCase().trim();
     if (!q) {
       this.filtered = [...this.rows];
-      return;
+    } else {
+      this.filtered = this.rows.filter((row) =>
+        JSON.stringify(row).toLowerCase().includes(q)
+      );
     }
-    this.filtered = this.rows.filter((row) =>
-      JSON.stringify(row).toLowerCase().includes(q)
-    );
   }
 
   onSearchChange(): void {
@@ -67,7 +74,12 @@ export class NotesListComponent implements OnInit {
 
   openCreate(): void {
     this.editingId = null;
-    this.form.reset({ id: null, name: '', details: '' });
+    this.form.reset({
+      id: null,
+      name: '',
+      details: '',
+      user_id: this.currentUserId(),
+    });
     this.panelOpen = true;
   }
 
@@ -78,6 +90,7 @@ export class NotesListComponent implements OnInit {
       id,
       name: row.name ?? '',
       details: row.details ?? '',
+      user_id: row.user_id ?? this.currentUserId(),
     });
     this.panelOpen = true;
   }
@@ -85,7 +98,12 @@ export class NotesListComponent implements OnInit {
   closePanel(): void {
     this.panelOpen = false;
     this.editingId = null;
-    this.form.reset({ id: null, name: '', details: '' });
+    this.form.reset({
+      id: null,
+      name: '',
+      details: '',
+      user_id: this.currentUserId(),
+    });
   }
 
   submit(): void {
@@ -96,34 +114,53 @@ export class NotesListComponent implements OnInit {
     this.saving = true;
     this.error = '';
     const raw = { ...this.form.getRawValue() };
+    if (!this.editingId) {
+      raw.user_id = this.currentUserId();
+      delete raw.id;
+    }
     const req$ = this.editingId
       ? this.service.update(raw)
       : this.service.create(raw);
 
     req$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.saving = false;
+        const msg = res?.response?.message || res?.message || (this.editingId ? 'Note updated successfully' : 'Note created successfully');
+        this.toast.success(msg);
         this.closePanel();
         this.load();
       },
       error: (err) => {
         this.saving = false;
-        this.error = err?.error?.message || err?.message || 'Save failed';
+        this.error =
+          err?.error?.response?.message ||
+          err?.error?.message ||
+          err?.message ||
+          'Save failed';
       },
     });
   }
 
-  remove(row: any, event?: Event): void {
+  async remove(row: any, event?: Event): Promise<void> {
     event?.stopPropagation();
     const id = row?.id || row?._id || this.editingId;
     if (!id) return;
-    if (!confirm('Delete this note? This action cannot be undone.')) {
-      return;
-    }
+    const name = row?.title || row?.name || 'this note';
+    const confirmed = await this.confirmService.confirm({
+      title: 'Delete Note',
+      message: 'Are you sure you want to delete this note? This action cannot be undone.',
+      itemName: `${name}`,
+      confirmText: 'Delete Note',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
     this.deletingId = id;
     this.service.deleteById(id).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.deletingId = null;
+        const msg = res?.response?.message || res?.message || 'Note deleted successfully';
+        this.toast.success(msg);
         if (this.editingId === id) {
           this.closePanel();
         }
@@ -162,5 +199,15 @@ export class NotesListComponent implements OnInit {
 
   rowId(row: any): string | number | null {
     return row?.id || row?._id || null;
+  }
+
+  private currentUserId(): number | null {
+    const user = this.auth.currentUserValue;
+    const id = user?.id ?? user?._id;
+    if (id == null || id === '') {
+      return null;
+    }
+    const n = Number(id);
+    return Number.isFinite(n) ? n : null;
   }
 }

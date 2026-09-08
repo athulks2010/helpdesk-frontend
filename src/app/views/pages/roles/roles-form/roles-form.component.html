@@ -1,26 +1,14 @@
 <div class="space-y-6">
-  <div class="flex items-start justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-        {{ isEditMode ? 'Edit Role' : 'Create Role' }}
-      </h1>
-      <p class="text-sm text-slate-500 mt-0.5">
-        {{ isEditMode ? 'Update role name, slug, and access permissions' : 'Define a new role and its access matrix' }}
-      </p>
-    </div>
-    <button type="button" class="hd-btn-secondary" (click)="cancel()">Back</button>
-  </div>
-
   <div *ngIf="loadingData" class="hd-card p-10 text-center text-slate-500">Loading…</div>
 
   <form *ngIf="!loadingData" class="hd-card" [formGroup]="form" (ngSubmit)="submit()">
     <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-      <div>
+      <div [class.sm:col-span-2]="!isEditMode">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
         <input type="text" class="hd-input" formControlName="name" />
         <p *ngIf="hasError('name')" class="mt-1 text-xs text-red-600">Name is required</p>
       </div>
-      <div>
+      <div *ngIf="isEditMode">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Slug</label>
         <input type="text" class="hd-input" formControlName="slug" />
         <p *ngIf="hasError('slug')" class="mt-1 text-xs text-red-600">Slug is required</p>
