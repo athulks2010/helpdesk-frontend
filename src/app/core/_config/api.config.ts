@@ -119,6 +119,7 @@ export const apiUrl = {
   faqCreate: '/faq/create',
   faqUpdate: '/faq/update',
   faqDelete: '/faq/delete',
+  faqsPublic: '/public/faqs',
 
   /* Blogs / Posts */
   blogs: '/post',
@@ -246,5 +247,10 @@ export const apiUrl = {
   publicServices: '/public/services',
   publicFrontPage: '/public/front-page',
   publicTicketOpen: '/public/ticket/open',
+  publicDepartments: '/public/departments',
+  publicCategories: '/public/categories',
+  publicPriorities: '/public/priorities',
+  publicTypes: '/public/types',
   publicSubscribeNews: '/public/subscribe/news',
+  publicContact: '/public/contact',
 };

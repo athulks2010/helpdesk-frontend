@@ -12,7 +12,8 @@ export class LandingContactComponent implements OnInit {
   loading = true;
 
   form = {
-    name: '',
+    first_name: '',
+    last_name: '',
     email: '',
     phone: '',
     message: '',
@@ -61,8 +62,11 @@ export class LandingContactComponent implements OnInit {
 
   validate(): boolean {
     this.validationErrors = {};
-    if (!this.form.name.trim()) {
-      this.validationErrors['name'] = 'Full name is required.';
+    if (!this.form.first_name.trim()) {
+      this.validationErrors['first_name'] = 'First name is required.';
+    }
+    if (!this.form.last_name.trim()) {
+      this.validationErrors['last_name'] = 'Last name is required.';
     }
     if (!this.form.email.trim() || !this.form.email.includes('@')) {
       this.validationErrors['email'] = 'Valid email is required.';
@@ -77,7 +81,7 @@ export class LandingContactComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.validate()) {
+    if (this.isSubmitting || !this.validate()) {
       return;
     }
 
@@ -85,8 +89,15 @@ export class LandingContactComponent implements OnInit {
     this.submitSuccess = false;
     this.submitError = '';
 
+    const firstName = this.form.first_name.trim();
+    const lastName = this.form.last_name.trim();
     const payload = {
-      ...this.form,
+      first_name: firstName,
+      last_name: lastName,
+      name: [firstName, lastName].filter(Boolean).join(' '),
+      email: this.form.email.trim(),
+      phone: this.form.phone.trim(),
+      message: this.form.message.trim(),
       recipient: this.contact.contact_recipient || this.contact.email,
     };
 
@@ -98,7 +109,7 @@ export class LandingContactComponent implements OnInit {
           res?.response?.message ||
           res?.message ||
           'Thank you for reaching out! We have received your message and will respond shortly.';
-        this.form = { name: '', email: '', phone: '', message: '' };
+        this.form = { first_name: '', last_name: '', email: '', phone: '', message: '' };
       },
       error: (err) => {
         this.isSubmitting = false;

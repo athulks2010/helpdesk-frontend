@@ -199,20 +199,38 @@
               </div>
 
               <form (ngSubmit)="onSubmit()" class="space-y-5">
-                <div>
-                  <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
-                    Full Name <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    [(ngModel)]="form.name"
-                    name="contactName"
-                    placeholder="Enter your full name"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    [ngClass]="{'border-red-500': validationErrors['name']}"
-                  />
-                  <div *ngIf="validationErrors['name']" class="text-xs text-red-500 mt-1">
-                    {{ validationErrors['name'] }}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                      First Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="form.first_name"
+                      name="contactFirstName"
+                      placeholder="Enter first name"
+                      class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      [ngClass]="{'border-red-500': validationErrors['first_name']}"
+                    />
+                    <div *ngIf="validationErrors['first_name']" class="text-xs text-red-500 mt-1">
+                      {{ validationErrors['first_name'] }}
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
+                      Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      [(ngModel)]="form.last_name"
+                      name="contactLastName"
+                      placeholder="Enter last name"
+                      class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      [ngClass]="{'border-red-500': validationErrors['last_name']}"
+                    />
+                    <div *ngIf="validationErrors['last_name']" class="text-xs text-red-500 mt-1">
+                      {{ validationErrors['last_name'] }}
+                    </div>
                   </div>
                 </div>
 
